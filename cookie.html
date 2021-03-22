@@ -1,0 +1,49 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=windows-1252">
+      <script type="text/javascript">
+         <!--
+            function WriteCookie() {
+               if( document.myform.customer.value == "" ) {
+                  alert("Enter some value!");
+                  return;
+               }
+               cookievalue = escape(document.myform.customer.value) + ";";
+               var days = 2;  // set a cooke for 1 day since now
+               var date = new Date();
+               date.setTime(date.getTime()+(days*24*60*60*1000));
+               var expires = "; expires="+date.toGMTString();
+               console.log(expires);
+               document.cookie = "name=" + cookievalue + expires + ";"
+               document.getElementById('write').innerHTML = document.cookie; //"Setting Cookies : " + "name=" + cookievalue;
+            }
+
+            function ReadCookie() {
+               var allcookies = document.cookie;
+               document.getElementById('read').innerHTML = ("All Cookies : " + allcookies );
+
+               // Get all the cookies pairs in an array
+               cookiearray = allcookies.split(';');
+
+               // Now take key value pair out of this array
+               for(var i=0; i<cookiearray.length; i++) {
+                  name = cookiearray[i].split('=')[0];
+                  value = cookiearray[i].split('=')[1];
+                  document.getElementById('read').innerHTML += "Key is : " + name + " and Value is : " + value;
+               }
+            }
+         //-->
+      </script>
+   </head>
+   <body>
+      <form name="myform" action="">
+         Enter name: <input type="text" name="customer">
+         <input type="button" value="Set Cookie" onclick="WriteCookie();">
+
+         <p> click the following button and see the result:</p>
+         <input type="button" value="Get Cookie" onclick="ReadCookie()">
+      </form>
+      <div id="write"></div>
+      <div id="read"></div>
+   
+
+</body></html>

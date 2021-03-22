@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8"></head><body style="color: black; background-color : white">
+
+<script>
+function myFunction(){
+  if (window.File && window.FileReader && window.FileList && window.Blob && navigator.webkitPersistentStorage) {
+        if ("webkitRequestFileSystem" in window) {
+            var f = 100 * 1024 * 1024;
+            navigator.webkitPersistentStorage.requestQuota(f, function(l) {
+                console.log("[HAEJINS] navigator.webkitPersistentStorage.requestQuota done");
+		document.getElementById("demo").innerHTML = 'requestQuota for Persistent Storage; reqeusted: ' +f + ' bytes, granted: ' + l + "bytes";
+            }, function(l) {
+            	console.log("[HAEJINS] navigator.webkitPersistentStorage.requestQuota NOT done", l);
+        	document.getElementById("demo").innerHTML = 'requestQuota for Persistent Storage; reqeusted: ' +f + ' bytes, but Error: ' + l + l.message;   
+	 })
+        } else {
+            console.log("no webkit")
+        }
+       }
+}
+
+function myFunction2() {
+navigator.webkitTemporaryStorage.queryUsageAndQuota ( 
+    function(usedBytes, grantedBytes) {  
+        console.log('we are using ', usedBytes, ' of ', grantedBytes, 'bytes');
+	document.getElementById("demo").innerHTML = 'we are using temporary Storage ' + usedBytes +  ' of ' + grantedBytes + 'bytes'; 
+    }, 
+    function(e) { console.log('Error', e);  
+        document.getElementById("demo").innerHTML = 'webkitTemporaryStorage.queryUsageAndQuota;  but Error: ' + l;
+    }
+);
+}
+
+function myFunction3(){
+navigator.webkitPersistentStorage.queryUsageAndQuota (
+    function(usedBytes, grantedBytes) {
+        console.log('we are using ', usedBytes, ' of ', grantedBytes, 'bytes');
+	document.getElementById("demo").innerHTML = 'we are using Persistent Storage ' +usedBytes + ' of ' +grantedBytes +'bytes'; 
+    },
+    function(e) { console.log('Error', e);  
+	document.getElementById("demo").innerHTML = 'webkitPersistentStorage.queryUsageAndQuota;  but Error: ' + l;
+    }
+);
+}
+</script>
+<button type="button" id="date" onclick="myFunction2()">navigator.webkitTemporaryStorage.queryUsageAndQuota</button>
+<button type="button" id="date" onclick="myFunction3()">navigator.webkitPersistentStorage.queryUsageAndQuota</button>
+<button type="button" id="date" onclick="myFunction()">navigator.webkitPersistentStorage.requestQuota</button>
+<p id="demo"></p>
+
+
+
+</body></html>
