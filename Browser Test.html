@@ -1,0 +1,344 @@
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Browser Test</title>
+<link rel="stylesheet" type="text/css" href="Browser%20Test_files/style.css"> 
+<script type="text/javascript" src="Browser%20Test_files/prototype.js"></script>
+<script type="text/javascript" src="Browser%20Test_files/focus.js"></script></head><body onselectstart="return false" style="margin:50; font_family: arial, Helvetica,sans-serif;" onload="event_handler();" _onload="document.body.focus();" id="body"><div style="position:absolute; top:5%; right:5%; font-size:24px; color:red; border-style:dotted;"><span onclick="javascript:window.location.reload();">Reload</span>  |   <span onclick="javascript:window.history.back();">Back</span></div> 
+
+
+<script>
+function event_handler() {
+    document.addEventListener('visibilityChange', function() { 
+        console.log("visibilityChange fired");
+        if (document.hidden) {
+            console.log("App Hidden");
+        }
+        else {
+            console.log("App Shown");
+        }
+    }, true);
+
+    document.addEventListener('webkitvisibilityChange', function() { 
+        console.log("webkitvisibilityChange fired");
+        if (document.hidden) {
+            console.log("w App Hidden");
+        }
+        else {
+            console.log("w App Shown");
+        }
+    }, true);
+
+    console.log("visibilityChange handler added");
+}
+
+function dump(arr,level) {
+	var dumped_text = "";
+	if(!level) level = 0;
+	
+	//The padding given at the beginning of the line.
+	var level_padding = "";
+	for(var j=0;j<level+1;j++) level_padding += "    ";
+	
+	if(typeof(arr) == 'object') { //Array/Hashes/Objects 
+		for(var item in arr) {
+			var value = arr[item];
+			
+			if(typeof(value) == 'object') { //If it is an array,
+				dumped_text += level_padding + "'" + item + "' ...\n";
+				dumped_text += dump(value,level+1);
+			} else {
+				dumped_text += level_padding + "'" + item + "' => \"" + value + "\"\n";
+			}
+		}
+	} else { //Stings/Chars/Numbers etc.
+		dumped_text = "===>"+arr+"<===("+typeof(arr)+")";
+	}
+	return dumped_text;
+}
+
+function a()
+{
+	//alert('a');
+	//alert( decodeURI('%u2019') );
+	alert( '[' + encodeURI(' ') + ']');
+	//alert( escape(',') );
+
+	//for( var item in navigator.mimeTypes ) {
+	//	alert(navigator.mimeTypes[item].type);
+	//}
+}
+
+/*
+<input type="text" value="Hello World" id="myInput">
+<button onclick="myFunction()">Copy text</button>
+*/
+
+function myFunction() {
+    var copyText = document.getElementById("myInput");
+    copyText.select();
+    copyText.setSelectionRange(0, 99999)
+    document.execCommand("copy");
+    alert("Copied the text: " + copyText.value);
+}
+
+function makeCopyableText(value) {
+
+
+}
+</script>
+
+<script type="text/javascript" src="Browser%20Test_files/function.js"></script> 
+
+
+
+<h1>Browser Test</h1>
+
+<div style="font-family: arial">
+
+<div style="width:20; height:20;">
+<svg viewBox="0 0 24 24" onclick="alert('click2')" preserveAspectRatio="xMidYMid meet" focusable="false" _style="pointer-events: none; display: block; width: 100%; height: 100%;">
+    <!--<g class="style-scope iron-icon"></g>-->
+	<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"></path>
+    
+</svg>
+</div>
+
+<div style="width:15; height:15;">
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+	<circle cx="100" cy="100" r="100" onclick="alert('You have clicked the circle.')"></circle>
+</svg>
+</div>
+
+<ul>
+	<li>
+	| <a href="http://yt-dash-mse-test.commondatastorage.googleapis.com/demo-player/dash-player-020416.html?manifest_url=assets/spherical_h264.mpd&amp;spherical=true&amp;disableScreenSizeCheck=true" class="focused">YouTube Certification</a>
+	| <a href="https://test.browser.lge.com:8080/video/personal/index.html">personal page</a>
+	| <a href="http://156.147.61.12/tv/testapp/index.html">SDK</a>
+	| <a href="http://wp.lge.com/~be.lim/be.lim/html5/">HTML5 Test Suite</a>
+	| <a href="https://test.browser.lge.com:8080/video/car.php">car</a>
+	| <a href="https://test.browser.lge.com:8080/video/youtube.php">youtube</a>
+	| <a href="http://fb.browser.lge.com/tests/pages/pages/naver_hcliff/naver.com/naver.html">flash scroll</a>
+	| <a href="https://test.browser.lge.com:8080/video/personal/portal.php?key=html5_player_test">html5 player test</a>
+	| <a href="https://test.browser.lge.com:8080/video/personal/portal.php?key=html5_ipad2">html5_ipad2</a>
+	| <a href="http://daum.net/">daum</a>
+	| <a href="http://naver.com/">naver</a>
+	| <a href="http://nate.com/">nate</a>
+	| <a href="http://fb.browser.lge.com/tests/pages/pages/naver/naver.com/naver.html">naver local</a>
+	| <a href="https://test.browser.lge.com:8080/video/ce_html_test.html">ce test</a>
+	| <a href="https://test.browser.lge.com:8080/video/bw_ajax.html">bw_ajax(async)</a>
+	| <a href="https://test.browser.lge.com:8080/video/bw_ajax_sync.html">bw_ajax(sync)</a>
+	| <a href="https://test.browser.lge.com:8080/video/case1.html">case1</a>
+	| <a href="https://test.browser.lge.com:8080/video/case2.html">case2</a>
+	| <a href="https://test.browser.lge.com:8080/video/case3.html">case3</a>
+	| <a href="http://fb.browser.lge.com/">215</a>
+	| <a href="https://test.browser.lge.com:8080/video/current_cp.html">current cp</a>
+	| <a href="https://test.browser.lge.com:8080/video/new_cp.php">new cp</a>
+	| <a href="https://test.browser.lge.com:8080/video/cancel_test.html">cancel test</a>
+	| <a href="https://test.browser.lge.com:8080/video/multiple_value_test.html">multiple value test</a>
+	| <a href="https://test.browser.lge.com:8080/video/ce_html_test.html">ce test</a>
+	| <a href="https://test.browser.lge.com:8080/video/window_media_test.html">wmp API test</a>
+	| <a href="https://test.browser.lge.com:8080/video/device_info_LGE.html">device info LGE</a>
+	| <a href="https://test.browser.lge.com:8080/video/device_info_MS.html">device info MS</a>
+	| <a href="https://test.browser.lge.com:8080/video/performance.html">performance</a>
+	| <a href="https://test.browser.lge.com:8080/video/lg_example/index.html">lg example</a>
+	| <a href="https://test.browser.lge.com:8080/video/client.php?xx">client info</a>
+	| <a href="https://test.browser.lge.com:8080/video/resolution.html">resolution</a>
+	|
+	</li>
+</ul>
+</div>
+
+<table style="border:0;">
+<tbody><tr>
+
+<td>
+<table _border="1" style="border-collapse:collapse; _border: 1px solid black; _border-color:pink;">
+	<tbody><tr><td><a href="https://test.browser.lge.com:8080/video/tc/event/index.html">tc - event</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/url/index.html">tc - url</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/webosjs/index.html">tc - webosjs</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/video_play/index.html">tc - video play</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/palmservicebridge/index.html">tc - PalmServiceBridge</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/storage_limitation/index.html">tc - storage limitation</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/tls/index.html">tc - Browser TLS Version</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/post_message/index.html">tc - post message</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/resource_loaderror/index.html">tc - resource_loaderror</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/application_cache/index.html">tc - application_cache</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/response_code/index.html">tc - response_code</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/redirect/index.html">tc - redirection (check image caching)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/connection/index.php">tc - connection</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/memory/index.html">tc - memory</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/flash/index.html">tc - flash</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/socket_timeout/index.html">tc - socket_timeout</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/javascript/index.html">tc - javascript</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/javascriptcore/index.html">tc - javascriptcore</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/plugin/index.html">tc - plugin</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/async/index.html">tc - javascript execution</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/cookie/index.html">tc - cookie</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/media/index.html">tc - media</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/orange_vod/index.html">tc - orange_vod</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/ssl/index.html">tc - ssl</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/png/index.html">tc - png</a></td></tr>
+</tbody></table>
+</td>
+
+<td>
+<table _border="1" style="border-collapse:collapse; _border: 1px solid black; _border-color:pink;">
+	<tbody><tr><td><a href="https://test.browser.lge.com:8080/video/tc/mouse/index.html">tc - mouse event</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/key/index.html">tc - key event</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/cross_domain/index.html">tc - cross_domain</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/time/index.php">tc - setTimeout</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/video_region/index.html">tc - video_region</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/check_plugins/index.php">tc - check_plugins</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/check_object/index.php">tc - check_object</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/ism/index.html">tc - ism</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/hls/index.html">tc - hls</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/plugin_style/index.html">tc - plugin_style</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/focus_event/fo.html">tc - focus_event</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/disc/index.html">tc - disc</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/playlist/index.php">tc - playlist</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/plugin_loading/index.html">tc - plugin_loading</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/load_done/index.html">tc - load_done</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/hidden_frame/index.html">tc - hidden frame</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/web_storage/index.html">tc - web storage</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/full_browser/index.html">tc - full browser</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/stability/index.html">tc - stability</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/font/index.html">tc - font</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/hbbtv_video/index.html">tc - hbbtv_video_test</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/select/index.html">tc - select object</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/animated_gif/index.html">tc - animated gif</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/subtitle/index.html">tc - subtitle</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/local_file/local_file.html">tc - local_file</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/temp/orange/player/nan_fix.html">orange - NaN - fixed</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/onselectstart.html">onselectstart not applied</a></td></tr>
+</tbody></table>
+</td>
+
+<td>
+<table _border="1" style="border-collapse:collapse; _border: 1px solid black; _border-color:pink;">
+	<tbody><tr><td><a href="https://test.browser.lge.com:8080/video/onselectstart_applied.html">onselectstart_applied</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/esp/loading.html">esp loading</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/1/oh.mp4">http : oh.mp4</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/vtuner_test.html">vtuner_test.html</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/emul_problem_1/index.html">embed-src</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:5556/">tls server(5556)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:5557/">tls server(5557)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:5558/">tls bbc test server(5558)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:4433/">apache(4433) ssl test</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:4433/video/1/oh.mp4">apache(4433) ssl : oh.mp4</a></td></tr>
+	<tr><td>orange</td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/orange/oneshot_test/oneshot.html">oneshot test</a></td></tr>
+	<tr><td><a href="http://connectedtv-1870b.orange.fr/">http://connectedtv-1870b.orange.fr</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/rock.html">rock.html</a></td></tr>
+	<tr><td><a href="http://connectedtv.rd.francetelecom.com/">http://connectedtv.rd.francetelecom.com/</a></td></tr>
+	<tr><td><a href="http://161.105.224.103:84/AppFrame.html?appId=0">orange(dev)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/temp/maxdome/2010_03_17/play.html">maxdome play (2010_03_17)</a></td></tr>
+	<tr><td><a href="http://10.177.230.151/iplayer_test.html">iplayer_test</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/orange_issues.html">orange issues (2010_03_10)</a></td></tr>
+	<tr><td><a href="http://lgconnectedtv.rd.francetelecom.com/test_mp4_redir/">orange redirection test</a></td></tr>
+	<tr><td><a href="http://lgconnectedtv.rd.francetelecom.com/">orange ( Halim's site )</a></td></tr>
+	<tr><td><a href="http://161.105.182.72/test">orange mp3 test</a></td></tr>
+	<tr><td><a href="http://lgconnectedtv.rd.francetelecom.com/test_audio/">orange audio test</a></td></tr>
+	<tr><td><a href="http://161.105.182.72/test_redir_mms/index.html">mms redirection</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/mms_redirection.html">mms(changed http) redirection</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/tempp/lgconnectedtv.rd.francetelecom.com/AppFrame.html">orange(local)</a></td></tr>
+	<tr><td><a href="http://10.19.100.39/~dilee/x/orange/radio/rtl.html">orange radio test</a></td></tr>
+</tbody></table>
+</td>
+
+<td>
+<table _border="1" style="border-collapse:collapse; _border: 1px solid black; _border-color:pink;">
+	<tbody><tr><td><a href="https://test.browser.lge.com:8080/video/sina_video.html">sina video test local</a></td></tr>
+	<tr><td><a href="http://wap.uol.com.br/natv/">Uol(dev)</a></td></tr>
+	<tr><td><a href="http://wap.uol.com.br/natv-stc/">Uol(test)</a></td></tr>
+	<tr><td><a href="http://api.video.sina.com.cn/lg/video2.php">sina video</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/key.html">key</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/auto_close.html">auto_close</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/pause_seek_resume.html">pause_seek_resume</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tv4.html">tv4</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/error.html">error</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/image_cache_test.html">image_cache_test</a></td></tr>
+	<tr><td><a href="https://account.maxdome.de/account">maxdome https</a></td></tr>
+	<tr><td>bigpond</td></tr>
+	<tr><td><a href="http://btv.bigpond.com/deploy/testcases/testcases.html">bigpond(dev)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/temp/accu/devoweb.accuweather.com/lg/tv/index.html">accu ajax( local )</a></td></tr>
+	<tr><td><a href="http://devoweb.accuweather.com/lg/tv/default.aspx">accu ajax</a></td></tr>
+	<tr><td><a href="http://map.google.com/">google map</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/temp/maxdome/staticmini/index.html">staticmini index</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/temp/maxdome/staticslow/index.html">staticslow index</a></td></tr>
+	<tr><td><a href="http://zap-test02.web.de/mini_v1/">Maxdome Mini-dev</a></td></tr>
+	<tr><td><a href="http://zap-test02.web.de/mini/">Maxdome Mini</a></td></tr>
+	<tr><td><a href="http://mini.maxdome.de/lg/index.html">Maxdome Mini (recent)</a></td></tr>
+	<tr><td><a href="http://zap-test02.web.de/lg3312.html">Maxdome</a></td></tr>
+</tbody></table>
+</td>
+
+<td>
+<table _border="1" style="border-collapse:collapse; _border: 1px solid black; _border-color:pink;">
+	<tbody><tr><td><a href="http://10.19.100.75/bigpond.html">bigpond.html</a></td></tr>
+	<tr><td><a href="http://api.video.sina.com.cn/lg/">Sina.com</a></td></tr>
+	<tr><td><a href="http://bbtv.dev.computerize.com.br/">Globo(dev)</a></td></tr>
+	<tr><td><a href="http://bbtv.computerize.com.br/">Globo(test)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/404.html">not found error</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/redirection.html">redirection test</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/redirection2.html">double redirection test</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/playlist_test.html">playlist_test</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/ajax_test.html">ajax_test</a></td></tr>
+	<tr><td><a href="http://mheg5.net/x/">mheg5.net</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/1/">media files</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/slow_video.html">slow video</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/swf">flash test</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/test/maxdome_ifa_final/index.html">dog</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/sina_test.html">sina_font_test</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/sina_test2.html">sina_font_test2</a></td></tr>
+</tbody></table>
+</td>
+
+<td>
+<table _border="1" style="border-collapse:collapse; _border: 1px solid black; _border-color:pink;">
+	<tbody><tr><td><a href="https://test.browser.lge.com:8080/video/http_wmv.html">http wmv</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_avi.html">http avi</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_wmv2.html">http wmv2</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_mp4.html">http mp4</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_mp4_without_buffering.html">http mp4_without_buffering</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_mp4_2.html">http mp4_2</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_mp3.html">http mp3</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_mp3_2.html">http mp3_2</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_mp3_3.html">http mp3_3( low bandwidth : 10K/s )</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/http_wma.html">http wma</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/mms_wma.html">mms wma</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/mms_wmv_2.html">mms wmv - 2</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/mms_mp4.html">mms mp4</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/playlist.html">playlist(asx)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/temp/zap-test02.web.de/mini_v1/playerpage.html">maxdome mini v1 playerpage test</a></td></tr>
+</tbody></table>
+</td>
+
+<td>
+<table _border="1" style="border-collapse:collapse; _border: 1px solid black; _border-color:pink;">
+	<tbody><tr><td><a href="http://test.browser.lge.com:9999/temp/wap.uol.com.br/natv-stc/videos/esporte/index.html">uol play local</a></td></tr>
+	<tr><td><a href="http://10.178.203.115/lg/TheDarkKnight.mp4">xingri</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/long2.html">long.html</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/girl.html">girl</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/kara.html">kara</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/vicky.html">vicky</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/ba.html">ba</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/mouse.html">mouse test</a></td></tr>
+	<tr><td><a href="http://10.178.203.215/html_pages/cp_url.html">cp_url</a></td></tr>
+	<tr><td><a href="http://test.browser.lge.com:8889/404.php">404 ( without body )</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/temp/bbtv.computerize.com.br/play.html">globo play page(local)</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/mem.html">mem.html</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/golf.html">golf.html</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/test/porter.html">porter</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/mms_wmv.html">mms ( lip sync )</a></td></tr>
+	<tr><td><a href="https://test.browser.lge.com:8080/video/tc/css_ani/index.html">css_ani</a><a></a></td></tr>
+</tbody></table>
+</td>
+
+</tr>
+</tbody></table>
+<!--
+<img src="slow_gif.php" onload="document.getElementById('loading').style.visibility='hidden';">
+-->
+
+
+</body></html>
