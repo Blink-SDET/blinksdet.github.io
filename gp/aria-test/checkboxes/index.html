@@ -1,0 +1,895 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 5 - Checkboxes using IMG elements for visual state</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+ul.checkboxes {
+   margin: 0;
+   padding: 0;		
+}
+
+ul.checkboxes li   {
+   margin: 2px 2px 2px 20px;
+   padding: 2px; 
+   list-style: none;
+   width: 6em;	  
+}
+   
+ul.checkboxes li.hover {
+   margin: 2px 0px 2px 18px;
+   padding: 0px 2px;
+   border: 2px solid #777;
+}
+
+ul.checkboxes li.focus {
+   margin: 2px 0px 2px 18px;
+   padding: 0px 2px;
+   border: 2px solid black;
+}
+
+.offscreen {
+   position: absolute;
+   left: -200em;
+   top: -20em;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+
+	var checkboxes = [];
+
+	$('ul.checkboxes li').each(function(index) {
+		if ($(this).attr('role') == 'checkbox') {
+			checkboxes[index] = new checkbox($(this));
+		};
+	});
+
+	$('ul.checkboxes li').first().focus();
+}); // end ready()
+
+//
+// Function keyCodes() is an object to contain keycodes needed for the application
+//
+function keyCodes() {
+	this.space = 13; //32;
+	this.enter=13;
+	this.left       = 37;
+	this.up         = 38;
+	this.right      = 39;
+	this.down       = 40; 
+	
+}
+
+//
+// Function checkbox() is a class constructor for the implementation of a checkbox widget.
+// The element passed to checkbox() must contain an image tag that will be used to display
+// the state of the checkbox.
+//
+// @param(id string) id is the html id of the element to act as a checkbox
+//
+// @return N/A
+//
+function checkbox($id) {
+
+	// define object properties
+	this.$id = $id;
+	this.keys = new keyCodes();
+
+	// bind event handlers
+	this.bindHandlers();
+
+} // end checkbox() constructor
+
+//
+// Function bindHandlers() is a member function to bind event handlers to the checkboxes in the
+// checkbox group.
+//
+// @return N/A
+//
+checkbox.prototype.bindHandlers = function() {
+
+	var thisObj = this;
+
+	// bind a click handler
+	this.$id.click(function(e) {
+		return thisObj.handleClick(e);
+	});
+
+	// bind a keydown handler
+	this.$id.keydown(function(e) {
+		return thisObj.handleKeyDown(e);
+	});
+
+	// bind a keypress handler
+	this.$id.keypress(function(e) {
+		return thisObj.handleKeyPress(e);
+	});
+
+	// bind a mouseover handler
+	this.$id.mouseover(function(e) {
+		return thisObj.handleMouseOver(e);
+	});
+
+	// bind a mouseout handler
+	this.$id.mouseout(function(e) {
+		return thisObj.handleMouseOut(e);
+	});
+
+	// bind a focus handler
+	this.$id.focus(function(e) {
+		return thisObj.handleFocus(e);
+	});
+
+	// bind a blur handler
+	this.$id.blur(function(e) {
+		return thisObj.handleBlur(e);
+	});
+
+} // end bindHandlers()
+
+// Function toggleState() is a member function to toggle a checkbox state. This function sets the
+// aria-checked property and changes the box image to display the new box state.
+//
+// @return N/A
+//
+checkbox.prototype.toggleState = function() {
+
+	var $img = this.$id.find('img');
+
+	if (this.$id.attr('aria-checked') == 'true') {
+
+		this.$id.attr('aria-checked', 'false');
+		$img.attr('src','http://www.oaa-accessibility.org/media/examples/images/checkbox-unchecked-black.png');
+	}
+	else {
+		this.$id.attr('aria-checked', 'true');
+		$img.attr('src','http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png');
+	}
+
+} // end toggleState()
+
+//
+// Function handleClick() is a member function to handle click events for the checkbox.
+//
+// @param (e object) e is the event object associated with the keydown event
+//
+// @return (boolean) Returns false if processing; true of doing nothing
+//
+checkbox.prototype.handleClick = function(e) {
+		 
+	if (e.altkey || e.ctrlKey || e.shiftKey) {
+		// do nothing;
+		return true;
+	}
+
+	// toggle the checkbox state
+	this.toggleState();
+
+	e.stopPropagation();
+	return false;
+	
+} // end handleClick()
+	
+//
+// Function handleKeyDown() is a member function to handle keydown events for the checkbox.
+//
+// @param (e object) e is the event object associated with the keydown event
+//
+// @return (boolean) Returns false if processing; true of doing nothing
+//
+checkbox.prototype.handleKeyDown = function(e) {
+	 
+	if (e.altkey || e.ctrlKey || e.shiftKey) {
+		// do nothing;
+		return true;
+	}
+	if (e.keyCode==461) // back key input
+	{
+		console.log("handleTabKeyDown: keycode="+e.keyCode);
+		e.stopPropagation();
+		//window.history.back();
+		window.location.replace("../../menu.html");
+		return false;
+	}
+
+	
+	var moveIndex=0;
+	if(( e.keyCode == this.keys.space )||(e.keyCode == this.keys.ok)) {
+console.log("ok key down event, keycode="+e.keyCode);
+		// toggle the checkbox state
+		this.toggleState();
+
+		e.stopPropagation();
+		return false;
+	} else if ( e.keyCode == this.keys.down ) {
+		moveIndex=1;
+	} else if( e.keyCode == this.keys.up ) {
+		moveIndex=-1;
+	}
+	if (moveIndex != 0) {
+		var curItem = this.$id.attr('aria-describedby');
+		console.log("move focus, curItem="+curItem);
+		var len = curItem.length;
+		var rowNum = parseInt(curItem.substr(len-1, 1)) + moveIndex;
+		console.log("key down event, rowNum="+rowNum);
+		if (rowNum>4)
+			rowNum=1;
+		else if (rowNum<1)
+			rowNum=4;
+		// build the id string of the new cell
+		var newCell = '#ch-' + rowNum;
+		this.$id.removeClass('focus');
+		// Make the new cell navigable and give it focus
+		// Use jQuery chaining for optimization
+		$(newCell).focus();
+	}
+
+	return true;
+	
+} // end handleKeyDown()
+
+//
+// Function handleKeyPress() is a member function to handle keypress events for the checkbox.
+// This function is needed to consume events for browsers, such as Opera, that perform window
+// manipulation on keypress events.
+//
+// @param (e object) e is the event object associated with the keydown event
+//
+// @return (boolean) Returns false if processing; true of doing nothing
+//
+checkbox.prototype.handleKeyPress = function(e) {
+		 
+	if (e.altkey || e.ctrlKey || e.shiftKey) {
+		// do nothing;
+		return true;
+	}
+
+	if( e.keyCode == this.keys.space ) {
+		// consume the event
+		e.stopPropagation();
+		return false;
+	} // endif
+
+	return true;
+	
+} // end handleKeyPress()
+
+//
+// Function handleMouseOver() is a member function to handle mouseover events for the checkbox.
+//
+// @param (e object) e is the event object associated with the mouseover event
+//
+// @return (boolean) Returns false;
+//
+checkbox.prototype.handleMouseOver = function(e) {
+		 
+	// if the box does not have the focus class add the hover highlight
+	if (this.$id.not('.focus')) {
+		this.$id.addClass('hover');
+	}
+
+	e.stopPropagation();
+	return false;
+	
+} // end handleMouseOver()
+
+//
+// Function handleMouseOut() is a member function to handle mouseout events for the checkbox.
+//
+// @param (e object) e is the event object associated with the mouseout event
+//
+// @return (boolean) Returns false;
+//
+checkbox.prototype.handleMouseOut = function(e) {
+		 
+	this.$id.removeClass('hover');
+
+	e.stopPropagation();
+	return false;
+	
+} // end handleMouseOut()
+
+//
+// Function handleFocus() is a member function to handle focus events for the checkbox.
+//
+// @param (e object) e is the event object associated with the focus event
+//
+// @return (boolean) Returns true;
+//
+checkbox.prototype.handleFocus = function(e) {
+		 
+	this.$id.addClass('focus');
+
+	// remove the hover class if it is applied
+	this.$id.removeClass('hover');
+
+	return true;
+	
+} // end handleFocus()
+
+//
+// Function handleBlur() is a member function to handle blur events for the checkbox.
+//
+// @param (e object) e is the event object associated with the blur event
+//
+// @return (boolean) Returns true;
+//
+checkbox.prototype.handleBlur = function(e) {
+		 
+	this.$id.removeClass('focus');
+	return true;
+	
+} // end handleBlur()
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../4/index.html">Previous</a></li>
+        
+        <li>Example 5</li>
+        
+        <li class="next"><a href="../6/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 5 - Checkboxes using IMG elements for visual state</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/checkbox1/index.html">Permanent link for Checkboxes using IMG elements for visual state</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div role="application">
+
+<h3 id="cond">Sandwich Condiments</h3>
+<div role="directory">
+<ul class="checkboxes" 
+    aria-labelledby="cond">
+
+  <li role="checkbox"  id="ch-1"
+      tabindex="0"
+      aria-checked="false"
+      aria-describedby="cond desc1">
+      <img src="http://www.oaa-accessibility.org/media/examples/images/checkbox-unchecked-black.png" role="presentation">
+      Lettuce
+  </li>
+            
+  <li role="checkbox" id="ch-2"
+      tabindex="1"
+      aria-checked="true" 
+      aria-describedby="cond desc2">
+      <img src="http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png" role="presentation">
+      Tomato
+   </li>
+            
+   <li role="checkbox" id="ch-3"
+       tabindex="2"
+       aria-checked="true" 
+       aria-describedby="cond desc3">
+       <img src="http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png" role="presentation">
+       Mustard
+   </li>
+            
+   <li role="checkbox" id="ch-4"
+       tabindex="3"
+       aria-checked="true" 
+       aria-describedby="cond desc4">
+       <img src="http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png" role="presentation">
+       Sprouts
+  </li>            
+   
+</ul>
+</div>
+<div id="desc1" class="offscreen">The best available organic romaine lettuce grown locally.</div>
+<div id="desc2" class="offscreen">These organically grown beef steak tomatoes are vide rippened.</div>
+<div id="desc3" class="offscreen"><p>This is a gourmet mustard from Germany.</p><aside role="note"> <q> We are so glad we visited the Animal Sanctuary, and brought home little Puddles.
+He is such a good puppy! </q></aside></div>
+<div id="desc4" class="offscreen">These organically grown alfalfa sprouts are a great addition to any sandwich.</div>
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a checkbox widget using inline images to display the visual state of the boxes in the group.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <ul>
+<li>Tab: Move between button items and text area.</li>
+<li>Enter or space: Toggle aria-checked state of checkbox with keyboard focus.</li>
+</ul>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-checked]</li>      
+        
+        <li>ARIA 1.0: [aria-describedby]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;checkbox&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;presentation&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div role="application"&gt;<br/>
+<br/>
+&lt;h3 id="cond"&gt;Sandwich Condiments&lt;/h3&gt;<br/>
+<br/>
+&lt;ul class="checkboxes" <br/>
+&#160;&#160;&#160;&#160;aria-labelledby="cond"&gt;<br/>
+<br/>
+&#160;&#160;&lt;li role="checkbox" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="0"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-describedby="cond desc1"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/checkbox-unchecked-black.png" role="presentation"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Lettuce<br/>
+&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&lt;li role="checkbox" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="0"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="true" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-describedby="cond desc2"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png" role="presentation"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Tomato<br/>
+&#160;&#160; &lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160; &lt;li role="checkbox" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160; tabindex="0"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; aria-checked="true" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160; aria-describedby="cond desc3"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; &lt;img src="http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png" role="presentation"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; Mustard<br/>
+&#160;&#160; &lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160; &lt;li role="checkbox" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160; tabindex="0"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; aria-checked="true" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160; aria-describedby="cond desc4"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; &lt;img src="http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png" role="presentation"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; Sprouts<br/>
+&#160;&#160;&lt;/li&gt;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160; <br/>
+&lt;/ul&gt;<br/>
+&lt;div id="desc1" class="offscreen"&gt;The best available organic romaine lettuce grown locally.&lt;/div&gt;<br/>
+&lt;div id="desc2" class="offscreen"&gt;These organically grown beef steak tomatoes are vide rippened.&lt;/div&gt;<br/>
+&lt;div id="desc3" class="offscreen"&gt;This is a gourmet mustard from Germany.&lt;/div&gt;<br/>
+&lt;div id="desc4" class="offscreen"&gt;These organically grown alfalfa sprouts are a great addition to any sandwich.&lt;/div&gt;<br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+ul.checkboxes {<br/>
+&#160;&#160; margin: 0;<br/>
+&#160;&#160; padding: 0;&#160;&#160;&#160;&#160;<br/>
+}<br/>
+<br/>
+ul.checkboxes li&#160;&#160; {<br/>
+&#160;&#160; margin: 2px 2px 2px 20px;<br/>
+&#160;&#160; padding: 2px; <br/>
+&#160;&#160; list-style: none;<br/>
+&#160;&#160; width: 6em;&#160;&#160;&#160;&#160;<br/>
+}<br/>
+&#160;&#160; <br/>
+ul.checkboxes li.hover {<br/>
+&#160;&#160; margin: 2px 0px 2px 18px;<br/>
+&#160;&#160; padding: 0px 2px;<br/>
+&#160;&#160; border: 2px solid #777;<br/>
+}<br/>
+<br/>
+ul.checkboxes li.focus {<br/>
+&#160;&#160; margin: 2px 0px 2px 18px;<br/>
+&#160;&#160; padding: 0px 2px;<br/>
+&#160;&#160; border: 2px solid black;<br/>
+}<br/>
+<br/>
+.offscreen {<br/>
+&#160;&#160; position: absolute;<br/>
+&#160;&#160; left: -200em;<br/>
+&#160;&#160; top: -20em;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+$(document).ready(function() {<br/>
+<br/>
+&#160;&#160;var checkboxes = [];<br/>
+<br/>
+&#160;&#160;$('ul.checkboxes li').each(function(index) {<br/>
+&#160;&#160;&#160;&#160;if ($(this).attr('role') == 'checkbox') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;checkboxes[index] = new checkbox($(this));<br/>
+&#160;&#160;&#160;&#160;};<br/>
+&#160;&#160;});<br/>
+<br/>
+}); // end ready()<br/>
+<br/>
+//<br/>
+// Function keyCodes() is an object to contain keycodes needed for the application<br/>
+//<br/>
+function keyCodes() {<br/>
+&#160;&#160;this.space = 32;<br/>
+}<br/>
+<br/>
+//<br/>
+// Function checkbox() is a class constructor for the implementation of a checkbox widget.<br/>
+// The element passed to checkbox() must contain an image tag that will be used to display<br/>
+// the state of the checkbox.<br/>
+//<br/>
+// @param(id string) id is the html id of the element to act as a checkbox<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+function checkbox($id) {<br/>
+<br/>
+&#160;&#160;// define object properties<br/>
+&#160;&#160;this.$id = $id;<br/>
+&#160;&#160;this.keys = new keyCodes();<br/>
+<br/>
+&#160;&#160;// bind event handlers<br/>
+&#160;&#160;this.bindHandlers();<br/>
+<br/>
+} // end checkbox() constructor<br/>
+<br/>
+//<br/>
+// Function bindHandlers() is a member function to bind event handlers to the checkboxes in the<br/>
+// checkbox group.<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+checkbox.prototype.bindHandlers = function() {<br/>
+<br/>
+&#160;&#160;var thisObj = this;<br/>
+<br/>
+&#160;&#160;// bind a click handler<br/>
+&#160;&#160;this.$id.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleClick(e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a keydown handler<br/>
+&#160;&#160;this.$id.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleKeyDown(e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a keypress handler<br/>
+&#160;&#160;this.$id.keypress(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleKeyPress(e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a mouseover handler<br/>
+&#160;&#160;this.$id.mouseover(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseOver(e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a mouseout handler<br/>
+&#160;&#160;this.$id.mouseout(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseOut(e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a focus handler<br/>
+&#160;&#160;this.$id.focus(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleFocus(e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a blur handler<br/>
+&#160;&#160;this.$id.blur(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleBlur(e);<br/>
+&#160;&#160;});<br/>
+<br/>
+} // end bindHandlers()<br/>
+<br/>
+// Function toggleState() is a member function to toggle a checkbox state. This function sets the<br/>
+// aria-checked property and changes the box image to display the new box state.<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+checkbox.prototype.toggleState = function() {<br/>
+<br/>
+&#160;&#160;var $img = this.$id.find('img');<br/>
+<br/>
+&#160;&#160;if (this.$id.attr('aria-checked') == 'true') {<br/>
+<br/>
+&#160;&#160;&#160;&#160;this.$id.attr('aria-checked', 'false');<br/>
+&#160;&#160;&#160;&#160;$img.attr('src','http://www.oaa-accessibility.org/media/examples/images/checkbox-unchecked-black.png');<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;this.$id.attr('aria-checked', 'true');<br/>
+&#160;&#160;&#160;&#160;$img.attr('src','http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png');<br/>
+&#160;&#160;}<br/>
+<br/>
+} // end toggleState()<br/>
+<br/>
+//<br/>
+// Function handleClick() is a member function to handle click events for the checkbox.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the keydown event<br/>
+//<br/>
+// @return (boolean) Returns false if processing; true of doing nothing<br/>
+//<br/>
+checkbox.prototype.handleClick = function(e) {<br/>
+&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;if (e.altkey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing;<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// toggle the checkbox state<br/>
+&#160;&#160;this.toggleState();<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+&#160;&#160;<br/>
+} // end handleClick()<br/>
+&#160;&#160;<br/>
+//<br/>
+// Function handleKeyDown() is a member function to handle keydown events for the checkbox.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the keydown event<br/>
+//<br/>
+// @return (boolean) Returns false if processing; true of doing nothing<br/>
+//<br/>
+checkbox.prototype.handleKeyDown = function(e) {<br/>
+&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;if (e.altkey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing;<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;if( e.keyCode == this.keys.space ) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// toggle the checkbox state<br/>
+&#160;&#160;&#160;&#160;this.toggleState();<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;} // endif<br/>
+<br/>
+&#160;&#160;return true;<br/>
+&#160;&#160;<br/>
+} // end handleKeyDown()<br/>
+<br/>
+//<br/>
+// Function handleKeyPress() is a member function to handle keypress events for the checkbox.<br/>
+// This function is needed to consume events for browsers, such as Opera, that perform window<br/>
+// manipulation on keypress events.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the keydown event<br/>
+//<br/>
+// @return (boolean) Returns false if processing; true of doing nothing<br/>
+//<br/>
+checkbox.prototype.handleKeyPress = function(e) {<br/>
+&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;if (e.altkey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing;<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;if( e.keyCode == this.keys.space ) {<br/>
+&#160;&#160;&#160;&#160;// consume the event<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;} // endif<br/>
+<br/>
+&#160;&#160;return true;<br/>
+&#160;&#160;<br/>
+} // end handleKeyPress()<br/>
+<br/>
+//<br/>
+// Function handleMouseOver() is a member function to handle mouseover events for the checkbox.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the mouseover event<br/>
+//<br/>
+// @return (boolean) Returns false;<br/>
+//<br/>
+checkbox.prototype.handleMouseOver = function(e) {<br/>
+&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;// if the box does not have the focus class add the hover highlight<br/>
+&#160;&#160;if (this.$id.not('.focus')) {<br/>
+&#160;&#160;&#160;&#160;this.$id.addClass('hover');<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+&#160;&#160;<br/>
+} // end handleMouseOver()<br/>
+<br/>
+//<br/>
+// Function handleMouseOut() is a member function to handle mouseout events for the checkbox.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the mouseout event<br/>
+//<br/>
+// @return (boolean) Returns false;<br/>
+//<br/>
+checkbox.prototype.handleMouseOut = function(e) {<br/>
+&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;this.$id.removeClass('hover');<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+&#160;&#160;<br/>
+} // end handleMouseOut()<br/>
+<br/>
+//<br/>
+// Function handleFocus() is a member function to handle focus events for the checkbox.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the focus event<br/>
+//<br/>
+// @return (boolean) Returns true;<br/>
+//<br/>
+checkbox.prototype.handleFocus = function(e) {<br/>
+&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;this.$id.addClass('focus');<br/>
+<br/>
+&#160;&#160;// remove the hover class if it is applied<br/>
+&#160;&#160;this.$id.removeClass('hover');<br/>
+<br/>
+&#160;&#160;return true;<br/>
+&#160;&#160;<br/>
+} // end handleFocus()<br/>
+<br/>
+//<br/>
+// Function handleBlur() is a member function to handle blur events for the checkbox.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the blur event<br/>
+//<br/>
+// @return (boolean) Returns true;<br/>
+//<br/>
+checkbox.prototype.handleBlur = function(e) {<br/>
+&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;this.$id.removeClass('focus');<br/>
+&#160;&#160;return true;<br/>
+&#160;&#160;<br/>
+} // end handleBlur()<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

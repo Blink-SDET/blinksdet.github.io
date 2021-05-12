@@ -1,0 +1,582 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 22 - Hide/Show: Region is exclusive</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+.hidden {
+    display: none; 
+}
+
+ul.controls {
+   margin: 10px;
+   padding: 0;
+   list-style: none outside none;
+}
+ul.controls li {
+   float: left;
+   margin-bottom: 5px;
+   padding: 5px 10px;
+   width: 130px;
+   text-align: center;
+   border: 1px solid black;
+}
+ul.controls li {
+   color: #004400;
+   text-decoration: none;
+}
+
+ul.controls li:hover,
+ul.controls li:active,
+ul.controls li:focus {
+   font-weight: bold;
+   background-color: #fc3;
+}
+ul.controls li[aria-expanded="true"] {
+   font-weight: bold;
+}
+
+div#region_wrapper {
+   clear: both;
+   width: 660px;
+   height: 124px;
+   background-color: #ccc;
+   border: 1px solid black;
+}
+div.message
+{
+   padding: .5em; 
+   border: 2px solid #880000;
+   width: 40em;
+}
+
+div.message[aria-hidden="true"] {
+   display: none;
+}
+
+div#m1 {
+   background-color: #ffefef;
+}
+
+div#m2 {
+   background-color: #efffef;
+}
+
+div#m3 {
+   background-color: #efefff;
+}
+
+div#m4 {
+  background-color: #efffff;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+   var keys = {
+            enter: 13,
+            space: 32,
+			left : 37,
+			up   : 38,
+			right: 39,
+			down :40 
+            };
+
+   var $rgns = $('message');
+
+   $('li').keydown(function(e) {
+		console.log("keydown evt:"+e.keyCode);
+      if (e.altKey||e.ctrlKey||e.shiftKey) {
+            // do nothing
+      }	else if (e.keyCode==461) {// back key input
+		console.log("handleTabKeyDown: keycode="+e.keyCode);
+		e.stopPropagation();
+		//window.history.back();
+		window.location.replace("../../menu.html");
+		return false;
+	  } else if (e.keyCode == keys.enter || e.keyCode == keys.space) {
+
+         var $rgn =  $('#' + $(this).attr('aria-controls'));
+
+         if ($(this).attr('aria-expanded') == 'true') {
+
+            $(this).attr('aria-expanded', 'false');
+            $rgn.attr('aria-hidden', 'true');
+
+            $(this).find('span').html('Show');
+         }
+         else {
+            $(this).attr('aria-expanded', 'true');
+            $rgn.attr('aria-hidden', 'false');
+
+            $(this).siblings().attr('aria-expanded', 'false');
+            $rgn.siblings().attr('aria-hidden', 'true');
+
+            $(this).siblings().find('span').html('Show');
+            $(this).find('span').html('Hide');
+         }
+
+         e.stopPropagation();
+         return false;
+      } else if (e.keyCode == keys.right || e.keyCode == keys.down) {
+		var $rgn =  $('#' + $(this).attr('aria-controls'));
+        if ($(this).attr('aria-expanded') == 'true') {
+		   $(this).attr('aria-expanded', 'false');
+            $rgn.attr('aria-hidden', 'true');
+		}
+		$(this).next().focus();
+	  } else if (e.keyCode == keys.left || e.keyCode == keys.up) {
+		var $rgn =  $('#' + $(this).attr('aria-controls'));
+        if ($(this).attr('aria-expanded') == 'true') {
+		   $(this).attr('aria-expanded', 'false');
+            $rgn.attr('aria-hidden', 'true');
+		}
+		$(this).prev().focus();
+	  }
+
+      return true;
+   });
+  
+   $('li').click(function(e) {
+
+         var $rgn =  $('#' + $(this).attr('aria-controls'));
+
+         if ($(this).attr('aria-expanded') == 'true') {
+
+            $(this).attr('aria-expanded', 'false');
+            $rgn.attr('aria-hidden', 'true');
+
+            $(this).find('span').html('Show');
+         }
+         else {
+            $(this).attr('aria-expanded', 'true');
+            $rgn.attr('aria-hidden', 'false');
+
+            $(this).siblings().attr('aria-expanded', 'false');
+            $rgn.siblings().attr('aria-hidden', 'true');
+
+            $(this).siblings().find('span').html('Show');
+            $(this).find('span').html('Hide');
+         }
+
+      e.stopPropagation();
+      return false;
+   });
+   
+   $('li[aria-controls="m1"]').focus();
+}); // end ready()
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+  <div id="banner" role="banner">        
+    <div class="content">
+ 
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../21/index.html">Previous</a></li>
+        
+        <li>Example 22</li>
+        
+        <li class="next"><a href="../23/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 22 - Hide/Show: Region is exclusive</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/hideshow3/index.html">Permanent link for Hide/Show: Region is exclusive</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<h2>List of Messages</h2>
+
+<ul class="controls">
+  <li role="button" aria-controls="m1" aria-expanded="false" tabindex="0">
+         <span>Show</span> 
+         Message 1
+  </li> 
+  <li role="button" aria-controls="m2" aria-expanded="false" tabindex="0">
+         <span>Show</span> 
+         Message 2
+  </li> 
+  <li role="button" aria-controls="m3" aria-expanded="false" tabindex="0">
+         <span>Show</span> 
+         Message 3
+  </li> 
+  <li role="button" aria-controls="m4" aria-expanded="false" tabindex="0">
+         <span>Show</span> 
+         Message 4
+  </li> 
+</ul>
+
+<div id="region_wrapper">
+   <div id="m1" class="message" tabindex="-1" role="region" aria-labelledby="m1-label" aria-hidden="true">
+       <h2 id="m1-label">Message 1</h2>
+       <p>Message 1 is all about being message 1 and has nothing to do with any other messages.</p>
+   </div>
+
+   <div id="m2" class="message" role="region" aria-labelledby="m2-label" tabindex="-1" aria-hidden="true">
+         <h2 id="m2-label">Message 2
+         <p>Message 2 is all about being message 2 and has nothing to do with any other messages.</p></h2>
+   </div>
+
+   <div id="m3" class="message" role="region" aria-labelledby="m3-label" tabindex="-1" aria-hidden="true">
+          <h2 id="m3-label">Message 3</h2>
+          <p>Message 3 is all about being message 3 and has nothing to do with any other messages.</p>
+   </div>
+
+   <div id="m4" class="message" role="region" aria-labelledby="m4-label" tabindex="-1" aria-hidden="true">
+          <h2 id="m4-label">Message 4</h2>
+          <p>Message 4 is all about being message 4 and has nothing to do with any other messages.</p>
+   </div>
+</div>
+
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of hiding and showing regions using aria-expanded. aria-controls is used to maintain markup associations. Only one region may be displayed at a time.&#8217;</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <ul>
+	<li>Tab: Move between button items and text area.</li>
+	<li>Enter or space: Toggle display of hide/show regions.</li>
+</ul>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-controls]</li>      
+        
+        <li>ARIA 1.0: [aria-expanded]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;button&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;region&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;h2&gt;List of Messages&lt;/h2&gt;<br/>
+<br/>
+&lt;ul class="controls"&gt;<br/>
+&#160;&#160;&lt;li role="button" aria-controls="m1" aria-expanded="false" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;span&gt;Show&lt;/span&gt; <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; Message 1<br/>
+&#160;&#160;&lt;/li&gt; <br/>
+&#160;&#160;&lt;li role="button" aria-controls="m2" aria-expanded="false" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;span&gt;Show&lt;/span&gt; <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; Message 2<br/>
+&#160;&#160;&lt;/li&gt; <br/>
+&#160;&#160;&lt;li role="button" aria-controls="m3" aria-expanded="false" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;span&gt;Show&lt;/span&gt; <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; Message 3<br/>
+&#160;&#160;&lt;/li&gt; <br/>
+&#160;&#160;&lt;li role="button" aria-controls="m4" aria-expanded="false" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;span&gt;Show&lt;/span&gt; <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; Message 4<br/>
+&#160;&#160;&lt;/li&gt; <br/>
+&lt;/ul&gt;<br/>
+<br/>
+&lt;div id="region_wrapper"&gt;<br/>
+&#160;&#160; &lt;div id="m1" class="message" tabindex="-1" role="region" aria-labelledby="m1-label" aria-hidden="true"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; &lt;h2 id="m1-label"&gt;Message 1&lt;/h2&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; &lt;p&gt;Message 1 is all about being message 1 and has nothing to do with any other messages.&lt;/p&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+<br/>
+&#160;&#160; &lt;div id="m2" class="message" role="region" aria-labelledby="m2-label" tabindex="-1" aria-hidden="true"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;h2 id="m2-label"&gt;Message 2&lt;/h2&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;p&gt;Message 2 is all about being message 2 and has nothing to do with any other messages.&lt;/p&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+<br/>
+&#160;&#160; &lt;div id="m3" class="message" role="region" aria-labelledby="m3-label" tabindex="-1" aria-hidden="true"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;h2 id="m3-label"&gt;Message 3&lt;/h2&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;Message 3 is all about being message 3 and has nothing to do with any other messages.&lt;/p&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+<br/>
+&#160;&#160; &lt;div id="m4" class="message" role="region" aria-labelledby="m4-label" tabindex="-1" aria-hidden="true"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;h2 id="m4-label"&gt;Message 4&lt;/h2&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;Message 4 is all about being message 4 and has nothing to do with any other messages.&lt;/p&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+&lt;/div&gt;<br/>
+<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+.hidden {<br/>
+&#160;&#160;&#160;&#160;display: none; <br/>
+}<br/>
+<br/>
+ul.controls {<br/>
+&#160;&#160; margin: 10px;<br/>
+&#160;&#160; padding: 0;<br/>
+&#160;&#160; list-style: none outside none;<br/>
+}<br/>
+ul.controls li {<br/>
+&#160;&#160; float: left;<br/>
+&#160;&#160; margin-bottom: 5px;<br/>
+&#160;&#160; padding: 5px 10px;<br/>
+&#160;&#160; width: 130px;<br/>
+&#160;&#160; text-align: center;<br/>
+&#160;&#160; border: 1px solid black;<br/>
+}<br/>
+ul.controls li {<br/>
+&#160;&#160; color: #004400;<br/>
+&#160;&#160; text-decoration: none;<br/>
+}<br/>
+<br/>
+ul.controls li:hover,<br/>
+ul.controls li:active,<br/>
+ul.controls li:focus {<br/>
+&#160;&#160; font-weight: bold;<br/>
+&#160;&#160; background-color: #fc3;<br/>
+}<br/>
+ul.controls li[aria-expanded="true"] {<br/>
+&#160;&#160; font-weight: bold;<br/>
+}<br/>
+<br/>
+div#region_wrapper {<br/>
+&#160;&#160; clear: both;<br/>
+&#160;&#160; width: 660px;<br/>
+&#160;&#160; height: 124px;<br/>
+&#160;&#160; background-color: #ccc;<br/>
+&#160;&#160; border: 1px solid black;<br/>
+}<br/>
+div.message<br/>
+{<br/>
+&#160;&#160; padding: .5em; <br/>
+&#160;&#160; border: 2px solid #880000;<br/>
+&#160;&#160; width: 40em;<br/>
+}<br/>
+<br/>
+div.message[aria-hidden="true"] {<br/>
+&#160;&#160; display: none;<br/>
+}<br/>
+<br/>
+div#m1 {<br/>
+&#160;&#160; background-color: #ffefef;<br/>
+}<br/>
+<br/>
+div#m2 {<br/>
+&#160;&#160; background-color: #efffef;<br/>
+}<br/>
+<br/>
+div#m3 {<br/>
+&#160;&#160; background-color: #efefff;<br/>
+}<br/>
+<br/>
+div#m4 {<br/>
+&#160;&#160;background-color: #efffff;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+$(document).ready(function() {<br/>
+&#160;&#160; var keys = {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;enter: 13,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;space: 32<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;};<br/>
+<br/>
+&#160;&#160; var $rgns = $('message');<br/>
+<br/>
+&#160;&#160; $('li').keydown(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.altKey||e.ctrlKey||e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else if (e.keyCode == keys.enter || e.keyCode == keys.space) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var $rgn =&#160;&#160;$('#' + $(this).attr('aria-controls'));<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if ($(this).attr('aria-expanded') == 'true') {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).attr('aria-expanded', 'false');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$rgn.attr('aria-hidden', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).find('span').html('Show');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).attr('aria-expanded', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$rgn.attr('aria-hidden', 'false');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).siblings().attr('aria-expanded', 'false');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$rgn.siblings().attr('aria-hidden', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).siblings().find('span').html('Show');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).find('span').html('Hide');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160; });<br/>
+&#160;&#160;<br/>
+&#160;&#160; $('li').click(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var $rgn =&#160;&#160;$('#' + $(this).attr('aria-controls'));<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if ($(this).attr('aria-expanded') == 'true') {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).attr('aria-expanded', 'false');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$rgn.attr('aria-hidden', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).find('span').html('Show');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).attr('aria-expanded', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$rgn.attr('aria-hidden', 'false');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).siblings().attr('aria-expanded', 'false');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$rgn.siblings().attr('aria-hidden', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).siblings().find('span').html('Show');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(this).find('span').html('Hide');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160; });<br/>
+}); // end ready()<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

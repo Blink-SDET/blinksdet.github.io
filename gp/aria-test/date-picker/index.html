@@ -1,0 +1,2289 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 15 - Date Picker</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+.datepicker {
+   margin: 10px;
+   padding: 2px;
+   position: absolute;
+   width: 261px;
+   background-color: #fff;
+   border: 1px solid #ccc;
+   -webkit-border-radius: 4px;
+   -moz-border-radius: 4px;
+   border-radius: 4px;
+}
+div#month-wrap {
+   height: 30px;
+   background-color: #ddd;
+   border: 1px solid black;
+   -webkit-border-radius: 4px;
+   -moz-border-radius: 4px;
+   border-radius: 4px;
+}
+div#bn_prev {
+   margin: 3px;
+   float: left;
+   width: 24px;
+   height: 24px;
+}
+div#bn_next {
+   margin: 3px;
+   float: right;
+   width: 24px;
+   height: 24px;
+}
+
+div#bn_prev:hover,
+div#bn_prev:focus,
+div#bn_next:hover,
+div#bn_next:focus {
+   margin: 2px;
+   background-color: #fc3;
+   border: 1px solid #800;
+   -webkit-border-radius: 4px;
+   -moz-border-radius: 4px;
+   border-radius: 4px;
+}
+img.bn_img {
+   margin: 0;
+   padding: 2px;
+}
+div#month {
+   float: left;
+   padding-top: 6px;
+   width: 199px;
+   height: 24px;
+   text-align: center;
+   font-weight: bold;
+   font-size: 1.2em;
+}
+table#cal {
+   width: 261px;
+   font-size: 1.2em;
+   text-align: center;
+}
+table#cal th,
+table#cal td {
+   width: 35px;
+   height: 30px;
+   padding: 0;
+}
+table#cal td {
+   background-color: #ddd;
+   border: 1px solid #999;
+}
+
+table#cal td.today {
+   background-color: #FFF0C4;
+   border: 1px solid #999;
+}
+
+table#cal td.empty {
+   background-color: #f9f9f9;
+   border: 1px solid #eee;
+}
+
+table#cal td:hover,
+table#cal td.focus {
+   border-color: #800;
+   background-color: #fc3;
+}
+
+table#cal td.empty:hover {
+   background-color: #f9f9f9;
+   border: 1px solid #eee;
+}
+
+.offscreen {
+   position: absolute;
+   left: -200em;
+   top: -100em;
+}
+[aria-hidden="true"] {
+   display: none;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+   var dp1 = new datepicker('dp1', 'date', true);
+	$('#date').focus();
+   $('#bn_date').click(function(e) {
+      dp1.showDlg();
+
+      e.stopPropagation();
+      return false;
+   });
+   $('#date').keydown(function(e) {
+	switch (e.keyCode)
+	{
+		case 461: // back key input
+		{
+			console.log("handleTabKeyDown: keycode="+e.keyCode);
+			e.stopPropagation();
+			//window.history.back();
+			window.location.replace("../../menu.html");
+			return false;
+		}
+		case 39: {  // right button
+			$('#bn_date').focus();
+
+			e.stopPropagation();
+			return false;
+		}
+	}
+   });
+});
+
+function datepicker(id, target, modal) {
+
+
+   this.$id = $('#' + id); // element to attach widget to
+   this.$monthObj = this.$id.find('#month');
+   this.$prev = this.$id.find('#bn_prev');
+   this.$next = this.$id.find('#bn_next');
+   this.$grid = this.$id.find('#cal');
+   this.$target = $('#' + target); // div or text box that will receive the selected date string and focus (if modal)
+   this.bModal = modal; // true if datepicker should appear in a modal dialog box.
+
+   this.monthNames = ['January', 'February', 'March', 'April','May','June',
+         'July', 'August', 'September', 'October', 'November', 'December'];
+
+   this.dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+   this.dateObj = new Date();
+
+   this.curYear = this.dateObj.getFullYear(); 
+   this.year = this.curYear;
+
+   this.curMonth = this.dateObj.getMonth(); 
+   this.month = this.curMonth;
+   this.currentDate = true;
+
+   this.date = this.dateObj.getDate(); 
+
+   this.keys = {
+                tab:       9,
+                enter:    13,
+                esc:      27,
+                space:    32,
+                pageup:   33,
+                pagedown: 34,
+                end:      35,
+                home:     36,
+                left:     37,
+                up:       38,
+                right:    39,
+                down:     40
+               };
+   
+   // display the current month
+   this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);
+
+   // populate the calendar grid
+   this.popGrid();
+
+   // update the table's activedescdendant to point to the current day
+   this.$grid.attr('aria-activedescendant', this.$grid.find('.today').attr('id'));
+
+   this.bindHandlers();
+
+   // hide dialog if in modal mode
+   if (this.bModal == true) {
+      this.$id.attr('aria-hidden', 'true');
+   }
+}
+
+//
+// popGrid() is a member function to populate the datepicker grid with calendar days
+// representing the current month
+//
+// @return N/A
+//
+datepicker.prototype.popGrid = function() {
+   
+   var numDays = this.calcNumDays(this.year, this.month);
+   var startWeekday = this.calcStartWeekday(this.year, this.month);
+   var weekday = 0;
+   var curDay = 1;
+   var rowCount = 1;
+   var $tbody = this.$grid.find('tbody');
+
+   var gridCells = '\t<tr id="row1">\n';
+
+   // clear the grid
+   $tbody.empty();
+   $('#msg').empty();
+
+   // Insert the leading empty cells
+   for (weekday = 0; weekday < startWeekday; weekday++) {
+
+      gridCells += '\t\t<td class="empty">&nbsp;</td>\n';
+   }
+
+   // insert the days of the month.
+   for (curDay = 1; curDay <= numDays; curDay++) {
+
+      if (curDay == this.date && this.currentDate == true) {
+
+         gridCells += '\t\t<td id="day' + curDay + '" class="today" headers="row' +
+                      rowCount + ' ' + this.dayNames[weekday] + '" role="gridcell" aria-selected="false">' + curDay + '</td>';
+
+      }
+      else {
+         gridCells += '\t\t<td id="day' + curDay + '" headers="row' +
+                      rowCount + ' ' + this.dayNames[weekday] + '" role="gridcell" aria-selected="false">' + curDay + '</td>';
+      }
+
+
+      if (weekday == 6 && curDay < numDays) {
+         // This was the last day of the week, close it out
+         // and begin a new one
+         gridCells += '\t</tr>\n\t<tr id="row' + rowCount + '">\n';
+         rowCount++;
+         weekday = 0;
+      }
+      else {
+         weekday++;
+      }
+   }
+
+   // Insert any trailing empty cells
+   for (weekday; weekday < 7; weekday++) {
+
+      gridCells += '\t\t<td class="empty">&nbsp;</td>\n';
+   }
+
+   gridCells += '\t</tr>';
+
+   $tbody.append(gridCells);
+}
+
+//
+// calcNumDays() is a member function to calculate the number of days in a given month
+//
+// @return (integer) number of days
+//
+datepicker.prototype.calcNumDays = function(year, month) {
+   
+   return 32 - new Date(year, month, 32).getDate();
+}
+
+//
+// calcstartWeekday() is a member function to calculate the day of the week the first day of a
+// month lands on
+//
+// @return (integer) number representing the day of the week (0=Sunday....6=Saturday)
+//
+datepicker.prototype.calcStartWeekday = function(year, month) {
+   
+   return  new Date(year, month, 1).getDay();
+
+} // end calcStartWeekday()
+
+//
+// showPrevMonth() is a member function to show the previous month
+//
+// @param (offset int) offset may be used to specify an offset for setting
+//                      focus on a day the specified number of days from
+//                      the end of the month.
+// @return N/A
+//
+datepicker.prototype.showPrevMonth = function(offset) {
+   // show the previous month
+   if (this.month == 0) {
+      this.month = 11;
+      this.year--;
+   }
+   else {
+      this.month--;
+   }
+   
+   if (this.month != this.curMonth || this.year != this.curYear) {
+      this.currentDate = false;
+   }
+   else {
+      this.currentDate = true;
+   }
+
+   // populate the calendar grid
+   this.popGrid();
+
+   this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);
+
+   // if offset was specified, set focus on the last day - specified offset
+   if (offset != null) {
+      var numDays = this.calcNumDays(this.year, this.month);
+      var day = 'day' + (numDays - offset);
+      
+      this.$grid.attr('aria-activedescendant', day);
+      $('#' + day).addClass('focus').attr('aria-selected', 'true');
+   }
+
+} // end showPrevMonth()
+
+//
+// showNextMonth() is a member function to show the next month
+//
+// @param (offset int) offset may be used to specify an offset for setting
+//                      focus on a day the specified number of days from
+//                      the beginning of the month.
+// @return N/A
+//
+datepicker.prototype.showNextMonth = function(offset) {
+
+   // show the next month
+   if (this.month == 11) {
+      this.month = 0;
+      this.year++;
+   }
+   else {
+      this.month++;
+   }
+
+   if (this.month != this.curMonth || this.year != this.curYear) {
+      this.currentDate = false;
+   }
+   else {
+      this.currentDate = true;
+   }
+   
+   // populate the calendar grid
+   this.popGrid();
+
+   this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);
+
+      // if offset was specified, set focus on the first day + specified offset
+      if (offset != null) {
+         var day = 'day' + offset;
+         
+         this.$grid.attr('aria-activedescendant', day);
+         $('#' + day).addClass('focus').attr('aria-selected', 'true');
+      }
+
+} // end showNextMonth()
+
+//
+// showPrevYear() is a member function to show the previous year
+//
+// @return N/A
+//
+datepicker.prototype.showPrevYear = function() {
+
+      // decrement the year
+      this.year--;
+      
+      if (this.month != this.curMonth || this.year != this.curYear) {
+         this.currentDate = false;
+      }
+      else {
+         this.currentDate = true;
+      }
+
+      // populate the calendar grid
+      this.popGrid();
+
+      this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);
+
+} // end showPrevYear()
+
+//
+// showNextYear() is a member function to show the next year
+//
+// @return N/A
+//
+datepicker.prototype.showNextYear = function() {
+
+   // increment the year
+   this.year++;
+
+   if (this.month != this.curMonth || this.year != this.curYear) {
+      this.currentDate = false;
+   }
+   else {
+      this.currentDate = true;
+   }
+   
+   // populate the calendar grid
+   this.popGrid();
+
+   this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);
+
+} // end showNextYear()
+
+//
+// bindHandlers() is a member function to bind event handlers for the widget
+//
+// @return N/A
+//
+datepicker.prototype.bindHandlers = function() {
+
+   var thisObj = this;
+
+   ////////////////////// bind button handlers //////////////////////////////////
+   this.$prev.click(function(e) {
+      return thisObj.handlePrevClick(e);
+   });
+
+   this.$next.click(function(e) {
+      return thisObj.handleNextClick(e);
+   });
+
+   this.$prev.keydown(function(e) {
+      return thisObj.handlePrevKeyDown(e);
+   });
+
+   this.$next.keydown(function(e) {
+      return thisObj.handleNextKeyDown(e);
+   });
+
+   ///////////// bind grid handlers //////////////
+  
+   this.$grid.keydown(function(e) {
+      return thisObj.handleGridKeyDown(e);
+   });
+
+   this.$grid.keypress(function(e) {
+      return thisObj.handleGridKeyPress(e);
+   });
+
+   this.$grid.focus(function(e) {
+      return thisObj.handleGridFocus(e);
+   });
+
+   this.$grid.blur(function(e) {
+      return thisObj.handleGridBlur(e);
+   });
+
+   this.$grid.delegate('td', 'click', function(e) {
+      return thisObj.handleGridClick(this, e);
+   });
+
+} // end bindHandlers();
+
+//
+// handlePrevClick() is a member function to process click events for the prev month button
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+datepicker.prototype.handlePrevClick = function(e) {
+
+   var active = this.$grid.attr('aria-activedescendant');
+
+   if (e.ctrlKey) {
+      this.showPrevYear();
+   }
+   else {
+      this.showPrevMonth();
+   }
+
+   if (this.currentDate == false) {
+      this.$grid.attr('aria-activedescendant', 'day1');
+   }
+   else {
+      this.$grid.attr('aria-activedescendant', active);
+   }
+
+   e.stopPropagation();
+   return false;
+
+} // end handlePrevClick()
+
+//
+// handleNextClick() is a member function to process click events for the next month button
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+datepicker.prototype.handleNextClick = function(e) {
+
+   var active = this.$grid.attr('aria-activedescendant');
+
+   if (e.ctrlKey) {
+      this.showNextYear();
+   }
+   else {
+      this.showNextMonth();
+   }
+
+   if (this.currentDate == false) {
+      this.$grid.attr('aria-activedescendant', 'day1');
+   }
+   else {
+      this.$grid.attr('aria-activedescendant', active);
+   }
+
+   e.stopPropagation();
+   return false;
+
+} // end handleNextClick()
+
+//
+// handlePrevKeyDown() is a member function to process keydown events for the prev month button
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+datepicker.prototype.handlePrevKeyDown = function(e) {
+
+   if (e.altKey) {
+      return true;
+   }
+
+   switch (e.keyCode) {
+		case 461: // back key input
+		{
+			console.log("Back key-return to main menu: keycode="+e.keyCode);
+			e.stopPropagation();
+			//window.history.back();
+			window.location.replace("http://10.186.121.34/aria-test/aria/menu.html");
+			return false;
+		}
+      case this.keys.tab: {
+         if (this.bModal == false || !e.shiftKey || e.ctrlKey) {
+            return true;
+         }
+
+         this.$grid.focus();
+         e.stopPropagation();
+         return false;
+      }
+      case this.keys.enter:
+      case this.keys.space: {
+         if (e.shiftKey) {
+            return true;
+         }
+
+         if (e.ctrlKey) {
+            this.showPrevYear();
+         }
+         else {
+            this.showPrevMonth();
+         }
+
+         e.stopPropagation();
+         return false;
+      }
+   }
+
+   return true;
+
+} // end handlePrevKeyDown()
+
+//
+// handleNextKeyDown() is a member function to process keydown events for the next month button
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+datepicker.prototype.handleNextKeyDown = function(e) {
+
+   if (e.altKey) {
+      return true;
+   }
+
+   switch (e.keyCode) {
+      case this.keys.enter:
+      case this.keys.space: {
+
+         if (e.ctrlKey) {
+            this.showNextYear();
+         }
+         else {
+            this.showNextMonth();
+         }
+
+         e.stopPropagation();
+         return false;
+      }
+   }
+
+   return true;
+
+} // end handleNextKeyDown()
+
+//
+// handleGridKeyDown() is a member function to process keydown events for the datepicker grid
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+datepicker.prototype.handleGridKeyDown = function(e) {
+
+      var $rows = this.$grid.find('tbody tr');
+      var $curDay = $('#' + this.$grid.attr('aria-activedescendant'));
+      var $days = this.$grid.find('td').not('.empty');
+      var $curRow = $curDay.parent();
+
+      if (e.altKey) {
+         return true;
+      }
+
+      switch(e.keyCode) {
+		case 461: // back key input
+		{
+			console.log("handleTabKeyDown: keycode="+e.keyCode);
+			e.stopPropagation();
+			//window.history.back();
+			window.location.replace("http://10.186.121.34/aria-test/aria/menu.html");
+			return false;
+		}
+
+	  case this.keys.tab: {
+
+            if (this.bModal == true) {
+               if (e.shiftKey) {
+                  this.$next.focus();
+               }
+               else {
+                  this.$prev.focus();
+               }
+               e.stopPropagation()
+               return false;
+            }
+            break;
+         } 
+         case this.keys.enter:
+         case this.keys.space: {
+
+            if (e.ctrlKey) {
+               return true;
+            }
+
+            // update the target box
+            this.$target.val((this.month < 9 ? '0' : '') + (this.month+1) + '/' + $curDay.html() + '/' + this.year);
+
+            // fall through
+         }
+         case this.keys.esc: {
+            // dismiss the dialog box
+            this.hideDlg();
+           
+            e.stopPropagation();
+            return false;
+         }
+         case this.keys.left: {
+
+            if (e.ctrlKey || e.shiftKey) {
+               return true;
+            }
+
+            var dayIndex = $days.index($curDay) - 1;
+            var $prevDay = null;
+
+            if (dayIndex >= 0) {
+               $prevDay = $days.eq(dayIndex);
+
+               $curDay.removeClass('focus').attr('aria-selected', 'false');
+               $prevDay.addClass('focus').attr('aria-selected', 'true');
+
+               this.$grid.attr('aria-activedescendant', $prevDay.attr('id'));
+            }
+            else {
+               this.showPrevMonth(0);
+            }
+
+            e.stopPropagation();
+            return false;
+         }
+         case this.keys.right: {
+
+            if (e.ctrlKey || e.shiftKey) {
+               return true;
+            }
+
+            var dayIndex = $days.index($curDay) + 1;
+            var $nextDay = null;
+
+            if (dayIndex < $days.length) {
+               $nextDay = $days.eq(dayIndex);
+               $curDay.removeClass('focus').attr('aria-selected', 'false');
+               $nextDay.addClass('focus').attr('aria-selected', 'true');
+
+               this.$grid.attr('aria-activedescendant', $nextDay.attr('id'));
+            }
+            else {
+               // move to the next month
+               this.showNextMonth(1);
+            }
+
+            e.stopPropagation();
+            return false;
+         }
+         case this.keys.up: {
+
+            if (e.ctrlKey || e.shiftKey) {
+               return true;
+            }
+
+            var dayIndex = $days.index($curDay) - 7;
+            var $prevDay = null;
+
+            if (dayIndex >= 0) {
+               $prevDay = $days.eq(dayIndex);
+
+               $curDay.removeClass('focus').attr('aria-selected', 'false');
+               $prevDay.addClass('focus').attr('aria-selected', 'true');
+
+               this.$grid.attr('aria-activedescendant', $prevDay.attr('id'));
+            }
+            else {
+               // move to appropriate day in previous month
+               dayIndex = 6 - $days.index($curDay);
+
+               this.showPrevMonth(dayIndex);
+            }
+
+            e.stopPropagation();
+            return false;
+         }
+         case this.keys.down: {
+
+            if (e.ctrlKey || e.shiftKey) {
+               return true;
+            }
+
+            var dayIndex = $days.index($curDay) + 7;
+            var $prevDay = null;
+
+            if (dayIndex < $days.length) {
+               $prevDay = $days.eq(dayIndex);
+
+               $curDay.removeClass('focus').attr('aria-selected', 'false');
+               $prevDay.addClass('focus').attr('aria-selected', 'true');
+
+               this.$grid.attr('aria-activedescendant', $prevDay.attr('id'));
+            }
+            else {
+               // move to appropriate day in next month
+               dayIndex = 8 - ($days.length - $days.index($curDay));
+
+               this.showNextMonth(dayIndex);
+            }
+
+            e.stopPropagation();
+            return false;
+         }
+         case this.keys.pageup: {
+            var active = this.$grid.attr('aria-activedescendant');
+
+
+            if (e.shiftKey) {
+               return true;
+            }
+
+
+            if (e.ctrlKey) {
+               this.showPrevYear();
+            }
+            else {
+               this.showPrevMonth();
+            }
+
+            if ($('#' + active).attr('id') == undefined) {
+               var lastDay = 'day' + this.calcNumDays(this.year, this.month);
+               $('#' + lastDay).addClass('focus').attr('aria-selected', 'true');
+            }
+            else {
+               $('#' + active).addClass('focus').attr('aria-selected', 'true');
+            }
+
+            e.stopPropagation();
+            return false;
+         }
+         case this.keys.pagedown: {
+            var active = this.$grid.attr('aria-activedescendant');
+
+
+            if (e.shiftKey) {
+               return true;
+            }
+
+            if (e.ctrlKey) {
+               this.showNextYear();
+            }
+            else {
+               this.showNextMonth();
+            }
+
+            if ($('#' + active).attr('id') == undefined) {
+               var lastDay = 'day' + this.calcNumDays(this.year, this.month);
+               $('#' + lastDay).addClass('focus').attr('aria-selected', 'true');
+            }
+            else {
+               $('#' + active).addClass('focus').attr('aria-selected', 'true');
+            }
+
+            e.stopPropagation();
+            return false;
+         }
+         case this.keys.home: {
+
+            if (e.ctrlKey || e.shiftKey) {
+               return true;
+            }
+
+            $curDay.removeClass('focus').attr('aria-selected', 'false');
+
+            $('#day1').addClass('focus').attr('aria-selected', 'true');
+
+            this.$grid.attr('aria-activedescendant', 'day1');
+
+            e.stopPropagation();
+            return false;
+         }
+         case this.keys.end: {
+
+            if (e.ctrlKey || e.shiftKey) {
+               return true;
+            }
+
+            var lastDay = 'day' + this.calcNumDays(this.year, this.month);
+
+            $curDay.removeClass('focus').attr('aria-selected', 'false');
+
+            $('#' + lastDay).addClass('focus').attr('aria-selected', 'true');
+
+            this.$grid.attr('aria-activedescendant', lastDay);
+
+            e.stopPropagation();
+            return false;
+         }
+      }
+
+      return true;
+
+} // end handleGridKeyDown()
+
+//
+// handleGridKeyPress() is a member function to consume keypress events for browsers that
+// use keypress to scroll the screen and manipulate tabs
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+datepicker.prototype.handleGridKeyPress = function(e) {
+
+      if (e.altKey) {
+         return true;
+      }
+
+      switch(e.keyCode) {
+		case 461: // back key input
+		{
+			console.log("handleTabKeyDown: keycode="+e.keyCode);
+			e.stopPropagation();
+			//window.history.back();
+			window.location.replace("http://10.186.121.34/aria-test/aria/menu.html");
+			return false;
+		}
+         case this.keys.tab:
+         case this.keys.enter:
+         case this.keys.space:
+         case this.keys.esc:
+         case this.keys.left:
+         case this.keys.right:
+         case this.keys.up:
+         case this.keys.down:
+         case this.keys.pageup:
+         case this.keys.pagedown:
+         case this.keys.home:
+         case this.keys.end: {
+            e.stopPropagation();
+            return false;
+         }
+      }
+
+      return true;
+
+} // end handleGridKeyPress()
+
+//
+// handleGridClick() is a member function to process mouse click events for the datepicker grid
+//
+// @input (id obj) e is the id of the object triggering the event
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+datepicker.prototype.handleGridClick = function(id, e) {
+   var $cell = $(id);
+
+   if ($cell.is('.empty')) {
+      return true;
+   }
+
+   this.$grid.find('.focus').removeClass('focus').attr('aria-selected', 'false');
+   $cell.addClass('focus').attr('aria-selected', 'true');
+   this.$grid.attr('aria-activedescendant', $cell.attr('id'));
+
+   var $curDay = $('#' + this.$grid.attr('aria-activedescendant'));
+
+   // update the target box
+   this.$target.val((this.month < 9 ? '0' : '') + (this.month+1) + '/' + $curDay.html() + '/' + this.year);
+
+   // dismiss the dialog box
+   this.hideDlg();
+
+   e.stopPropagation(); 
+   return false;
+
+} // end handleGridClick()
+
+//
+// handleGridFocus() is a member function to process focus events for the datepicker grid
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) true
+//
+datepicker.prototype.handleGridFocus = function(e) {
+   var active = this.$grid.attr('aria-activedescendant');
+
+   if ($('#' + active).attr('id') == undefined) {
+      var lastDay = 'day' + this.calcNumDays(this.year, this.month);
+      $('#' + lastDay).addClass('focus').attr('aria-selected', 'true');
+   }
+   else {
+      $('#' + active).addClass('focus').attr('aria-selected', 'true');
+   }
+
+   return true;
+
+} // end handleGridFocus()
+
+//
+// handleGridBlur() is a member function to process blur events for the datepicker grid
+//
+// @input (e obj) e is the event object associated with the event
+//
+// @return (boolean) true
+//
+datepicker.prototype.handleGridBlur = function(e) {
+   $('#' + this.$grid.attr('aria-activedescendant')).removeClass('focus').attr('aria-selected', 'false');
+
+   return true;
+
+} // end handleGridBlur()
+
+//
+// showDlg() is a member function to show the datepicker and give it focus. This function is only called if
+// the datepicker is used in modal dialog mode.
+//
+// @return N/A
+//
+datepicker.prototype.showDlg = function() {
+
+   var thisObj = this;
+
+	// Bind an event listener to the document to capture all mouse events to make dialog modal
+	$(document).bind('click mousedown mouseup mousemove mouseover', function(e) {
+
+		//ensure focus remains on the dialog
+		thisObj.$grid.focus();
+
+		// Consume all mouse events and do nothing
+		e.stopPropagation;
+		return false;
+	});
+
+   // show the dialog
+   this.$id.attr('aria-hidden', 'false');
+
+   this.$grid.focus();
+
+} // end showDlg()
+
+//
+// hideDlg() is a member function to hide the datepicker and remove focus. This function is only called if
+// the datepicker is used in modal dialog mode.
+//
+// @return N/A
+//
+datepicker.prototype.hideDlg = function() {
+
+   var thisObj = this;
+
+	// unbind the modal event sinks
+	$(document).unbind('click mousedown mouseup mousemove mouseover');
+
+   // hide the dialog
+   this.$id.attr('aria-hidden', 'true');
+
+   // set focus on the focus target
+   this.$target.focus();
+
+} // end showDlg()
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../14/index.html">Previous</a></li>
+        
+        <li>Example 15</li>
+        
+        <li class="next"><a href="../16/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 15 - Date Picker</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/datepicker1/index.html">Permanent link for Date Picker</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div id="application" role="application">
+   <label id="date_label" for="date">Date</label>:
+   <input id="date" type="text"/>
+   <button id="bn_date">Select Date...</button> 
+   <div id="dp1" class="datepicker" aria-hidden="true">
+      <div id="month-wrap">
+         <div id="bn_prev" role="button" aria-labelledby="bn_prev-label" tabindex="0"><img class="bn_img" src="http://www.oaa-accessibility.org/media/examples/images/prev.png" alt="<<"/></div>
+         <div id="month" role="heading" aria-live="assertive" aria-atomic="true">February 2011</div>
+         <div id="bn_next" role="button" aria-labelledby="bn_next-label" tabindex="0"><img class="bn_img" src="http://www.oaa-accessibility.org/media/examples/images/next.png" alt=">>"/></div>
+      </div>
+      <table id="cal" role="grid" aria-activedescendant="errMsg" aria-labelledby="month" tabindex="0">
+         <thead>
+            <tr id="weekdays">
+               <th id="Sunday" role="columnheader"><abbr title="Sunday">Su</abbr></th>
+               <th id="Monday" role="columnheader"><abbr title="Monday">Mo</abbr></th>
+               <th id="Tuesday" role="columnheader"><abbr title="Tuesday">Tu</abbr></th>
+               <th id="Wednesday" role="columnheader"><abbr title="Wednesday">We</abbr></th>
+               <th id="Thursday" role="columnheader"><abbr title="Thursday">Th</abbr></th>
+               <th id="Friday" role="columnheader"><abbr title="Friday">Fr</abbr></th>
+               <th id="Saturday" role="columnheader"><abbr title="Saturday">Sa</abbr></th>
+            </tr>
+         </thead>
+         <tbody>
+            <tr><td id="errMsg" colspan="7">Javascript must be enabled</td></tr>
+         </tbody>
+      </table>
+      <div id="bn_prev-label" class="offscreen">Go to previous month</div>
+      <div id="bn_next-label" class="offscreen">Go to next month</div>
+   </div>
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a date picker widget.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <ul>
+    <li>Left: Move focus to the previous day. Will move to the last day of the previous month, if the current day is the first day of a month.</li>
+    <li>Right: Move focus to the next day. Will move to the first day of the following month, if the current day is the last day of a month.</li>
+    <li>Up: Move focus to the same day of the previous week. Will wrap to the appropriate day in the previous month.</li>
+    <li>Down: Move focus to the same day of the following week. Will wrap to the appropriate day in the following month.</li>
+    <li>PgUp: Move focus to the same date of the previous month. If that date does not exist, focus is placed on the last day of the month.</li>
+    <li>PgUp: Move focus to the same date of the following month. If that date does not exist, focus is placed on the last day of the month.</li>
+    <li>Ctrl+PgUp: Move focus to the same date of the previous year. If that date does not exist (e.g leap year), focus is placed on the last day of the month.</li>
+    <li>Ctrl+PgDn: Move focus to the same date of the following year. If that date does not exist (e.g leap year), focus is placed on the last day of the month.</li>
+    <li>Home: Move to the first day of the month.</li>
+    <li>End: Move to the last day of the month</li>
+    <li>Tab: Navigate between calander grid and previous/next selection buttons</li>
+    <li>Enter/Space: Select date</li>
+</ul>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-activedescendant]</li>      
+        
+        <li>ARIA 1.0: [aria-atomic]</li>      
+        
+        <li>ARIA 1.0: [aria-hidden]</li>      
+        
+        <li>ARIA 1.0: [aria-live]</li>      
+        
+        <li>ARIA 1.0: [aria-selected]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;application&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;button&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;grid&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;gridcell&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;heading&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Chrome 10.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Chrome 10.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div id="application" role="application"&gt;<br/>
+&#160;&#160; &lt;label id="date_label" for="date"&gt;Date&lt;/label&gt;:<br/>
+&#160;&#160; &lt;input id="date" type="text"/&gt;<br/>
+&#160;&#160; &lt;button id="bn_date"&gt;Select Date...&lt;/button&gt; <br/>
+&#160;&#160; &lt;div id="dp1" class="datepicker" aria-hidden="true"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;div id="month-wrap"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;div id="bn_prev" role="button" aria-labelledby="bn_prev-label" tabindex="0"&gt;&lt;img class="bn_img" src="http://www.oaa-accessibility.org/media/examples/images/prev.png" alt="&lt;&lt;"/&gt;&lt;/div&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;div id="month" role="heading" aria-live="assertive" aria-atomic="true"&gt;February 2011&lt;/div&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;div id="bn_next" role="button" aria-labelledby="bn_next-label" tabindex="0"&gt;&lt;img class="bn_img" src="http://www.oaa-accessibility.org/media/examples/images/next.png" alt="&gt;&gt;"/&gt;&lt;/div&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/div&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;table id="cal" role="grid" aria-activedescendant="errMsg" aria-labelledby="month" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;thead&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;tr id="weekdays"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;th id="Sunday"&gt;&lt;abbr title="Sunday"&gt;Su&lt;/abbr&gt;&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;th id="Monday"&gt;&lt;abbr title="Monday"&gt;Mo&lt;/abbr&gt;&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;th id="Tuesday"&gt;&lt;abbr title="Tuesday"&gt;Tu&lt;/abbr&gt;&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;th id="Wednesday"&gt;&lt;abbr title="Wednesday"&gt;We&lt;/abbr&gt;&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;th id="Thursday"&gt;&lt;abbr title="Thursday"&gt;Th&lt;/abbr&gt;&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;th id="Friday"&gt;&lt;abbr title="Friday"&gt;Fr&lt;/abbr&gt;&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;th id="Saturday"&gt;&lt;abbr title="Saturday"&gt;Sa&lt;/abbr&gt;&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/tr&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/thead&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;tbody&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;tr&gt;&lt;td id="errMsg" colspan="7"&gt;Javascript must be enabled&lt;/td&gt;&lt;/tr&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/tbody&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/table&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;div id="bn_prev-label" class="offscreen"&gt;Go to previous month&lt;/div&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;div id="bn_next-label" class="offscreen"&gt;Go to next month&lt;/div&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+.datepicker {<br/>
+&#160;&#160; margin: 10px;<br/>
+&#160;&#160; padding: 2px;<br/>
+&#160;&#160; position: absolute;<br/>
+&#160;&#160; width: 261px;<br/>
+&#160;&#160; background-color: #fff;<br/>
+&#160;&#160; border: 1px solid #ccc;<br/>
+&#160;&#160; -webkit-border-radius: 4px;<br/>
+&#160;&#160; -moz-border-radius: 4px;<br/>
+&#160;&#160; border-radius: 4px;<br/>
+}<br/>
+div#month-wrap {<br/>
+&#160;&#160; height: 30px;<br/>
+&#160;&#160; background-color: #ddd;<br/>
+&#160;&#160; border: 1px solid black;<br/>
+&#160;&#160; -webkit-border-radius: 4px;<br/>
+&#160;&#160; -moz-border-radius: 4px;<br/>
+&#160;&#160; border-radius: 4px;<br/>
+}<br/>
+div#bn_prev {<br/>
+&#160;&#160; margin: 3px;<br/>
+&#160;&#160; float: left;<br/>
+&#160;&#160; width: 24px;<br/>
+&#160;&#160; height: 24px;<br/>
+}<br/>
+div#bn_next {<br/>
+&#160;&#160; margin: 3px;<br/>
+&#160;&#160; float: right;<br/>
+&#160;&#160; width: 24px;<br/>
+&#160;&#160; height: 24px;<br/>
+}<br/>
+<br/>
+div#bn_prev:hover,<br/>
+div#bn_prev:focus,<br/>
+div#bn_next:hover,<br/>
+div#bn_next:focus {<br/>
+&#160;&#160; margin: 2px;<br/>
+&#160;&#160; background-color: #fc3;<br/>
+&#160;&#160; border: 1px solid #800;<br/>
+&#160;&#160; -webkit-border-radius: 4px;<br/>
+&#160;&#160; -moz-border-radius: 4px;<br/>
+&#160;&#160; border-radius: 4px;<br/>
+}<br/>
+img.bn_img {<br/>
+&#160;&#160; margin: 0;<br/>
+&#160;&#160; padding: 2px;<br/>
+}<br/>
+div#month {<br/>
+&#160;&#160; float: left;<br/>
+&#160;&#160; padding-top: 6px;<br/>
+&#160;&#160; width: 199px;<br/>
+&#160;&#160; height: 24px;<br/>
+&#160;&#160; text-align: center;<br/>
+&#160;&#160; font-weight: bold;<br/>
+&#160;&#160; font-size: 1.2em;<br/>
+}<br/>
+table#cal {<br/>
+&#160;&#160; width: 261px;<br/>
+&#160;&#160; font-size: 1.2em;<br/>
+&#160;&#160; text-align: center;<br/>
+}<br/>
+table#cal th,<br/>
+table#cal td {<br/>
+&#160;&#160; width: 35px;<br/>
+&#160;&#160; height: 30px;<br/>
+&#160;&#160; padding: 0;<br/>
+}<br/>
+table#cal td {<br/>
+&#160;&#160; background-color: #ddd;<br/>
+&#160;&#160; border: 1px solid #999;<br/>
+}<br/>
+<br/>
+table#cal td.today {<br/>
+&#160;&#160; background-color: #FFF0C4;<br/>
+&#160;&#160; border: 1px solid #999;<br/>
+}<br/>
+<br/>
+table#cal td.empty {<br/>
+&#160;&#160; background-color: #f9f9f9;<br/>
+&#160;&#160; border: 1px solid #eee;<br/>
+}<br/>
+<br/>
+table#cal td:hover,<br/>
+table#cal td.focus {<br/>
+&#160;&#160; border-color: #800;<br/>
+&#160;&#160; background-color: #fc3;<br/>
+}<br/>
+<br/>
+table#cal td.empty:hover {<br/>
+&#160;&#160; background-color: #f9f9f9;<br/>
+&#160;&#160; border: 1px solid #eee;<br/>
+}<br/>
+<br/>
+.offscreen {<br/>
+&#160;&#160; position: absolute;<br/>
+&#160;&#160; left: -200em;<br/>
+&#160;&#160; top: -100em;<br/>
+}<br/>
+[aria-hidden="true"] {<br/>
+&#160;&#160; display: none;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+$(document).ready(function() {<br/>
+&#160;&#160; var dp1 = new datepicker('dp1', 'date', true);<br/>
+<br/>
+&#160;&#160; $('#bn_date').click(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;dp1.showDlg();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160; });<br/>
+});<br/>
+<br/>
+function datepicker(id, target, modal) {<br/>
+<br/>
+<br/>
+&#160;&#160; this.$id = $('#' + id); // element to attach widget to<br/>
+&#160;&#160; this.$monthObj = this.$id.find('#month');<br/>
+&#160;&#160; this.$prev = this.$id.find('#bn_prev');<br/>
+&#160;&#160; this.$next = this.$id.find('#bn_next');<br/>
+&#160;&#160; this.$grid = this.$id.find('#cal');<br/>
+&#160;&#160; this.$target = $('#' + target); // div or text box that will receive the selected date string and focus (if modal)<br/>
+&#160;&#160; this.bModal = modal; // true if datepicker should appear in a modal dialog box.<br/>
+<br/>
+&#160;&#160; this.monthNames = ['January', 'February', 'March', 'April','May','June',<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; 'July', 'August', 'September', 'October', 'November', 'December'];<br/>
+<br/>
+&#160;&#160; this.dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];<br/>
+<br/>
+&#160;&#160; this.dateObj = new Date();<br/>
+<br/>
+&#160;&#160; this.curYear = this.dateObj.getFullYear(); <br/>
+&#160;&#160; this.year = this.curYear;<br/>
+<br/>
+&#160;&#160; this.curMonth = this.dateObj.getMonth(); <br/>
+&#160;&#160; this.month = this.curMonth;<br/>
+&#160;&#160; this.currentDate = true;<br/>
+<br/>
+&#160;&#160; this.date = this.dateObj.getDate(); <br/>
+<br/>
+&#160;&#160; this.keys = {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;tab:&#160;&#160;&#160;&#160;&#160;&#160; 9,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;enter:&#160;&#160;&#160;&#160;13,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;esc:&#160;&#160;&#160;&#160;&#160;&#160;27,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;space:&#160;&#160;&#160;&#160;32,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;pageup:&#160;&#160; 33,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;pagedown: 34,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;end:&#160;&#160;&#160;&#160;&#160;&#160;35,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;home:&#160;&#160;&#160;&#160; 36,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;left:&#160;&#160;&#160;&#160; 37,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;up:&#160;&#160;&#160;&#160;&#160;&#160; 38,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;right:&#160;&#160;&#160;&#160;39,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;down:&#160;&#160;&#160;&#160; 40<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; };<br/>
+&#160;&#160; <br/>
+&#160;&#160; // display the current month<br/>
+&#160;&#160; this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);<br/>
+<br/>
+&#160;&#160; // populate the calendar grid<br/>
+&#160;&#160; this.popGrid();<br/>
+<br/>
+&#160;&#160; // update the table's activedescdendant to point to the current day<br/>
+&#160;&#160; this.$grid.attr('aria-activedescendant', this.$grid.find('.today').attr('id'));<br/>
+<br/>
+&#160;&#160; this.bindHandlers();<br/>
+<br/>
+&#160;&#160; // hide dialog if in modal mode<br/>
+&#160;&#160; if (this.bModal == true) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-hidden', 'true');<br/>
+&#160;&#160; }<br/>
+}<br/>
+<br/>
+//<br/>
+// popGrid() is a member function to populate the datepicker grid with calendar days<br/>
+// representing the current month<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+datepicker.prototype.popGrid = function() {<br/>
+&#160;&#160; <br/>
+&#160;&#160; var numDays = this.calcNumDays(this.year, this.month);<br/>
+&#160;&#160; var startWeekday = this.calcStartWeekday(this.year, this.month);<br/>
+&#160;&#160; var weekday = 0;<br/>
+&#160;&#160; var curDay = 1;<br/>
+&#160;&#160; var rowCount = 1;<br/>
+&#160;&#160; var $tbody = this.$grid.find('tbody');<br/>
+<br/>
+&#160;&#160; var gridCells = '\t&lt;tr id="row1"&gt;\n';<br/>
+<br/>
+&#160;&#160; // clear the grid<br/>
+&#160;&#160; $tbody.empty();<br/>
+&#160;&#160; $('#msg').empty();<br/>
+<br/>
+&#160;&#160; // Insert the leading empty cells<br/>
+&#160;&#160; for (weekday = 0; weekday &lt; startWeekday; weekday++) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;gridCells += '\t\t&lt;td class="empty"&gt;&amp;nbsp;&lt;/td&gt;\n';<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; // insert the days of the month.<br/>
+&#160;&#160; for (curDay = 1; curDay &lt;= numDays; curDay++) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (curDay == this.date &amp;&amp; this.currentDate == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; gridCells += '\t\t&lt;td id="day' + curDay + '" class="today" headers="row' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rowCount + ' ' + this.dayNames[weekday] + '" role="gridcell" aria-selected="false"&gt;' + curDay + '&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; gridCells += '\t\t&lt;td id="day' + curDay + '" headers="row' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;rowCount + ' ' + this.dayNames[weekday] + '" role="gridcell" aria-selected="false"&gt;' + curDay + '&lt;/td&gt;';<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (weekday == 6 &amp;&amp; curDay &lt; numDays) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // This was the last day of the week, close it out<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // and begin a new one<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; gridCells += '\t&lt;/tr&gt;\n\t&lt;tr id="row' + rowCount + '"&gt;\n';<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; rowCount++;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; weekday = 0;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; weekday++;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; // Insert any trailing empty cells<br/>
+&#160;&#160; for (weekday; weekday &lt; 7; weekday++) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;gridCells += '\t\t&lt;td class="empty"&gt;&amp;nbsp;&lt;/td&gt;\n';<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; gridCells += '\t&lt;/tr&gt;';<br/>
+<br/>
+&#160;&#160; $tbody.append(gridCells);<br/>
+}<br/>
+<br/>
+//<br/>
+// calcNumDays() is a member function to calculate the number of days in a given month<br/>
+//<br/>
+// @return (integer) number of days<br/>
+//<br/>
+datepicker.prototype.calcNumDays = function(year, month) {<br/>
+&#160;&#160; <br/>
+&#160;&#160; return 32 - new Date(year, month, 32).getDate();<br/>
+}<br/>
+<br/>
+//<br/>
+// calcstartWeekday() is a member function to calculate the day of the week the first day of a<br/>
+// month lands on<br/>
+//<br/>
+// @return (integer) number representing the day of the week (0=Sunday....6=Saturday)<br/>
+//<br/>
+datepicker.prototype.calcStartWeekday = function(year, month) {<br/>
+&#160;&#160; <br/>
+&#160;&#160; return&#160;&#160;new Date(year, month, 1).getDay();<br/>
+<br/>
+} // end calcStartWeekday()<br/>
+<br/>
+//<br/>
+// showPrevMonth() is a member function to show the previous month<br/>
+//<br/>
+// @param (offset int) offset may be used to specify an offset for setting<br/>
+//&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;focus on a day the specified number of days from<br/>
+//&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;the end of the month.<br/>
+// @return N/A<br/>
+//<br/>
+datepicker.prototype.showPrevMonth = function(offset) {<br/>
+&#160;&#160; // show the previous month<br/>
+&#160;&#160; if (this.month == 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.month = 11;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.year--;<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.month--;<br/>
+&#160;&#160; }<br/>
+&#160;&#160; <br/>
+&#160;&#160; if (this.month != this.curMonth || this.year != this.curYear) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.currentDate = false;<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.currentDate = true;<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; // populate the calendar grid<br/>
+&#160;&#160; this.popGrid();<br/>
+<br/>
+&#160;&#160; this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);<br/>
+<br/>
+&#160;&#160; // if offset was specified, set focus on the last day - specified offset<br/>
+&#160;&#160; if (offset != null) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var numDays = this.calcNumDays(this.year, this.month);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var day = 'day' + (numDays - offset);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$grid.attr('aria-activedescendant', day);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('#' + day).addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160; }<br/>
+<br/>
+} // end showPrevMonth()<br/>
+<br/>
+//<br/>
+// showNextMonth() is a member function to show the next month<br/>
+//<br/>
+// @param (offset int) offset may be used to specify an offset for setting<br/>
+//&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;focus on a day the specified number of days from<br/>
+//&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;the beginning of the month.<br/>
+// @return N/A<br/>
+//<br/>
+datepicker.prototype.showNextMonth = function(offset) {<br/>
+<br/>
+&#160;&#160; // show the next month<br/>
+&#160;&#160; if (this.month == 11) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.month = 0;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.year++;<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.month++;<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; if (this.month != this.curMonth || this.year != this.curYear) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.currentDate = false;<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.currentDate = true;<br/>
+&#160;&#160; }<br/>
+&#160;&#160; <br/>
+&#160;&#160; // populate the calendar grid<br/>
+&#160;&#160; this.popGrid();<br/>
+<br/>
+&#160;&#160; this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// if offset was specified, set focus on the first day + specified offset<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (offset != null) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var day = 'day' + offset;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$grid.attr('aria-activedescendant', day);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $('#' + day).addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+} // end showNextMonth()<br/>
+<br/>
+//<br/>
+// showPrevYear() is a member function to show the previous year<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+datepicker.prototype.showPrevYear = function() {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// decrement the year<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.year--;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (this.month != this.curMonth || this.year != this.curYear) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.currentDate = false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.currentDate = true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// populate the calendar grid<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.popGrid();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);<br/>
+<br/>
+} // end showPrevYear()<br/>
+<br/>
+//<br/>
+// showNextYear() is a member function to show the next year<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+datepicker.prototype.showNextYear = function() {<br/>
+<br/>
+&#160;&#160; // increment the year<br/>
+&#160;&#160; this.year++;<br/>
+<br/>
+&#160;&#160; if (this.month != this.curMonth || this.year != this.curYear) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.currentDate = false;<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.currentDate = true;<br/>
+&#160;&#160; }<br/>
+&#160;&#160; <br/>
+&#160;&#160; // populate the calendar grid<br/>
+&#160;&#160; this.popGrid();<br/>
+<br/>
+&#160;&#160; this.$monthObj.html(this.monthNames[this.month] + ' ' + this.year);<br/>
+<br/>
+} // end showNextYear()<br/>
+<br/>
+//<br/>
+// bindHandlers() is a member function to bind event handlers for the widget<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+datepicker.prototype.bindHandlers = function() {<br/>
+<br/>
+&#160;&#160; var thisObj = this;<br/>
+<br/>
+&#160;&#160; ////////////////////// bind button handlers //////////////////////////////////<br/>
+&#160;&#160; this.$prev.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handlePrevClick(e);<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; this.$next.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleNextClick(e);<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; this.$prev.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handlePrevKeyDown(e);<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; this.$next.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleNextKeyDown(e);<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; ///////////// bind grid handlers //////////////<br/>
+&#160;&#160;<br/>
+&#160;&#160; this.$grid.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleGridKeyDown(e);<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; this.$grid.keypress(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleGridKeyPress(e);<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; this.$grid.focus(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleGridFocus(e);<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; this.$grid.blur(function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleGridBlur(e);<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; this.$grid.delegate('td', 'click', function(e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleGridClick(this, e);<br/>
+&#160;&#160; });<br/>
+<br/>
+} // end bindHandlers();<br/>
+<br/>
+//<br/>
+// handlePrevClick() is a member function to process click events for the prev month button<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) false if consuming event, true if propagating<br/>
+//<br/>
+datepicker.prototype.handlePrevClick = function(e) {<br/>
+<br/>
+&#160;&#160; var active = this.$grid.attr('aria-activedescendant');<br/>
+<br/>
+&#160;&#160; if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.showPrevYear();<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.showPrevMonth();<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; if (this.currentDate == false) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$grid.attr('aria-activedescendant', 'day1');<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$grid.attr('aria-activedescendant', active);<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; e.stopPropagation();<br/>
+&#160;&#160; return false;<br/>
+<br/>
+} // end handlePrevClick()<br/>
+<br/>
+//<br/>
+// handleNextClick() is a member function to process click events for the next month button<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) false if consuming event, true if propagating<br/>
+//<br/>
+datepicker.prototype.handleNextClick = function(e) {<br/>
+<br/>
+&#160;&#160; var active = this.$grid.attr('aria-activedescendant');<br/>
+<br/>
+&#160;&#160; if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.showNextYear();<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.showNextMonth();<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; if (this.currentDate == false) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$grid.attr('aria-activedescendant', 'day1');<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$grid.attr('aria-activedescendant', active);<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; e.stopPropagation();<br/>
+&#160;&#160; return false;<br/>
+<br/>
+} // end handleNextClick()<br/>
+<br/>
+//<br/>
+// handlePrevKeyDown() is a member function to process keydown events for the prev month button<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) false if consuming event, true if propagating<br/>
+//<br/>
+datepicker.prototype.handlePrevKeyDown = function(e) {<br/>
+<br/>
+&#160;&#160; if (e.altKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;case this.keys.tab: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (this.bModal == false || !e.shiftKey || e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$grid.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;case this.keys.space: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.showPrevYear();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.showPrevMonth();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; return true;<br/>
+<br/>
+} // end handlePrevKeyDown()<br/>
+<br/>
+//<br/>
+// handleNextKeyDown() is a member function to process keydown events for the next month button<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) false if consuming event, true if propagating<br/>
+//<br/>
+datepicker.prototype.handleNextKeyDown = function(e) {<br/>
+<br/>
+&#160;&#160; if (e.altKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;case this.keys.space: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.showNextYear();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.showNextMonth();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; return true;<br/>
+<br/>
+} // end handleNextKeyDown()<br/>
+<br/>
+//<br/>
+// handleGridKeyDown() is a member function to process keydown events for the datepicker grid<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) false if consuming event, true if propagating<br/>
+//<br/>
+datepicker.prototype.handleGridKeyDown = function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $rows = this.$grid.find('tbody tr');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $curDay = $('#' + this.$grid.attr('aria-activedescendant'));<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $days = this.$grid.find('td').not('.empty');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $curRow = $curDay.parent();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.altKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;switch(e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.tab: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (this.bModal == true) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$next.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$prev.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; e.stopPropagation()<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; } <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.space: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// update the target box<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$target.val((this.month &lt; 9 ? '0' : '') + (this.month+1) + '/' + $curDay.html() + '/' + this.year);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// fall through<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.esc: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// dismiss the dialog box<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.hideDlg();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.left: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var dayIndex = $days.index($curDay) - 1;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $prevDay = null;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (dayIndex &gt;= 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $prevDay = $days.eq(dayIndex);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $curDay.removeClass('focus').attr('aria-selected', 'false');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $prevDay.addClass('focus').attr('aria-selected', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$grid.attr('aria-activedescendant', $prevDay.attr('id'));<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.showPrevMonth(0);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.right: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var dayIndex = $days.index($curDay) + 1;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $nextDay = null;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (dayIndex &lt; $days.length) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $nextDay = $days.eq(dayIndex);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $curDay.removeClass('focus').attr('aria-selected', 'false');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $nextDay.addClass('focus').attr('aria-selected', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$grid.attr('aria-activedescendant', $nextDay.attr('id'));<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // move to the next month<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.showNextMonth(1);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.up: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var dayIndex = $days.index($curDay) - 7;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $prevDay = null;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (dayIndex &gt;= 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $prevDay = $days.eq(dayIndex);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $curDay.removeClass('focus').attr('aria-selected', 'false');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $prevDay.addClass('focus').attr('aria-selected', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$grid.attr('aria-activedescendant', $prevDay.attr('id'));<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // move to appropriate day in previous month<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; dayIndex = 6 - $days.index($curDay);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.showPrevMonth(dayIndex);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.down: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var dayIndex = $days.index($curDay) + 7;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $prevDay = null;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (dayIndex &lt; $days.length) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $prevDay = $days.eq(dayIndex);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $curDay.removeClass('focus').attr('aria-selected', 'false');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $prevDay.addClass('focus').attr('aria-selected', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$grid.attr('aria-activedescendant', $prevDay.attr('id'));<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // move to appropriate day in next month<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; dayIndex = 8 - ($days.length - $days.index($curDay));<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.showNextMonth(dayIndex);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.pageup: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var active = this.$grid.attr('aria-activedescendant');<br/>
+<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.showPrevYear();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.showPrevMonth();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($('#' + active).attr('id') == undefined) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var lastDay = 'day' + this.calcNumDays(this.year, this.month);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $('#' + lastDay).addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $('#' + active).addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.pagedown: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var active = this.$grid.attr('aria-activedescendant');<br/>
+<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.showNextYear();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.showNextMonth();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($('#' + active).attr('id') == undefined) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var lastDay = 'day' + this.calcNumDays(this.year, this.month);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $('#' + lastDay).addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $('#' + active).addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.home: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$curDay.removeClass('focus').attr('aria-selected', 'false');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$('#day1').addClass('focus').attr('aria-selected', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$grid.attr('aria-activedescendant', 'day1');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.end: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var lastDay = 'day' + this.calcNumDays(this.year, this.month);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$curDay.removeClass('focus').attr('aria-selected', 'false');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$('#' + lastDay).addClass('focus').attr('aria-selected', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$grid.attr('aria-activedescendant', lastDay);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+<br/>
+} // end handleGridKeyDown()<br/>
+<br/>
+//<br/>
+// handleGridKeyPress() is a member function to consume keypress events for browsers that<br/>
+// use keypress to scroll the screen and manipulate tabs<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) false if consuming event, true if propagating<br/>
+//<br/>
+datepicker.prototype.handleGridKeyPress = function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.altKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;switch(e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.tab:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.space:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.esc:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.left:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.right:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.up:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.down:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.pageup:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.pagedown:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.home:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; case this.keys.end: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+<br/>
+} // end handleGridKeyPress()<br/>
+<br/>
+//<br/>
+// handleGridClick() is a member function to process mouse click events for the datepicker grid<br/>
+//<br/>
+// @input (id obj) e is the id of the object triggering the event<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) false if consuming event, true if propagating<br/>
+//<br/>
+datepicker.prototype.handleGridClick = function(id, e) {<br/>
+&#160;&#160; var $cell = $(id);<br/>
+<br/>
+&#160;&#160; if ($cell.is('.empty')) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; this.$grid.find('.focus').removeClass('focus').attr('aria-selected', 'false');<br/>
+&#160;&#160; $cell.addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160; this.$grid.attr('aria-activedescendant', $cell.attr('id'));<br/>
+<br/>
+&#160;&#160; var $curDay = $('#' + this.$grid.attr('aria-activedescendant'));<br/>
+<br/>
+&#160;&#160; // update the target box<br/>
+&#160;&#160; this.$target.val((this.month &lt; 9 ? '0' : '') + (this.month+1) + '/' + $curDay.html() + '/' + this.year);<br/>
+<br/>
+&#160;&#160; // dismiss the dialog box<br/>
+&#160;&#160; this.hideDlg();<br/>
+<br/>
+&#160;&#160; e.stopPropagation(); <br/>
+&#160;&#160; return false;<br/>
+<br/>
+} // end handleGridClick()<br/>
+<br/>
+//<br/>
+// handleGridFocus() is a member function to process focus events for the datepicker grid<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) true<br/>
+//<br/>
+datepicker.prototype.handleGridFocus = function(e) {<br/>
+&#160;&#160; var active = this.$grid.attr('aria-activedescendant');<br/>
+<br/>
+&#160;&#160; if ($('#' + active).attr('id') == undefined) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var lastDay = 'day' + this.calcNumDays(this.year, this.month);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('#' + lastDay).addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160; }<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('#' + active).addClass('focus').attr('aria-selected', 'true');<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; return true;<br/>
+<br/>
+} // end handleGridFocus()<br/>
+<br/>
+//<br/>
+// handleGridBlur() is a member function to process blur events for the datepicker grid<br/>
+//<br/>
+// @input (e obj) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) true<br/>
+//<br/>
+datepicker.prototype.handleGridBlur = function(e) {<br/>
+&#160;&#160; $('#' + this.$grid.attr('aria-activedescendant')).removeClass('focus').attr('aria-selected', 'false');<br/>
+<br/>
+&#160;&#160; return true;<br/>
+<br/>
+} // end handleGridBlur()<br/>
+<br/>
+//<br/>
+// showDlg() is a member function to show the datepicker and give it focus. This function is only called if<br/>
+// the datepicker is used in modal dialog mode.<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+datepicker.prototype.showDlg = function() {<br/>
+<br/>
+&#160;&#160; var thisObj = this;<br/>
+<br/>
+&#160;&#160;// Bind an event listener to the document to capture all mouse events to make dialog modal<br/>
+&#160;&#160;$(document).bind('click mousedown mouseup mousemove mouseover', function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;//ensure focus remains on the dialog<br/>
+&#160;&#160;&#160;&#160;thisObj.$grid.focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Consume all mouse events and do nothing<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation;<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160; // show the dialog<br/>
+&#160;&#160; this.$id.attr('aria-hidden', 'false');<br/>
+<br/>
+&#160;&#160; this.$grid.focus();<br/>
+<br/>
+} // end showDlg()<br/>
+<br/>
+//<br/>
+// hideDlg() is a member function to hide the datepicker and remove focus. This function is only called if<br/>
+// the datepicker is used in modal dialog mode.<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+datepicker.prototype.hideDlg = function() {<br/>
+<br/>
+&#160;&#160; var thisObj = this;<br/>
+<br/>
+&#160;&#160;// unbind the modal event sinks<br/>
+&#160;&#160;$(document).unbind('click mousedown mouseup mousemove mouseover');<br/>
+<br/>
+&#160;&#160; // hide the dialog<br/>
+&#160;&#160; this.$id.attr('aria-hidden', 'true');<br/>
+<br/>
+&#160;&#160; // set focus on the focus target<br/>
+&#160;&#160; this.$target.focus();<br/>
+<br/>
+} // end showDlg()<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

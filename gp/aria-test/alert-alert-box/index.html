@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<!-- saved from url=(0043)http://www.oaa-accessibility.org/example/1/ -->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head id="head"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <title id="header_title">Example 1 - Alert role example using an ARIA alert box</title>
+    
+    
+    
+    <link rel="stylesheet" href="./css/openajax-example-print.css" type="text/css" media="print">
+    <link rel="stylesheet" href="./css/openajax-example-screen.css" type="text/css" media="screen" title="screen">
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+div.guess {
+  border: thick double black;
+  padding: 1em;
+  width: 65%;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+div.guess h2 {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  margin-left: 1em;
+  margin-right: 1em;
+}
+
+div.guess input {
+  font-size: 100%;
+}
+
+div.guess p.input {
+  margin: 0;
+  padding: 0;
+  font-size: 150%;
+  margin-top: .5em;
+  margin-bottom: .5em;
+  text-align: center;
+  margin-left: 1em;
+  margin-right: 1em;
+}
+
+div.guess input.button {
+  margin: 0;
+  padding: 0;
+  display: inline;
+  padding-left: .5em;
+  padding-right: .5em;
+  padding-top: .25em;
+  padding-bottom: .25em;
+}
+
+
+div.guess p.feedback {
+  margin: 0;
+  padding: .25em;
+  border: 2px solid black;
+  text-align: center;
+  margin-top: .5em;
+  margin-bottom: .5em;
+  font-weight: bold;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="./js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+$(document).ready(function () {
+	var guess1 = new guess(1, 10, 'guess1_text', 'guess1_check', 'guess1_again', 'guess1_alert');
+	
+	document.getElementById('guess1_text').focus();
+	
+	window.addEventListener("keydown", checkKeyPressed, false);
+
+	function checkKeyPressed(e) {
+		if (e.keyCode == "461") {
+			window.location.replace("../../menu.html");
+		}
+	}	
+});
+
+//
+// guess() is a class to implement a simple number guessing game
+//
+// @param (max integer) min is the maximum number to guess.
+//
+// @param (text_id string) text_id is the id of the text box where player enters a guess.
+//
+// @param (check_id string) check_id is the id of the check guess button.
+//
+// @param (again_id string) again_id is the id of the play again button.
+//
+// @param (alert_id string) alert_id is the id of the alert element where game messages will
+//                          be printed.
+//
+// @return N/A
+//
+function guess(min, max, text_id, check_id, again_id, alert_id) {
+	
+	// define class properties
+	this.minGuess = min;         // the minimum number to guess
+	this.maxGuess = max;         // the maximum number to guess
+	this.$text = $('#' + text_id);   // the jQuery object pointer to the text box
+	this.$check = $('#' + check_id); // the jQuery object pointer to the check guess button
+	this.$again = $('#' + again_id); // the jQuery object pointer to the play again button
+	this.$alert = $('#' + alert_id); // the jQuery object pointer to the alert area
+
+	this.guessVal = -1;        // the number for the player to guess
+	this.guessCount = 0;       // the number of attempts the player has made
+
+	this.enterKey = 13;        // key code for the enter key
+
+	// bind event handlers
+	this.bindHandlers();
+
+	// initialize the game
+	this.newGame();
+
+} // end guess object constructor
+
+//
+// newGame() is a member function to set up a new game. The function chooses a number
+// between 1 and the max number specified at instantiation, sets the guess count to 0, and
+// show the user a message to make a guess.
+//
+// @return N/A
+guess.prototype.newGame = function () {
+
+	// get a new random number for the player to guess
+	this.guessVal = Math.floor(Math.random()*(this.maxGuess - this.minGuess + 1)) + this.minGuess;
+	
+	// reset the guess count
+	this.guessCount = 0;
+
+	// reset the guess text box
+	this.$text.val('');
+	this.$text.attr('aria-invalid', 'false');
+
+	// Re-enable the buttons
+	this.$text.removeAttr('disabled');
+	this.$check.removeAttr('disabled');
+
+	// invite the user to make a guess
+	this.$alert.text('Make a guess.');
+
+	// set focus on the guest text box
+	this.$text.focus();
+
+} // end newGame
+
+//
+// bindHandlers() is a function to bind the event handlers for the game controls
+//
+// @return N/A
+//
+guess.prototype.bindHandlers = function () {
+
+	var thisObj = this; // Store the this pointer
+
+	// bind a focus handler for the guess text box
+	this.$text.focus(function (e) {
+		thisObj.handleTextFocus(e);
+		return true;
+	});
+
+	// bind a keydown handler for the guess text box
+	this.$text.keydown(function (e) {
+		return thisObj.handleTextKeyDown(e);
+	});
+
+	// bind a keypress handler for the guess text box
+	this.$text.keypress(function (e) {
+		return thisObj.handleTextKeyPress(e);
+	});
+
+	// bind a click handler for the check guess button
+	this.$check.click(function (e) {
+		return thisObj.handleCheckClick(e);
+	});
+
+	// bind a click handler for the play again button
+	this.$again.click(function (e) {
+		return thisObj.handleAgainClick(e);
+	});
+
+} // end bindHandlers()
+
+//
+// handleTextFocus() is a member function to process focus events for the guess text box
+//
+// @input (evt obj) evt is the event object associated with the keydown event
+//
+// @return N/A
+//
+guess.prototype.handleTextFocus = function(evt) {
+
+	// Select any text in the text box
+	this.$text.select();
+
+} // end handleTextFocus()
+
+//
+// handleTextKeyDown() is a member function to process keydown events for the guess text box
+//
+// @input (evt obj) evt is the event object associated with the keydown event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+guess.prototype.handleTextKeyDown = function(evt) {
+
+	// do nothing if shift, alt, or ctrl key pressed.
+	if (evt.shiftKey || evt.altKey || evt.ctrlKey) {
+		return true;
+	}
+
+	if (evt.keyCode == this.enterKey) {
+
+		// validate the guess
+		if (this.validateGuess() == true) {
+
+			// increment the guess count
+			this.guessCount++;
+
+			// see if the player has won
+			if (this.checkGuess() == true) {
+				// disable the guess text box and the check guess button
+				this.$text.attr('disabled', 'true');
+				this.$check.attr('disabled', 'true');
+
+				// Set the focus on the play again button
+				this.$again.focus();
+			}
+			else {
+				// Game is still in progress. Set focus on the guess text box
+				this.$text.focus();
+			}
+		}
+		else {
+			// not a valid guess
+			this.$text.focus();
+		}
+
+		evt.stopPropagation;
+		return false;
+	}
+
+	return true;
+
+} // end handleTextKeyDown()
+
+//
+// handleTextKeyPress() is a member function to process keypress events for the guess text box. This function
+// is included to handle browsers that perform window scrolling, etc. on keypress rather than keydown.
+//
+// @input (evt obj) evt is the event object associated with the keypress event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+guess.prototype.handleTextKeyPress = function(evt) {
+
+	// do nothing if shift, alt, or ctrl key pressed.
+	if (evt.shiftKey || evt.altKey || evt.ctrlKey) {
+		return true;
+	}
+
+	if (evt.keyCode == this.enterKey) {
+
+		// consume the event
+		evt.stopPropagation;
+		return false;
+	}
+
+	return true;
+
+} // end handleTextKeyPress()
+
+//
+// handleCheckClick() is a member function to process click events for the check guess button
+//
+// @input (evt obj) evt is the event object associated with the click event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+guess.prototype.handleCheckClick = function(evt) {
+
+	// do nothing if shift, alt, or ctrl key pressed.
+	if (evt.shiftKey || evt.altKey || evt.ctrlKey) {
+		return true;
+	}
+
+	// validate the guess
+	if (this.validateGuess() == true) {
+
+		// increment the guess count
+		this.guessCount++;
+
+		// see if the player has won
+		if (this.checkGuess() == true) {
+			// disable the guess text box and the check guess button
+			this.$text.attr('disabled', 'true');
+			this.$check.attr('disabled', 'true');
+
+			// Set the focus on the play again button
+			this.$again.focus();
+		}
+		else {
+			// Game is still in progress. Set focus on the guess text box
+			this.$text.focus();
+		}
+	}
+	else {
+		// not a valid guess
+		this.$text.focus();
+	}
+		
+	evt.stopPropagation;
+	return false;
+
+} // end handleCheckClick()
+
+//
+// handleAgainClick() is a member function to process click events for the play again button
+//
+// @input (evt obj) evt is the event object associated with the click event
+//
+// @return (boolean) false if consuming event, true if propagating
+//
+guess.prototype.handleAgainClick = function(evt) {
+
+	// do nothing if shift, alt, or ctrl key pressed.
+	if (evt.shiftKey || evt.altKey || evt.ctrlKey) {
+		return true;
+	}
+
+	// Setup a new game
+	this.newGame();
+
+	// Set focus to the guess text box
+	this.$text.focus();
+		
+	evt.stopPropagation;
+	return false;
+
+} // end handleTextKeyDown()
+
+//
+// validateGuess() is a member function to validate a player's guess. If the guess is not a number, is less than
+// the minimum allowed guess, or is greater than the maximum allowed guess, the user is warned that the guess is invalid
+//
+// @return (boolean) true if guess is valid; false if guess is invalid
+//
+guess.prototype.validateGuess = function() {
+	var val = this.$text.val();
+
+	if (this.$text.val() == '') {
+		// guess is empty
+		this.$text.attr('aria-invalid', 'true');
+		this.$alert.html('You must enter a number!');
+
+		return false;
+	}
+	else if (isNaN(val) == true) {
+
+		// guess is not a number
+		this.$text.attr('aria-invalid', 'true');
+		this.$alert.html('\'' + this.$text.val() + '\' is not a number!');
+
+		return false;
+	}
+	else if (val < this.minGuess || val > this.maxGuess) {
+
+		// guess is out of range
+		this.$text.attr('aria-invalid', 'true');
+		this.$alert.html('You must choose a number between ' + this.minGuess + ' and ' + this.maxGuess + '!');
+
+		return false;
+	}
+	
+	this.$text.attr('aria-invalid', 'false');
+
+	return true;
+
+} // end validateGuess()
+
+//
+// checkGuess() is a member function to check the player's guess to see if he or she has won the game
+//
+// @return (boolean) true if the player has won; false if not
+guess.prototype.checkGuess = function() {
+
+	var guess = this.$text.val();
+
+	if (guess == this.guessVal) {
+
+		// The player has won. Tell the player how many tries it took
+
+		if (this.guessCount == 1) {
+			this.$alert.html('\'' + guess + '\' is right. You got it on your first try!');
+		}
+		else {
+			this.$alert.html('\'' + guess + '\' is right. It only took you ' + this.guessCount + ' tries!');
+		}
+		return true;
+	}
+
+	// Player did not guess the correct number. Tell the player if he or she is too high or too low
+	if (guess < this.guessVal) {
+		this.$alert.html('\'' + guess + '\' is too low. Try a higher number.');
+	}
+	else {
+		this.$alert.html('\'' + guess + '\' is too high. Try a lower number.');
+	}
+
+	return false;
+
+} // end checkGuess()
+
+</script>
+
+
+
+
+
+  <style id="style-1-cropbar-clipper">/* Copyright 2014 Evernote Corporation. All rights reserved. */
+.en-markup-crop-options {
+    top: 18px !important;
+    left: 50% !important;
+    margin-left: -100px !important;
+    width: 200px !important;
+    border: 2px rgba(255,255,255,.38) solid !important;
+    border-radius: 4px !important;
+}
+
+.en-markup-crop-options div div:first-of-type {
+    margin-left: 0px !important;
+}
+</style></head>
+  
+<body data-feedly-mini="yes">
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="http://www.oaa-accessibility.org/">Examples</a></li>
+        
+        
+        
+        
+        <li class="first disabled">First</li>
+        
+        
+        <li class="previous disabled">Previous</li>
+        
+        <li>Example 1</li>
+        
+        <li class="next"><a href="http://oaa-accessibility.org/example/2/">Next</a></li>
+        
+        
+        <li class="last"><a href="http://oaa-accessibility.org/example/44/">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 1 - Alert role example using an ARIA alert box</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="http://www.oaa-accessibility.org/examplep/alert1/">Permanent link for Alert role example using an ARIA alert box</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        <div role="application">
+
+<div id="guess1" class="guess">
+
+  <h2>Number Guessing Game</h2>
+	
+	<p><strong>Instructions:</strong> In this game you guess a number between 1 an 10 and then press the "Check My Guess" button to check your responses.  
+	  An <abbr title="Accessible Rich Internet Application">ARIA</abbr> dialog box will display the results of your guess.  To start over again to press the "Play Again" button.</p>
+
+  <p class="input">
+    <label id="guess1_label" for="guess1_text">Guess a number between 1 and 10</label>
+    <input type="text" id="guess1_text" size="3" aria-labelledby="guess1_label" aria-invalid="false">
+  </p>
+
+  <p id="guess1_alert" role="alert" class="feedback">Make a guess.</p>
+
+  <p class="input">  	
+    <input class="button" id="guess1_check" type="button" value="Check My Guess">
+    <input class="button" id="guess1_again" type="button" value="Play Again">
+  </p>
+</div>
+
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple number guessing game that displays the results of each guess in an <span class="caps">ARIA</span> alert box.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <ul>
+<li>Tab: Move between guess box and buttons.</li>
+<li>Enter: Submit guess or push button.</li>
+</ul>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-invalid]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [role="alert"]</li>      
+        
+        <li>ARIA 1.0: [role="application"]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        &lt;div role="application"&gt;
+<br>
+
+<br>
+&lt;div id="guess1" class="guess"&gt;
+<br>
+
+<br>
+&nbsp;&nbsp;&lt;h2&gt;Number Guessing Game&lt;/h2&gt;
+<br>
+&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;&lt;p&gt;&lt;strong&gt;Instructions:&lt;/strong&gt; In this game you guess a number between 1 an 10 and then press the "Check My Guess" button to check your responses.&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;An &lt;abbr title="Accessible Rich Internet Application"&gt;ARIA&lt;/abbr&gt; dialog box will display the results of your guess.&nbsp;&nbsp;To start over again to press the "Play Again" button.&lt;/p&gt;
+<br>
+
+<br>
+&nbsp;&nbsp;&lt;p class="input"&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;label id="guess1_label" for="guess1_text"&gt;Guess a number between 1 and 10&lt;/label&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;input type="text" id="guess1_text" size="3" aria-labelledby="guess1_label" aria-invalid="false"/&gt;
+<br>
+&nbsp;&nbsp;&lt;/p&gt;
+<br>
+
+<br>
+&nbsp;&nbsp;&lt;p id="guess1_alert" role="alert" class="feedback"&gt;&lt;/p&gt;
+<br>
+
+<br>
+&nbsp;&nbsp;&lt;p class="input"&gt;&nbsp;&nbsp;&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;input class="button" id="guess1_check" type="button" value="Check My Guess"/&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;input class="button" id="guess1_again" type="button" value="Play Again"/&gt;
+<br>
+&nbsp;&nbsp;&lt;/p&gt;
+<br>
+&lt;/div&gt;
+<br>
+
+<br>
+&lt;/div&gt;
+<br>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        
+<br>
+div.guess {
+<br>
+&nbsp;&nbsp;border: thick double black;
+<br>
+&nbsp;&nbsp;padding: 1em;
+<br>
+&nbsp;&nbsp;width: 65%;
+<br>
+&nbsp;&nbsp;font-family: Arial, Helvetica, sans-serif;
+<br>
+}
+<br>
+
+<br>
+div.guess h2 {
+<br>
+&nbsp;&nbsp;margin: 0;
+<br>
+&nbsp;&nbsp;padding: 0;
+<br>
+&nbsp;&nbsp;text-align: center;
+<br>
+&nbsp;&nbsp;margin-left: 1em;
+<br>
+&nbsp;&nbsp;margin-right: 1em;
+<br>
+}
+<br>
+
+<br>
+div.guess input {
+<br>
+&nbsp;&nbsp;font-size: 100%;
+<br>
+}
+<br>
+
+<br>
+div.guess p.input {
+<br>
+&nbsp;&nbsp;margin: 0;
+<br>
+&nbsp;&nbsp;padding: 0;
+<br>
+&nbsp;&nbsp;font-size: 150%;
+<br>
+&nbsp;&nbsp;margin-top: .5em;
+<br>
+&nbsp;&nbsp;margin-bottom: .5em;
+<br>
+&nbsp;&nbsp;text-align: center;
+<br>
+&nbsp;&nbsp;margin-left: 1em;
+<br>
+&nbsp;&nbsp;margin-right: 1em;
+<br>
+}
+<br>
+
+<br>
+div.guess input.button {
+<br>
+&nbsp;&nbsp;margin: 0;
+<br>
+&nbsp;&nbsp;padding: 0;
+<br>
+&nbsp;&nbsp;display: inline;
+<br>
+&nbsp;&nbsp;padding-left: .5em;
+<br>
+&nbsp;&nbsp;padding-right: .5em;
+<br>
+&nbsp;&nbsp;padding-top: .25em;
+<br>
+&nbsp;&nbsp;padding-bottom: .25em;
+<br>
+}
+<br>
+
+<br>
+
+<br>
+div.guess p.feedback {
+<br>
+&nbsp;&nbsp;margin: 0;
+<br>
+&nbsp;&nbsp;padding: .25em;
+<br>
+&nbsp;&nbsp;border: 2px solid black;
+<br>
+&nbsp;&nbsp;text-align: center;
+<br>
+&nbsp;&nbsp;margin-top: .5em;
+<br>
+&nbsp;&nbsp;margin-bottom: .5em;
+<br>
+&nbsp;&nbsp;font-weight: bold;
+<br>
+}
+<br>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        $(document).ready(function () {
+<br>
+&nbsp;&nbsp;var guess1 = new guess(1, 10, 'guess1_text', 'guess1_check', 'guess1_again', 'guess1_alert');
+<br>
+});
+<br>
+
+<br>
+//
+<br>
+// guess() is a class to implement a simple number guessing game
+<br>
+//
+<br>
+// @param (max integer) min is the maximum number to guess.
+<br>
+//
+<br>
+// @param (text_id string) text_id is the id of the text box where player enters a guess.
+<br>
+//
+<br>
+// @param (check_id string) check_id is the id of the check guess button.
+<br>
+//
+<br>
+// @param (again_id string) again_id is the id of the play again button.
+<br>
+//
+<br>
+// @param (alert_id string) alert_id is the id of the alert element where game messages will
+<br>
+//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be printed.
+<br>
+//
+<br>
+// @return N/A
+<br>
+//
+<br>
+function guess(min, max, text_id, check_id, again_id, alert_id) {
+<br>
+&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;// define class properties
+<br>
+&nbsp;&nbsp;this.minGuess = min;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // the minimum number to guess
+<br>
+&nbsp;&nbsp;this.maxGuess = max;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // the maximum number to guess
+<br>
+&nbsp;&nbsp;this.$text = $('#' + text_id);&nbsp;&nbsp; // the jQuery object pointer to the text box
+<br>
+&nbsp;&nbsp;this.$check = $('#' + check_id); // the jQuery object pointer to the check guess button
+<br>
+&nbsp;&nbsp;this.$again = $('#' + again_id); // the jQuery object pointer to the play again button
+<br>
+&nbsp;&nbsp;this.$alert = $('#' + alert_id); // the jQuery object pointer to the alert area
+<br>
+
+<br>
+&nbsp;&nbsp;this.guessVal = -1;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// the number for the player to guess
+<br>
+&nbsp;&nbsp;this.guessCount = 0;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // the number of attempts the player has made
+<br>
+
+<br>
+&nbsp;&nbsp;this.enterKey = 13;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// key code for the enter key
+<br>
+
+<br>
+&nbsp;&nbsp;// bind event handlers
+<br>
+&nbsp;&nbsp;this.bindHandlers();
+<br>
+
+<br>
+&nbsp;&nbsp;// initialize the game
+<br>
+&nbsp;&nbsp;this.newGame();
+<br>
+
+<br>
+} // end guess object constructor
+<br>
+
+<br>
+//
+<br>
+// newGame() is a member function to set up a new game. The function chooses a number
+<br>
+// between 1 and the max number specified at instantiation, sets the guess count to 0, and
+<br>
+// show the user a message to make a guess.
+<br>
+//
+<br>
+// @return N/A
+<br>
+guess.prototype.newGame = function () {
+<br>
+
+<br>
+&nbsp;&nbsp;// get a new random number for the player to guess
+<br>
+&nbsp;&nbsp;this.guessVal = Math.floor(Math.random()*(this.maxGuess - this.minGuess + 1)) + this.minGuess;
+<br>
+&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;// reset the guess count
+<br>
+&nbsp;&nbsp;this.guessCount = 0;
+<br>
+
+<br>
+&nbsp;&nbsp;// reset the guess text box
+<br>
+&nbsp;&nbsp;this.$text.val('');
+<br>
+&nbsp;&nbsp;this.$text.attr('aria-invalid', 'false');
+<br>
+
+<br>
+&nbsp;&nbsp;// Re-enable the buttons
+<br>
+&nbsp;&nbsp;this.$text.removeAttr('disabled');
+<br>
+&nbsp;&nbsp;this.$check.removeAttr('disabled');
+<br>
+
+<br>
+&nbsp;&nbsp;// invite the user to make a guess
+<br>
+&nbsp;&nbsp;this.$alert.text('Make a guess.');
+<br>
+
+<br>
+&nbsp;&nbsp;// set focus on the guest text box
+<br>
+&nbsp;&nbsp;this.$text.focus();
+<br>
+
+<br>
+} // end newGame
+<br>
+
+<br>
+//
+<br>
+// bindHandlers() is a function to bind the event handlers for the game controls
+<br>
+//
+<br>
+// @return N/A
+<br>
+//
+<br>
+guess.prototype.bindHandlers = function () {
+<br>
+
+<br>
+&nbsp;&nbsp;var thisObj = this; // Store the this pointer
+<br>
+
+<br>
+&nbsp;&nbsp;// bind a focus handler for the guess text box
+<br>
+&nbsp;&nbsp;this.$text.focus(function (e) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;thisObj.handleTextFocus(e);
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;
+<br>
+&nbsp;&nbsp;});
+<br>
+
+<br>
+&nbsp;&nbsp;// bind a keydown handler for the guess text box
+<br>
+&nbsp;&nbsp;this.$text.keydown(function (e) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return thisObj.handleTextKeyDown(e);
+<br>
+&nbsp;&nbsp;});
+<br>
+
+<br>
+&nbsp;&nbsp;// bind a keypress handler for the guess text box
+<br>
+&nbsp;&nbsp;this.$text.keypress(function (e) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return thisObj.handleTextKeyPress(e);
+<br>
+&nbsp;&nbsp;});
+<br>
+
+<br>
+&nbsp;&nbsp;// bind a click handler for the check guess button
+<br>
+&nbsp;&nbsp;this.$check.click(function (e) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return thisObj.handleCheckClick(e);
+<br>
+&nbsp;&nbsp;});
+<br>
+
+<br>
+&nbsp;&nbsp;// bind a click handler for the play again button
+<br>
+&nbsp;&nbsp;this.$again.click(function (e) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return thisObj.handleAgainClick(e);
+<br>
+&nbsp;&nbsp;});
+<br>
+
+<br>
+} // end bindHandlers()
+<br>
+
+<br>
+//
+<br>
+// handleTextFocus() is a member function to process focus events for the guess text box
+<br>
+//
+<br>
+// @input (evt obj) evt is the event object associated with the keydown event
+<br>
+//
+<br>
+// @return N/A
+<br>
+//
+<br>
+guess.prototype.handleTextFocus = function(evt) {
+<br>
+
+<br>
+&nbsp;&nbsp;// Select any text in the text box
+<br>
+&nbsp;&nbsp;this.$text.select();
+<br>
+
+<br>
+} // end handleTextFocus()
+<br>
+
+<br>
+//
+<br>
+// handleTextKeyDown() is a member function to process keydown events for the guess text box
+<br>
+//
+<br>
+// @input (evt obj) evt is the event object associated with the keydown event
+<br>
+//
+<br>
+// @return (boolean) false if consuming event, true if propagating
+<br>
+//
+<br>
+guess.prototype.handleTextKeyDown = function(evt) {
+<br>
+
+<br>
+&nbsp;&nbsp;// do nothing if shift, alt, or ctrl key pressed.
+<br>
+&nbsp;&nbsp;if (evt.shiftKey || evt.altKey || evt.ctrlKey) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;
+<br>
+&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;if (evt.keyCode == this.enterKey) {
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// validate the guess
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (this.validateGuess() == true) {
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// increment the guess count
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.guessCount++;
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// see if the player has won
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (this.checkGuess() == true) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// disable the guess text box and the check guess button
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$text.attr('disabled', 'true');
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$check.attr('disabled', 'true');
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Set the focus on the play again button
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$again.focus();
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Game is still in progress. Set focus on the guess text box
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$text.focus();
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// not a valid guess
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$text.focus();
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;evt.stopPropagation;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return false;
+<br>
+&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;return true;
+<br>
+
+<br>
+} // end handleTextKeyDown()
+<br>
+
+<br>
+//
+<br>
+// handleTextKeyPress() is a member function to process keypress events for the guess text box. This function
+<br>
+// is included to handle browsers that perform window scrolling, etc. on keypress rather than keydown.
+<br>
+//
+<br>
+// @input (evt obj) evt is the event object associated with the keypress event
+<br>
+//
+<br>
+// @return (boolean) false if consuming event, true if propagating
+<br>
+//
+<br>
+guess.prototype.handleTextKeyPress = function(evt) {
+<br>
+
+<br>
+&nbsp;&nbsp;// do nothing if shift, alt, or ctrl key pressed.
+<br>
+&nbsp;&nbsp;if (evt.shiftKey || evt.altKey || evt.ctrlKey) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;
+<br>
+&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;if (evt.keyCode == this.enterKey) {
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// consume the event
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;evt.stopPropagation;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return false;
+<br>
+&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;return true;
+<br>
+
+<br>
+} // end handleTextKeyPress()
+<br>
+
+<br>
+//
+<br>
+// handleCheckClick() is a member function to process click events for the check guess button
+<br>
+//
+<br>
+// @input (evt obj) evt is the event object associated with the click event
+<br>
+//
+<br>
+// @return (boolean) false if consuming event, true if propagating
+<br>
+//
+<br>
+guess.prototype.handleCheckClick = function(evt) {
+<br>
+
+<br>
+&nbsp;&nbsp;// do nothing if shift, alt, or ctrl key pressed.
+<br>
+&nbsp;&nbsp;if (evt.shiftKey || evt.altKey || evt.ctrlKey) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;
+<br>
+&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;// validate the guess
+<br>
+&nbsp;&nbsp;if (this.validateGuess() == true) {
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// increment the guess count
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.guessCount++;
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// see if the player has won
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (this.checkGuess() == true) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// disable the guess text box and the check guess button
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$text.attr('disabled', 'true');
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$check.attr('disabled', 'true');
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Set the focus on the play again button
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$again.focus();
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Game is still in progress. Set focus on the guess text box
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$text.focus();
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;else {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// not a valid guess
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$text.focus();
+<br>
+&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;evt.stopPropagation;
+<br>
+&nbsp;&nbsp;return false;
+<br>
+
+<br>
+} // end handleCheckClick()
+<br>
+
+<br>
+//
+<br>
+// handleAgainClick() is a member function to process click events for the play again button
+<br>
+//
+<br>
+// @input (evt obj) evt is the event object associated with the click event
+<br>
+//
+<br>
+// @return (boolean) false if consuming event, true if propagating
+<br>
+//
+<br>
+guess.prototype.handleAgainClick = function(evt) {
+<br>
+
+<br>
+&nbsp;&nbsp;// do nothing if shift, alt, or ctrl key pressed.
+<br>
+&nbsp;&nbsp;if (evt.shiftKey || evt.altKey || evt.ctrlKey) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;
+<br>
+&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;// Setup a new game
+<br>
+&nbsp;&nbsp;this.newGame();
+<br>
+
+<br>
+&nbsp;&nbsp;// Set focus to the guess text box
+<br>
+&nbsp;&nbsp;this.$text.focus();
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;evt.stopPropagation;
+<br>
+&nbsp;&nbsp;return false;
+<br>
+
+<br>
+} // end handleTextKeyDown()
+<br>
+
+<br>
+//
+<br>
+// validateGuess() is a member function to validate a player's guess. If the guess is not a number, is less than
+<br>
+// the minimum allowed guess, or is greater than the maximum allowed guess, the user is warned that the guess is invalid
+<br>
+//
+<br>
+// @return (boolean) true if guess is valid; false if guess is invalid
+<br>
+//
+<br>
+guess.prototype.validateGuess = function() {
+<br>
+&nbsp;&nbsp;var val = this.$text.val();
+<br>
+
+<br>
+&nbsp;&nbsp;if (this.$text.val() == '') {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// guess is empty
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$text.attr('aria-invalid', 'true');
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$alert.html('You must enter a number!');
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return false;
+<br>
+&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;else if (isNaN(val) == true) {
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// guess is not a number
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$text.attr('aria-invalid', 'true');
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$alert.html('\'' + this.$text.val() + '\' is not a number!');
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return false;
+<br>
+&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;else if (val &lt; this.minGuess || val &gt; this.maxGuess) {
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// guess is out of range
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$text.attr('aria-invalid', 'true');
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$alert.html('You must choose a number between ' + this.minGuess + ' and ' + this.maxGuess + '!');
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return false;
+<br>
+&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;
+<br>
+&nbsp;&nbsp;this.$text.attr('aria-invalid', 'false');
+<br>
+
+<br>
+&nbsp;&nbsp;return true;
+<br>
+
+<br>
+} // end validateGuess()
+<br>
+
+<br>
+//
+<br>
+// checkGuess() is a member function to check the player's guess to see if he or she has won the game
+<br>
+//
+<br>
+// @return (boolean) true if the player has won; false if not
+<br>
+guess.prototype.checkGuess = function() {
+<br>
+
+<br>
+&nbsp;&nbsp;var guess = this.$text.val();
+<br>
+
+<br>
+&nbsp;&nbsp;if (guess == this.guessVal) {
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// The player has won. Tell the player how many tries it took
+<br>
+
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (this.guessCount == 1) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$alert.html('\'' + guess + '\' is right. You got it on your first try!');
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this.$alert.html('\'' + guess + '\' is right. It only took you ' + this.guessCount + ' tries!');
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;
+<br>
+&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;// Player did not guess the correct number. Tell the player if he or she is too high or too low
+<br>
+&nbsp;&nbsp;if (guess &lt; this.guessVal) {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$alert.html('\'' + guess + '\' is too low. Try a higher number.');
+<br>
+&nbsp;&nbsp;}
+<br>
+&nbsp;&nbsp;else {
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;this.$alert.html('\'' + guess + '\' is too high. Try a lower number.');
+<br>
+&nbsp;&nbsp;}
+<br>
+
+<br>
+&nbsp;&nbsp;return false;
+<br>
+
+<br>
+} // end checkGuess()
+<br>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      © 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+
+
+<div id="feedly-mini" title="feedly Mini tookit"></div><div id="ToolTipDic" class="tooltip_dic" style="display: none !important; visibility: hidden !important; position: absolute !important; height: auto !important; width: auto !important; z-index: 1410065406 !important; vertical-align: middle; padding: 1px; margin: 0px !important; font-size: 9pt !important; line-height: normal !important; font-family: &#39;맑은 고딕&#39;; font-weight: bold; color: rgb(0, 0, 0); border: 1px solid rgb(112, 112, 112); overflow: hidden; white-space: nowrap; border-radius: 0.2em; box-shadow: rgba(0, 0, 0, 0.4) 2px 2px 5px; left: 456px !important; top: 439px !important; background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(rgb(240, 240, 240)), to(rgb(220, 220, 220)));"></div></body></html>

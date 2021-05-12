@@ -1,0 +1,1101 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 28 - Radiogroup</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+ul.radiogroup {
+    margin: 0;
+    padding: 0;		
+}
+
+ul.radiogroup  li   {
+    padding: 0; 
+    margin: 0;
+    margin-left: 1em;
+    padding: 4px;
+    list-style: none;
+    width: 6em;	  
+}
+    
+ul.radiogroup li:hover {
+    padding: 2px;
+    border: gray 2px solid;
+}
+
+ul.radiogroup li.selected {
+    padding: 2px;
+    border: black 2px solid;
+   }
+
+.offscreen {
+  position: absolute;
+	  left: -200em;
+	  top: -20em;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+
+	var group1 = new radioGroup('rg1');
+	var group2 = new radioGroup('rg2');
+
+}); // end ready
+
+function keyCodes () {
+  // Define values for keycodes
+  this.enter      = 13;
+  this.space      = 32;
+
+  this.left       = 37;
+  this.up         = 38;
+  this.right      = 39;
+  this.down       = 40;
+} 
+
+//
+// Function radioGroup() is a class to define an ARIA-enabled radiogroup widget.
+//
+// This widget attaches to an unordered list and makes each list entry a group
+// of radio buttons.
+//
+// @param (id object) id is the html id of the <ul> to attach to
+//
+// @return N/A
+//
+function radioGroup(id) {
+
+	var thisObj = this;
+
+	///////// define widget properties ///////////////
+
+	this.$id = $('#' + id);
+
+	// find all list items with a role of radio
+	this.$buttons = this.$id.find('li').filter('[role=radio]');
+
+	// Store the currently checked item
+	this.$checked = this.$buttons.filter('[aria-checked=true]');
+
+	this.checkButton = true; // set to false during ctrl+arrow operations;
+
+	this.$active = null; // the selected button (may not be checked)
+	
+	this.keys = new keyCodes();
+
+	///////////// Bind Event handlers ////////////////
+
+	this.$buttons.click(function(e) {
+		return thisObj.handleClick(e, $(this));
+	});
+
+	this.$buttons.keydown(function(e) {
+		return thisObj.handleKeyDown(e, $(this));
+	});
+
+	this.$buttons.keypress(function(e) {
+		return thisObj.handleKeyPress(e, $(this));
+	});
+
+	this.$buttons.focus(function(e) {
+		return thisObj.handleFocus(e, $(this));
+	});
+
+	this.$buttons.blur(function(e) {
+		return thisObj.handleBlur(e, $(this));
+	});
+}
+
+// 
+// Function selectButton() is a member function to select and possibly check a button in the
+// radioGroup.
+//
+// @param ($id object) $id is the jQuery object of the button to select
+//
+// @return N/A
+//
+radioGroup.prototype.selectButton = function($id) {
+
+	if (this.checkButton == true) {
+		// checking the button
+
+		// remove the checked image from the previously checked button
+		this.$checked.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif');
+
+		// update the button image
+		$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/radio-checked.gif');
+
+		if (this.$checked.length == 0) { // no previously checked group buttons
+			// the first and last items in the group will have
+			// tabindex=0. Remove them both from the tab order.
+			this.$buttons.first().attr('tabindex', '-1');
+
+			this.$buttons.last().attr('tabindex', '-1');
+		}
+		else {
+			// remove the previously checked item from
+			// the tab order and modify it's aria attributes accordingly
+			this.$checked.attr('tabindex', '-1').attr('aria-checked', 'false');
+		}
+
+		// Place this button in the tab order and modify it's aria attributes
+		$id.attr('tabindex', '0').attr('aria-checked', 'true');
+
+		// update the stored $checked object
+		this.$checked = $id;
+	}
+
+	// update the stored $active object
+	this.$active = $id;
+
+	// give this button the selected class
+	$id.addClass('selected');
+
+	// Reset checkButton flag - in case it was false
+	this.checkButton = true;
+
+} // end selectButton()
+
+//
+// Function handleClick() is a member function to process keydown events for the radioGroup.
+//
+// @param (e object) e is the event object
+//
+// @param ($id object) $is is the jquery object of the triggering element
+//
+// @return (boolean) Returns false if consuming event; true if propagating
+//
+radioGroup.prototype.handleClick = function(e, $id) {
+
+	if (e.altKey || e.ctrlKey || e.shiftKey) {
+		// do nothing
+		return true;
+	}
+
+	// simply consume the event - browser calls focus()
+
+	e.stopPropagation();
+	return false;
+
+} // end handleClick()
+
+//
+// Function handleKeyDown() is a member function to process keydown events for the radioGroup.
+//
+// @param (e object) e is the event object
+//
+// @param ($id object) $is is the jquery object of the triggering element
+//
+// @return (boolean) Returns false if consuming event; true if propagating
+//
+radioGroup.prototype.handleKeyDown = function(e, $id) {
+
+	if (e.altKey) {
+		// do nothing
+		return true;
+	}
+
+	switch (e.keyCode) {
+		case this.keys.space:
+		case this.keys.enter: {
+			if (e.ctrlkey || e.shiftKey) {
+				// do nothing
+				return true;
+			}
+
+			// select and check the button
+			this.selectButton($id);
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.left:
+		case this.keys.up: {
+
+			var $prev = $id.prev(); // the previous button
+
+			if (e.shiftKey) {
+				// do nothing
+				return true;
+			}
+
+			// if this was the first item
+			// select the last one in the group.
+			if ($id.index() == 0) {
+				$prev = this.$buttons.last();
+			}
+
+			if (e.ctrlKey) {
+				// set checkButton to false so
+				// focus does not check button
+				this.checkButton = false;
+			}
+
+			// select the previous button
+			$prev[0].focus();
+
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.right:
+		case this.keys.down: {
+
+			var $next = $id.next(); // the next button
+
+			if (e.shiftKey) {
+				// do nothing
+				return true;
+			}
+
+			// if this was the last item,
+			// select the first one in the group.
+			if ($id.index() == this.$buttons.length - 1) {
+				$next = this.$buttons.first();
+			}
+
+			if (e.ctrlKey) {
+				// set checkButton to false so
+				// focus does not check button
+				this.checkButton = false;
+			}
+
+			// select the next button
+			$next[0].focus();
+
+			e.preventDefault();
+			e.stopPropagation();
+			return false;
+		}
+	} // end switch
+
+	return true;
+
+} // end handleKeyDown()
+
+//
+// Function handleKeyPress() is a member function to process keydown events for the radioGroup.
+// This is needed to prevent browsers that process window events on keypress (such as Opera) from
+// performing unwanted scrolling of the window, etc.
+//
+// @param (e object) e is the event object
+//
+// @param ($id object) $is is the jquery object of the triggering element
+//
+// @return (boolean) Returns false if consuming event; true if propagating
+//
+radioGroup.prototype.handleKeyPress = function(e, $id) {
+
+	if (e.altKey) {
+		// do nothing
+		return true;
+	}
+
+	switch (e.keyCode) {
+		case this.keys.space:
+		case this.keys.enter: {
+			if (e.ctrlKey || e.shiftKey) {
+				// do nothing
+				return true;
+			}
+		}
+		case this.keys.left:
+		case this.keys.up:
+		case this.keys.right:
+		case this.keys.down: {
+			if (e.shiftKey) {
+				// do nothing
+				return true;
+			}
+			e.stopPropagation();
+			return false;
+		}
+	} // end switch
+
+	return true;
+
+} // end handleKeyPress()
+
+//
+// Function handleFocus() is a member function to process focus events for the radioGroup.
+//
+// @param (e object) e is the event object
+//
+// @param ($id object) $is is the jquery object of the triggering element
+//
+// @return (boolean) Returns false if consuming event; true if propagating
+//
+radioGroup.prototype.handleFocus = function(e, $id) {
+
+	// select the button
+	this.selectButton($id);
+
+	return true;
+} // end handleFocus()
+
+//
+// Function handleBlur() is a member function to process blur events for the radioGroup.
+//
+// @param (e object) e is the event object
+//
+// @param ($id object) $is is the jquery object of the triggering element
+//
+// @return (boolean) Returns false if consuming event; true if propagating
+//
+radioGroup.prototype.handleBlur = function(e, $id) {
+
+	// remove the focus styling from this buttons
+	$id.removeClass('selected');
+
+	return true;
+} // end handleBlur()
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+
+
+<script type="text/javascript">
+	window.onload = function(){
+		document.getElementById("r1").focus();
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }
+		}
+	}
+</script>
+
+
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../27/index.html">Previous</a></li>
+        
+        <li>Example 28</li>
+        
+        <li class="next"><a href="../29/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 28 - Radiogroup</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/radio1/index.html">Permanent link for Radiogroup</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div role="application">
+
+  <h3 id="rg1_label">Lunch Options</h3>
+ 
+  <ul class="radiogroup"
+      id="rg1" 
+      role="radiogroup"
+      aria-labelledby="rg1_label"
+	 >
+    <li id="r1" 
+      tabindex="-1"
+      role="radio" 
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Thai
+    </li>
+    <li id="r2" 
+      tabindex="-1"
+      role="radio" 
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Subway
+    </li>
+    <li id="r3" 
+      tabindex="-1"
+      role="radio" 
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Jimmy Johns
+    </li>
+    <li id="r4" 
+      tabindex="0"
+      role="radio" 
+      aria-checked="true">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-checked.gif" />
+      Radio Maria
+    </li>
+    <li id="r5" 
+      tabindex="-1"
+      role="radio" 
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Rainbow Gardens
+    </li>	 
+  </ul>	
+
+ <!-- Start of second Radio Group  -->
+ 
+  <h3 id="rg2_label">Drink Options</h3>
+   
+  <ul id="rg2" 
+      class="radiogroup"
+      role="radiogroup"
+      aria-labelledby="rg2_label"
+	 >
+    <li id="r6"
+      tabindex="0"
+      role="radio"
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Water
+    </li>
+    <li id="r7"
+    	tabindex="-1"
+      role="radio"
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Tea
+    </li>
+    <li id="r8"
+    	tabindex="-1"
+      role="radio"
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Coffee
+    </li>
+    <li id="r9"
+    	tabindex="-1"
+      role="radio"
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Cola
+    </li>
+    <li id="r10"
+      tabindex="0"
+      role="radio"
+      aria-checked="false">
+      <img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" />
+      Ginger Ale
+    </li>	 
+  </ul>	
+ 
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a radio button group widget.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <ul>
+<li>Tab: Move between button items and text area.</li>
+<li>Enter or space: Toggle aria-checked state of checkbox with keyboard focus.</li>
+</ul>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-checked]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;presentation&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;radio&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;radiogroup&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div role="application"&gt;<br/>
+<br/>
+&#160;&#160;&lt;h3 id="rg1_label"&gt;Lunch Options&lt;/h3&gt;<br/>
+ <br/>
+&#160;&#160;&lt;ul class="radiogroup"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;id="rg1" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radiogroup"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-labelledby="rg1_label"<br/>
+&#160;&#160; &gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r1" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="-1"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Thai<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r2" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="-1"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Subway<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r3" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="-1"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Jimmy Johns<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r4" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="0"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="true"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-checked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Radio Maria<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r5" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="-1"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Rainbow Gardens<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;&#160;&#160; <br/>
+&#160;&#160;&lt;/ul&gt;&#160;&#160;<br/>
+<br/>
+ &lt;!-- Start of second Radio Group&#160;&#160;--&gt;<br/>
+ <br/>
+&#160;&#160;&lt;h3 id="rg2_label"&gt;Drink Options&lt;/h3&gt;<br/>
+&#160;&#160; <br/>
+&#160;&#160;&lt;ul id="rg2" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;class="radiogroup"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radiogroup"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-labelledby="rg2_label"<br/>
+&#160;&#160; &gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r6"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="0"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Water<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r7"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="-1"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Tea<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r8"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="-1"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Coffee<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r9"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="-1"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Cola<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="r10"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;tabindex="0"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="radio"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;aria-checked="false"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;img role="presentation" src="http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif" /&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;Ginger Ale<br/>
+&#160;&#160;&#160;&#160;&lt;/li&gt;&#160;&#160; <br/>
+&#160;&#160;&lt;/ul&gt;&#160;&#160;<br/>
+ <br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+ul.radiogroup {<br/>
+&#160;&#160;&#160;&#160;margin: 0;<br/>
+&#160;&#160;&#160;&#160;padding: 0;&#160;&#160;&#160;&#160;<br/>
+}<br/>
+<br/>
+ul.radiogroup&#160;&#160;li&#160;&#160; {<br/>
+&#160;&#160;&#160;&#160;padding: 0; <br/>
+&#160;&#160;&#160;&#160;margin: 0;<br/>
+&#160;&#160;&#160;&#160;margin-left: 1em;<br/>
+&#160;&#160;&#160;&#160;padding: 4px;<br/>
+&#160;&#160;&#160;&#160;list-style: none;<br/>
+&#160;&#160;&#160;&#160;width: 6em;&#160;&#160;&#160;&#160;<br/>
+}<br/>
+&#160;&#160;&#160;&#160;<br/>
+ul.radiogroup li:hover {<br/>
+&#160;&#160;&#160;&#160;padding: 2px;<br/>
+&#160;&#160;&#160;&#160;border: gray 2px solid;<br/>
+}<br/>
+<br/>
+ul.radiogroup li.selected {<br/>
+&#160;&#160;&#160;&#160;padding: 2px;<br/>
+&#160;&#160;&#160;&#160;border: black 2px solid;<br/>
+&#160;&#160; }<br/>
+<br/>
+.offscreen {<br/>
+&#160;&#160;position: absolute;<br/>
+&#160;&#160;&#160;&#160;left: -200em;<br/>
+&#160;&#160;&#160;&#160;top: -20em;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+$(document).ready(function() {<br/>
+<br/>
+&#160;&#160;var group1 = new radioGroup('rg1');<br/>
+&#160;&#160;var group2 = new radioGroup('rg2');<br/>
+<br/>
+}); // end ready<br/>
+<br/>
+function keyCodes () {<br/>
+&#160;&#160;// Define values for keycodes<br/>
+&#160;&#160;this.enter&#160;&#160;&#160;&#160;&#160;&#160;= 13;<br/>
+&#160;&#160;this.space&#160;&#160;&#160;&#160;&#160;&#160;= 32;<br/>
+<br/>
+&#160;&#160;this.left&#160;&#160;&#160;&#160;&#160;&#160; = 37;<br/>
+&#160;&#160;this.up&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; = 38;<br/>
+&#160;&#160;this.right&#160;&#160;&#160;&#160;&#160;&#160;= 39;<br/>
+&#160;&#160;this.down&#160;&#160;&#160;&#160;&#160;&#160; = 40;<br/>
+} <br/>
+<br/>
+//<br/>
+// Function radioGroup() is a class to define an ARIA-enabled radiogroup widget.<br/>
+//<br/>
+// This widget attaches to an unordered list and makes each list entry a group<br/>
+// of radio buttons.<br/>
+//<br/>
+// @param (id object) id is the html id of the &lt;ul&gt; to attach to<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+function radioGroup(id) {<br/>
+<br/>
+&#160;&#160;var thisObj = this;<br/>
+<br/>
+&#160;&#160;///////// define widget properties ///////////////<br/>
+<br/>
+&#160;&#160;this.$id = $('#' + id);<br/>
+<br/>
+&#160;&#160;// find all list items with a role of radio<br/>
+&#160;&#160;this.$buttons = this.$id.find('li').filter('[role=radio]');<br/>
+<br/>
+&#160;&#160;// Store the currently checked item<br/>
+&#160;&#160;this.$checked = this.$buttons.filter('[aria-checked=true]');<br/>
+<br/>
+&#160;&#160;this.checkButton = true; // set to false during ctrl+arrow operations;<br/>
+<br/>
+&#160;&#160;this.$active = null; // the selected button (may not be checked)<br/>
+&#160;&#160;<br/>
+&#160;&#160;this.keys = new keyCodes();<br/>
+<br/>
+&#160;&#160;///////////// Bind Event handlers ////////////////<br/>
+<br/>
+&#160;&#160;this.$buttons.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleClick(e, $(this));<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$buttons.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleKeyDown(e, $(this));<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$buttons.keypress(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleKeyPress(e, $(this));<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$buttons.focus(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleFocus(e, $(this));<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$buttons.blur(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleBlur(e, $(this));<br/>
+&#160;&#160;});<br/>
+}<br/>
+<br/>
+// <br/>
+// Function selectButton() is a member function to select and possibly check a button in the<br/>
+// radioGroup.<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object of the button to select<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+radioGroup.prototype.selectButton = function($id) {<br/>
+<br/>
+&#160;&#160;if (this.checkButton == true) {<br/>
+&#160;&#160;&#160;&#160;// checking the button<br/>
+<br/>
+&#160;&#160;&#160;&#160;// remove the checked image from the previously checked button<br/>
+&#160;&#160;&#160;&#160;this.$checked.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/radio-unchecked.gif');<br/>
+<br/>
+&#160;&#160;&#160;&#160;// update the button image<br/>
+&#160;&#160;&#160;&#160;$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/radio-checked.gif');<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (this.$checked.length == 0) { // no previously checked group buttons<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// the first and last items in the group will have<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// tabindex=0. Remove them both from the tab order.<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$buttons.first().attr('tabindex', '-1');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$buttons.last().attr('tabindex', '-1');<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// remove the previously checked item from<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// the tab order and modify it's aria attributes accordingly<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$checked.attr('tabindex', '-1').attr('aria-checked', 'false');<br/>
+&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Place this button in the tab order and modify it's aria attributes<br/>
+&#160;&#160;&#160;&#160;$id.attr('tabindex', '0').attr('aria-checked', 'true');<br/>
+<br/>
+&#160;&#160;&#160;&#160;// update the stored $checked object<br/>
+&#160;&#160;&#160;&#160;this.$checked = $id;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// update the stored $active object<br/>
+&#160;&#160;this.$active = $id;<br/>
+<br/>
+&#160;&#160;// give this button the selected class<br/>
+&#160;&#160;$id.addClass('selected');<br/>
+<br/>
+&#160;&#160;// Reset checkButton flag - in case it was false<br/>
+&#160;&#160;this.checkButton = true;<br/>
+<br/>
+} // end selectButton()<br/>
+<br/>
+//<br/>
+// Function handleClick() is a member function to process keydown events for the radioGroup.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($id object) $is is the jquery object of the triggering element<br/>
+//<br/>
+// @return (boolean) Returns false if consuming event; true if propagating<br/>
+//<br/>
+radioGroup.prototype.handleClick = function(e, $id) {<br/>
+<br/>
+&#160;&#160;if (e.altKey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// simply consume the event - browser calls focus()<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleClick()<br/>
+<br/>
+//<br/>
+// Function handleKeyDown() is a member function to process keydown events for the radioGroup.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($id object) $is is the jquery object of the triggering element<br/>
+//<br/>
+// @return (boolean) Returns false if consuming event; true if propagating<br/>
+//<br/>
+radioGroup.prototype.handleKeyDown = function(e, $id) {<br/>
+<br/>
+&#160;&#160;if (e.altKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.space:<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlkey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// select and check the button<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.selectButton($id);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.left:<br/>
+&#160;&#160;&#160;&#160;case this.keys.up: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $prev = $id.prev(); // the previous button<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// if this was the first item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// select the last one in the group.<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if ($id.index() == 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$prev = this.$buttons.last();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// set checkButton to false so<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// focus does not check button<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.checkButton = false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// select the previous button<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$prev[0].focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.preventDefault();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.right:<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $next = $id.next(); // the next button<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// if this was the last item,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// select the first one in the group.<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if ($id.index() == this.$buttons.length - 1) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$next = this.$buttons.first();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// set checkButton to false so<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// focus does not check button<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.checkButton = false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// select the next button<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$next[0].focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.preventDefault();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;} // end switch<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleKeyDown()<br/>
+<br/>
+//<br/>
+// Function handleKeyPress() is a member function to process keydown events for the radioGroup.<br/>
+// This is needed to prevent browsers that process window events on keypress (such as Opera) from<br/>
+// performing unwanted scrolling of the window, etc.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($id object) $is is the jquery object of the triggering element<br/>
+//<br/>
+// @return (boolean) Returns false if consuming event; true if propagating<br/>
+//<br/>
+radioGroup.prototype.handleKeyPress = function(e, $id) {<br/>
+<br/>
+&#160;&#160;if (e.altKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.space:<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.left:<br/>
+&#160;&#160;&#160;&#160;case this.keys.up:<br/>
+&#160;&#160;&#160;&#160;case this.keys.right:<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;} // end switch<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleKeyPress()<br/>
+<br/>
+//<br/>
+// Function handleFocus() is a member function to process focus events for the radioGroup.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($id object) $is is the jquery object of the triggering element<br/>
+//<br/>
+// @return (boolean) Returns false if consuming event; true if propagating<br/>
+//<br/>
+radioGroup.prototype.handleFocus = function(e, $id) {<br/>
+<br/>
+&#160;&#160;// select the button<br/>
+&#160;&#160;this.selectButton($id);<br/>
+<br/>
+&#160;&#160;return true;<br/>
+} // end handleFocus()<br/>
+<br/>
+//<br/>
+// Function handleBlur() is a member function to process blur events for the radioGroup.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($id object) $is is the jquery object of the triggering element<br/>
+//<br/>
+// @return (boolean) Returns false if consuming event; true if propagating<br/>
+//<br/>
+radioGroup.prototype.handleBlur = function(e, $id) {<br/>
+<br/>
+&#160;&#160;// remove the focus styling from this buttons<br/>
+&#160;&#160;$id.removeClass('selected');<br/>
+<br/>
+&#160;&#160;return true;<br/>
+} // end handleBlur()<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

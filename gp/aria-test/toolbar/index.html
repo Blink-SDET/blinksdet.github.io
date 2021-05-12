@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<!-- saved from url=(0040)http://oaa-accessibility.org/example/38/ -->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head id="head"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <title id="header_title">Example 38 - Toolbar using inline images for visual state</title>
+    
+    
+    
+    <link rel="stylesheet" href="./css/openajax-example-print.css" type="text/css" media="print">
+    <link rel="stylesheet" href="./css/openajax-example-screen.css" type="text/css" media="screen" title="screen">
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+ul.toolbar{
+  float: left;
+  display: inline;
+  text-align: center;
+  margin: 0 !important;
+  padding: 0 1px !important;
+  font-size: 100% !important;
+  border: 1px solid black;
+  background-color: #ccc;
+}
+
+ul.toolbar li{
+  float: left;
+  display: inline;
+  text-align: center;
+  margin: 0;
+  padding: 3px;
+  height: 36px;
+  height: 34px;
+}
+
+ul div.italic{
+   font-style: italic;
+}
+
+textarea.example {
+  clear: both;
+  margin: 0;
+  padding: .25em;
+  width: 60%;
+  height: 200px;
+  
+}
+
+.italic {
+  font-style:italic;
+}
+
+.bold {
+  font-weight:bold;
+}
+
+.hide {
+position: absolute;
+top: -20em;
+left: -200em;
+} 
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="./js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+var KEY_ENTER = 13;
+var KEY_SPACE = 32;
+var KEY_LEFT  = 37;
+var KEY_UP    = 38;
+var KEY_RIGHT = 39;
+var KEY_DOWN  = 40;
+
+$(document).ready(function() {
+
+/*
+	$('body').on('keydown', 'input, select, textarea', function(e) {
+		var self = $(this)
+		  , form = self.parents('form:eq(0)')
+		  , focusable
+		  , next
+		  , prev;
+
+		if (e.shiftKey) {
+		 if (e.keyCode == 13) {
+			 focusable =   form.find('input,a,select,button,textarea').filter(':visible');
+			 prev = focusable.eq(focusable.index(this)-1); 
+
+			 if (prev.length) {
+				prev.focus();
+			 } else {
+				form.submit();
+			}
+		  }
+		}
+		else if (e.keyCode == 13) {
+			focusable = form.find('input,a,select,button,textarea').filter(':visible');
+			next = focusable.eq(focusable.index(this)+1);
+			if (next.length) {
+				next.focus();
+			} else {
+				form.submit();
+			}
+			return false;
+		}
+	});
+*/
+	$(document).keydown(function(e) {
+
+	  // Set self as the current item in focus
+	  var self = $(':focus'),
+		  // Set the form by the current item in focus
+		  form = self.parents('form:eq(0)'),
+		  focusable;
+
+	  // Array of Indexable/Tab-able items
+	  focusable = form.find('li,input,a,select,button,textarea,div[contenteditable=true]').filter(':visible');
+
+	  function enterKey(){
+		if (e.which === 13 && !self.is('textarea,div[contenteditable=true]')) { // [Enter] key
+
+		  // If not a regular hyperlink/button/textarea
+		  if ($.inArray(self, focusable) && (!self.is('a,button'))){
+			// Then prevent the default [Enter] key behaviour from submitting the form
+			e.preventDefault();
+		  } // Otherwise follow the link/button as by design, or put new line in textarea
+
+		  // Focus on the next item (either previous or next depending on shift)
+		  focusable.eq(focusable.index(self) + (e.shiftKey ? -1 : 1)).focus();
+
+		  return false;
+		}
+	  }
+	  // We need to capture the [Shift] key and check the [Enter] key either way.
+	  if (e.shiftKey) { enterKey() } else { enterKey() }
+	});
+	
+	
+
+	$('ul.toolbar li').mousedown(function(event) {
+
+		var ariaControls = '#' + $(this).attr('aria-controls');
+		var button = $(this).attr('aria-labelledby');
+
+		// remove "_label" from the button string
+		button = button.substr(0, button.length - 6);
+
+		// trigger the blur event to reset the button images to the unfocused state.
+		// this is necessary because blur is not triggered for li elements when using the mouse
+		$('ul.toolbar li').trigger('blur');
+
+		$(this).siblings().attr('tabindex', "-1");
+		$(this).attr('tabindex', "0");
+
+		switch(button) {
+			case 'bigger': {
+				increaseFontSize(ariaControls);
+				$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-biggerPressed-focus.png");
+				break;
+			}
+			case 'smaller': {
+				decreaseFontSize(ariaControls);
+				$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-smallerPressed-focus.png");
+				break;
+			}
+			case 'italic':
+			case 'bold': {
+				$(ariaControls).toggleClass(button);
+
+				if ($(ariaControls).hasClass(button) == true) {
+					$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "Pressed-focus.png");
+				}
+				else
+				{
+					$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "-focus.png");
+				}
+				break;
+			}
+			case 'left':
+			case 'center':
+			case 'right':
+			case 'justify': {
+
+				// Set the pressed-focus button state
+				$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "Pressed-focus.png");
+				$(this).attr('aria-pressed', "true");
+
+				setAlignment(button, ariaControls);
+
+				// clear the other alignment buttons
+				$(this).siblings().each(function(index) {
+					var sib = $(this).attr('id');
+					sib = sib.substr(0, sib.length - 1);
+					$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + sib + ".png");
+					$(this).attr('aria-pressed', "false");
+				});
+
+				break;
+			}
+		} // end switch
+
+		if ($(this).hasClass('toggleButton') == true) {
+
+			// This is a toggle button: toggle aria-pressed state
+			togglePressed(this);
+		}
+		else if ($(this).hasClass('radioButton') == false) {
+
+			// This is a momentary pushbutton: Set aria-pressed to true
+			$(this).attr('aria-pressed', 'true');
+		}
+
+		// Give the current button focus
+		$(this).focus();
+
+		event.stopPropagation();
+		return false;
+	}); // end button click handler
+
+	// bind a mouseup handler to the buttons to enable momentary pushbuttons
+	// to return to unpressed state and toggle buttons to remain pressed
+	// 
+	$('ul.toolbar li').mouseup(function(event) {
+
+		if ($(this).hasClass('toggleButton') == false && $(this).hasClass('radioButton') == false) {
+
+			// Set aria-pressed to false
+			$(this).attr('aria-pressed', 'false');
+
+			// change button image to reflect unpressed state
+			switch ($(this).attr('aria-labelledby')) {
+				case 'bigger_label': {
+					$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-bigger-focus.png");
+					break;
+				}
+				case 'smaller_label': {
+					$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-smaller-focus.png");
+					break;
+				}
+			} // end switch
+		}
+
+		event.stopPropagation();
+		return false;
+	}); // end mouseup handler
+
+	 // keypress handler
+	 //
+	 // The Opera browser performs some window commands from the keypress event,
+	 // not keydown like Firefox, Safari, and IE. This event handler consumes
+	 // keypresses for relevant keys so that Opera behaves when the user is
+	 // manipulating the buttons with the keyboard.
+	 //
+	$('ul.toolbar li').keypress(function(event) {
+		switch (event.keyCode) {
+			case KEY_UP:
+			case KEY_DOWN:
+			case KEY_ENTER:
+			case KEY_SPACE: {
+				event.stopPropagation;
+				return false;
+				break;
+			} // end case
+		} //end switch
+
+		return true;
+	}); //end keypress event
+
+	$('ul.toolbar li').keydown(function(event) {
+
+		var ariaControls = '#' + $(this).attr('aria-controls');
+
+		$(this).siblings().attr('tabindex', "-1");
+		$(this).attr('tabindex', "0");
+
+
+		switch (event.keyCode) {
+			case KEY_UP: {
+				document.getElementById('bigger1').focus();
+				event.stopPropagation();
+				return false;
+			}
+			
+			case KEY_LEFT: {
+				selectedButton = $(this).prev();
+				if (!$(selectedButton).length) {
+					selectedButton = $(this).parent().children('li:last');
+				}
+
+				// Blur the other buttons in the toolbar
+				$(selectedButton).siblings().trigger('blur');
+
+				// Set focus to the selected button
+				$(selectedButton).focus();
+
+				event.stopPropagation();
+				return false;
+
+			} // end case
+			case KEY_DOWN: {
+				document.getElementById('left1').focus();
+				event.stopPropagation();
+				return false;
+			}
+			case KEY_RIGHT: {
+				selectedButton = $(this).next();
+				if (!$(selectedButton).length) {
+					selectedButton = $(this).parent().children('li:first');
+				}
+
+				// Blur the other buttons in the toolbar
+				$(selectedButton).siblings().trigger('blur');
+
+				// Set focus to the selected button
+				$(selectedButton).focus();
+
+				event.stopPropagation();
+				return false;
+				
+			} // end case
+			case KEY_ENTER:
+			case KEY_SPACE: {
+				var button = $(this).attr('aria-labelledby');
+
+				// remove "_label" from the button string
+				button = button.substr(0, button.length - 6);
+
+					switch(button) {
+					case 'bigger': {
+						increaseFontSize(ariaControls);
+						$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-biggerPressed-focus.png");
+						break;
+					}
+					case 'smaller': {
+						decreaseFontSize(ariaControls);
+						$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-smallerPressed-focus.png");
+						break;
+					}
+					case 'italic':
+					case 'bold': {
+						$(ariaControls).toggleClass(button);
+		
+						if ($(ariaControls).hasClass(button) == true) {
+							$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "Pressed-focus.png");
+						}
+						else
+						{
+							$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "-focus.png");
+						}
+						break;
+					}
+					case 'left':
+					case 'center':
+					case 'right':
+					case 'justify': {
+		
+						// Set the pressed-focus button state
+						$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "Pressed-focus.png");
+						$(this).attr('aria-pressed', "true");
+		
+						setAlignment(button, ariaControls);
+		
+						// clear the other alignment buttons
+						$(this).siblings().each(function(index) {
+							var sib = $(this).attr('id');
+							sib = sib.substr(0, sib.length - 1);
+							$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + sib + ".png");
+							$(this).attr('aria-pressed', "false");
+						});
+		
+						break;
+					}
+				} // end switch	
+
+				if ($(this).hasClass('toggleButton') == true) {
+
+						// This is a toggle button: toggle aria-pressed state
+						togglePressed(this);
+				}
+				else if ($(this).hasClass('radioButton') == false) {
+						// This is a momentary pushbutton: Set aria-pressed to true
+						$(this).attr('aria-pressed', 'true');
+				}
+
+				event.stopPropagation();
+				return false;
+
+			} // end case
+			
+		} // end switch
+
+		return true;
+	}); // end button click handler
+
+	// bind a keyup handler to the buttons to enable momentary pushbuttons
+	// to return to unpressed state and toggle buttons to remain pressed
+	// 
+	$('ul.toolbar li').keyup(function(event) {
+		
+		var id = this;
+		var selectedButton;
+
+		switch (event.keyCode) {
+			case KEY_ENTER:
+			case KEY_SPACE: {
+				if ($(this).hasClass('toggleButton') == false && $(this).hasClass('radioButton') == false) {
+				
+					// set aria-pressed to false
+					$(id).attr('aria-pressed', 'false');
+
+					// change button image to reflect unpressed state
+					switch ($(this).attr('aria-labelledby')) {
+						case 'bigger_label': {
+							$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-bigger-focus.png");
+							break;
+						}
+						case 'smaller_label': {
+							$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-smaller-focus.png");
+							break;
+						}
+					} // end switch
+				}
+
+				event.stopPropagation();
+				return false;
+
+			} // end case
+		} // end switch
+
+		return true;
+	}); // end mouseup handler
+
+	// bind a focus handler to set button image to show focus
+	// 
+	$('ul.toolbar li').focus(function(event) {
+
+		var pressed = "Pressed";
+		var button = $(this).attr('aria-labelledby');
+
+		// Remove "_label" from the button string
+		button = button.substr(0, button.length - 6);
+
+		// If aria-pressed is false, set pressed to be an empty string
+		if ($(this).attr('aria-pressed') == 'false') {
+			pressed = '';
+		}
+
+		$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + pressed + "-focus.png");
+		
+	}); // end focus handler
+
+	// bind a blur handler to set button image to show focus
+	// 
+	$('ul.toolbar li').blur(function(event) {
+
+		var pressed = "Pressed";
+		var button = $(this).attr('aria-labelledby');
+
+		// Remove "_label" from the button string
+		button = button.substr(0, button.length - 6);
+
+		// If aria-pressed is false, set pressed to be an empty string
+		if ($(this).attr('aria-pressed') == 'false') {
+			pressed = '';
+		}
+
+		$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + pressed + ".png");
+
+	}); // end blur handler
+
+	/**
+	 * increaseFontSize() increases the font size for the controlled area
+	 *
+	 * @param (ariaControls) id of text area to modify
+	 *
+	 * @return N/A
+	 */
+	function increaseFontSize(ariaControls) {
+	
+		var $text = $(ariaControls);
+		var fontSize = parseFloat($text.css('fontSize'), 10);
+	
+		// increase the font size
+		fontSize *= 1.4;
+	
+		if (fontSize > 120) {
+			return;
+		}
+		// write the new value to the css property
+		// note: 'px' must be appended for valid css
+		$text.css('fontSize', fontSize+'px');
+	} // end increaseFontSize()
+	
+	/**
+	 * decreaseFontSize() decreases the font size for the controlled area
+	 *
+	 * @param (ariaControls) id of text area to modify
+	 *
+	 * @return N/A
+	 */
+	function decreaseFontSize(ariaControls) {
+	
+		var $text = $(ariaControls);
+		var fontSize = parseFloat($text.css('fontSize'), 10);
+	
+		// increase the font size
+		fontSize /= 1.4;
+	
+		if (fontSize < 4) {
+			return;
+		}
+	
+		// write the new value to the css property
+		// note: 'px' must be appended for valid css
+		$text.css('fontSize', fontSize+'px');
+	
+	} // end decreaseFontSize
+	
+	/**
+	 * setAlignment() sets the aligment of text according to the values passed into the function
+	 *
+	 * @param (align) value of alignment to set
+	 * @param (id) button to be operated on
+	 *
+	 * @return N/A
+	 */
+	function setAlignment(align, id) {
+	
+		// reverse the aria-pressed state
+		$(id).css('text-align', align);
+	}
+
+	/**
+	 * togglePressed() toggles the aria-pressed atribute between true or false
+	 *
+	 * @param ( id object) button to be operated on
+	 *
+	 * @return N/A
+	 */
+	function togglePressed(id) {
+	
+		// reverse the aria-pressed state
+		if ($(id).attr('aria-pressed') == 'true') {
+			$(id).attr('aria-pressed', 'false');
+		}
+		else {
+			$(id).attr('aria-pressed', 'true');
+		}
+	}
+
+	document.getElementById("bigger1").focus();
+}); // end ready
+
+</script>
+
+
+
+
+
+  <style id="style-1-cropbar-clipper">/* Copyright 2014 Evernote Corporation. All rights reserved. */
+.en-markup-crop-options {
+    top: 18px !important;
+    left: 50% !important;
+    margin-left: -100px !important;
+    width: 200px !important;
+    border: 2px rgba(255,255,255,.38) solid !important;
+    border-radius: 4px !important;
+}
+
+.en-markup-crop-options div div:first-of-type {
+    margin-left: 0px !important;
+}
+</style></head>
+  
+<body data-feedly-mini="yes">
+
+<script type="text/javascript">
+	window.onload = function(){
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }
+		}
+	}
+</script>
+
+
+
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="http://oaa-accessibility.org/examples/prop/165/">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="http://oaa-accessibility.org/example/1/">First</a></li>
+        
+        
+        <li class="previous"><a href="http://oaa-accessibility.org/example/37/">Previous</a></li>
+        
+        <li>Example 38</li>
+        
+        <li class="next"><a href="http://oaa-accessibility.org/example/39/">Next</a></li>
+        
+        
+        <li class="last"><a href="http://oaa-accessibility.org/example/44/">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 38 - Toolbar using inline images for visual state</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a id="temp12" href="http://oaa-accessibility.org/examplep/toolbar1/">Permanent link for Toolbar using inline images for visual state</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div role="application">
+
+<h3>Text Sample 1</h3>
+
+<ul class="toolbar" title="Text Formatting Controls 1" role="toolbar" id="toolbar1">
+
+	<li id="bigger1" role="button" tabindex="-1" aria-pressed="false" aria-labelledby="bigger_label" aria-controls="text1"><img src="./image/button-bigger.png" alt="incease font size" align="middle"></li>
+		    
+	<li id="smaller1" role="button" tabindex="-1" aria-pressed="false" aria-labelledby="smaller_label" aria-controls="text1"><img src="./image/button-smaller.png" alt="decrease font size" align="middle"></li>
+		   
+	<li id="italic1" class="toggleButton" role="button" tabindex="-1" aria-pressed="true" aria-labelledby="italic_label" aria-controls="text1"><img src="./image/button-italicPressed.png" alt="italicize text" align="middle"></li>
+		
+	<li id="bold1" class="toggleButton" role="button" tabindex="0" aria-pressed="false" aria-labelledby="bold_label" aria-controls="text1"><img src="./image/button-bold.png" alt="bold text" align="middle"></li>
+		
+</ul>
+
+<ul class="toolbar" title="Paragraph Formatting Controls 1" role="toolbar" id="toolbar2">
+	
+	<li id="left1" class="radioButton" role="button" tabindex="-1" aria-pressed="true" aria-labelledby="left_label" aria-controls="text1"><img src="./image/button-leftPressed.png" alt="align text left" align="middle"></li>
+		    
+	<li id="center1" class="radioButton" role="button" tabindex="0" aria-pressed="false" aria-labelledby="center_label" aria-controls="text1"><img src="./image/button-center.png" alt="align text center" align="middle"></li>
+		   
+	<li id="right1" class="radioButton" role="button" tabindex="-1" aria-pressed="false" aria-labelledby="right_label" aria-controls="text1"><img src="./image/button-right.png" alt="align text right" align="middle"></li>
+		
+	<li id="justify1" class="radioButton" role="button" tabindex="-1" aria-pressed="false" aria-labelledby="justify_label" aria-controls="text1"><img src="./image/button-justify.png" alt="justify text" align="middle"></li>
+		
+</ul>
+
+<p style="clear: both; height: 1px">&nbsp;</p>
+
+<label for="text1">Example Text 1</label>
+<textarea id="text1" name="text1" class="example italic"> 
+Four score and seven years ago our fathers brought forth on this continent a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.
+
+Now we are engaged in a great civil war, testing whether that nation, or any nation, so conceived and so dedicated, can long endure. We are met on a great battle-field of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.
+</textarea>	
+<p>&nbsp;</p>
+
+<h3>Text Sample 2</h3>
+
+<ul class="toolbar" title="Text Formatting Controls 2" role="toolbar" id="toolbar3">
+
+	<li id="bigger2" role="button" tabindex="0" aria-pressed="false" aria-labelledby="bigger_label" aria-controls="text2"><img src="./image/button-bigger.png" alt="increase font size" align="middle"></li>
+		    
+	<li id="smaller2" role="button" tabindex="-1" aria-pressed="false" aria-labelledby="smaller_label" aria-controls="text2"><img src="./image/button-smaller.png" alt="decrease font size" align="middle"></li>
+		   
+	<li id="italic2" class="toggleButton" role="button" tabindex="-1" aria-pressed="false" aria-controls="text2" aria-labelledby="italic_label"><img src="./image/button-italic.png" alt="italicize text" align="middle"></li>
+		
+	<li id="bold2" class="toggleButton" role="button" tabindex="0" aria-pressed="true" aria-labelledby="bold_label" aria-controls="text2"><img src="./image/button-boldPressed.png" alt="bold text" align="middle"></li>
+		
+</ul>
+
+<ul class="toolbar" title="Paragraph Formatting Controls 2" role="toolbar" id="toolbar4">
+
+	<li id="left2" class="radioButton" role="button" tabindex="0" aria-pressed="true" aria-labelledby="left_label" aria-controls="text2"><img src="./image/button-leftPressed.png" alt="align text left" align="middle"></li>
+		    
+	<li id="center2" class="radioButton" role="button" tabindex="-1" aria-pressed="false" aria-labelledby="center_label" aria-controls="text2"><img src="./image/button-center.png" alt="align text center" align="middle"></li>
+		   
+	<li id="right2" class="radioButton" role="button" tabindex="-1" aria-pressed="false" aria-labelledby="right_label" aria-controls="text2"><img src="./image/button-right.png" alt="align text right" align="middle"></li>
+		
+	<li id="justify2" class="radioButton" role="button" tabindex="-1" aria-pressed="false" aria-labelledby="justify_label" aria-controls="text2"><img src="./image/button-justify.png" alt="justify text" align="middle"></li>
+
+</ul>
+
+<p style="clear: both; height: 1px">&nbsp;</p>
+
+<label for="text2">Example Text 2</label>
+<textarea id="text2" name="text2" class="example bold">But, in a larger sense, we can not dedicate - we can not consecrate - we can not hallow - this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us - that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion - that we here highly resolve that these dead shall not have died in vain - that this nation, under God, shall have a new birth of freedom - and that government of the people, by the people, for the people, shall not perish from the earth. 
+</textarea>
+
+<p class="hide" id="bold_label">Bold</p>
+
+<p class="hide" id="italic_label">Italic</p>
+
+<p class="hide" id="bigger_label">Font Larger</p>
+
+<p class="hide" id="smaller_label">Font Smaller</p>
+
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a toolbar widget using inline images to display the visual state of the buttons.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <ul>
+    <li>Tab: move between toolbar items.</li>
+    <li>Left and Right Arrows: move between button items.</li>
+    <li>Space: toggle <code>aria-pressed</code> state of currently focused button until key is released.</li>
+</ul>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-checked]</li>      
+        
+        <li>ARIA 1.0: [aria-describedby]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [aria-pressed]</li>      
+        
+        <li>ARIA 1.0: [role="application"]</li>      
+        
+        <li>ARIA 1.0: [role="button"]</li>      
+        
+        <li>ARIA 1.0: [role="toolbar"]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br>
+&lt;div role="application"&gt;<br>
+<br>
+&lt;h3&gt;Text Sample 1&lt;/h3&gt;<br>
+<br>
+&lt;ul class="toolbar" title="Text Formatting Controls 1" role="toolbar" id="toolbar1"&gt;<br>
+<br>
+&nbsp;&nbsp;&lt;li id="bigger1"&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="0"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="bigger_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-bigger.png" alt="incease font size" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="smaller1"&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="smaller_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-smaller.png" alt="decrease font size" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&lt;li id="italic1"&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="toggleButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="true"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="italic_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-italicPressed.png" alt="italicize text" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="bold1"&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="toggleButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="0"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="bold_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-bold.png" alt="bold text" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&lt;/ul&gt;<br>
+<br>
+&lt;ul class="toolbar" title="Paragraph Formatting Controls 1"&nbsp;&nbsp;role="toolbar" id="toolbar2"&gt;<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="left1" <br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="radioButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="0"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="true"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="left_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-leftPressed.png" alt="align text left" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="center1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="radioButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="center_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-center.png" alt="align text center" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&lt;li id="right1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="radioButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="right_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-right.png" alt="align text right" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="justify1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="radioButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="0"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="justify_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-justify.png" alt="justify text" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&lt;/ul&gt;<br>
+<br>
+&lt;p style="clear: both; height: 1px"&gt;&amp;nbsp;&lt;/p&gt;<br>
+<br>
+&lt;label for="text1"&gt;Example Text 1&lt;/label&gt;<br>
+&lt;textarea id="text1" name="text1" class="example italic"&gt; <br>
+Four score and seven years ago our fathers brought forth on this continent a new nation, conceived in Liberty, and dedicated to the proposition that all men are created equal.<br>
+<br>
+Now we are engaged in a great civil war, testing whether that nation, or any nation, so conceived and so dedicated, can long endure. We are met on a great battle-field of that war. We have come to dedicate a portion of that field, as a final resting place for those who here gave their lives that that nation might live. It is altogether fitting and proper that we should do this.<br>
+&lt;/textarea&gt;&nbsp;&nbsp;<br>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;<br>
+<br>
+&lt;h3&gt;Text Sample 2&lt;/h3&gt;<br>
+<br>
+&lt;ul class="toolbar" title="Text Formatting Controls 2"&nbsp;&nbsp;role="toolbar" id="toolbar3"&gt;<br>
+<br>
+&nbsp;&nbsp;&lt;li id="bigger2"&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="0"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="bigger_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-bigger.png" alt="increase font size" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="smaller2" <br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="smaller_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-smaller.png" alt="decrease font size" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&lt;li id="italic2"&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="toggleButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="italic_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-italic.png" alt="italicize text" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="bold2"&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="toggleButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="0"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="true"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="bold_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-boldPressed.png" alt="bold text" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&lt;/ul&gt;<br>
+<br>
+&lt;ul class="toolbar" title="Paragraph Formatting Controls 2"&nbsp;&nbsp;role="toolbar" id="toolbar4"&gt;<br>
+<br>
+&nbsp;&nbsp;&lt;li id="left2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="radioButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="0"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="true"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="left_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-leftPressed.png" alt="align text left" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="center2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="radioButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="center_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-center.png" alt="align text center" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&lt;li id="right2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="radioButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="right_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-right.png" alt="align text right" align="middle"&gt;&lt;/li&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&lt;li id="justify2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;class="radioButton"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;role="button"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;tabindex="-1"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-pressed="false"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-labelledby="justify_label"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;aria-controls="text2"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&gt;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-justify.png" alt="justify text" align="middle"&gt;&lt;/li&gt;<br>
+<br>
+&lt;/ul&gt;<br>
+<br>
+&lt;p style="clear: both; height: 1px"&gt;&amp;nbsp;&lt;/p&gt;<br>
+<br>
+&lt;label for="text2"&gt;Example Text 2&lt;/label&gt;<br>
+&lt;textarea id="text2" name="text2" class="example bold"&gt;<br>
+But, in a larger sense, we can not dedicate - we can not consecrate - we can not hallow - this ground. The brave men, living and dead, who struggled here, have consecrated it, far above our poor power to add or detract. The world will little note, nor long remember what we say here, but it can never forget what they did here. It is for us the living, rather, to be dedicated here to the unfinished work which they who fought here have thus far so nobly advanced. It is rather for us to be here dedicated to the great task remaining before us - that from these honored dead we take increased devotion to that cause for which they gave the last full measure of devotion - that we here highly resolve that these dead shall not have died in vain - that this nation, under God, shall have a new birth of freedom - and that government of the people, by the people, for the people, shall not perish from the earth. <br>
+&lt;/textarea&gt;<br>
+<br>
+&lt;p class="hide" id="bold_label"&gt;Bold&lt;/p&gt;<br>
+<br>
+&lt;p class="hide" id="italic_label"&gt;Italic&lt;/p&gt;<br>
+<br>
+&lt;p class="hide" id="bigger_label"&gt;Font Larger&lt;/p&gt;<br>
+<br>
+&lt;p class="hide" id="smaller_label"&gt;Font Smaller&lt;/p&gt;<br>
+<br>
+&lt;/div&gt;<br>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br>
+ul.toolbar{<br>
+&nbsp;&nbsp;float: left;<br>
+&nbsp;&nbsp;display: inline;<br>
+&nbsp;&nbsp;text-align: center;<br>
+&nbsp;&nbsp;margin: 0 !important;<br>
+&nbsp;&nbsp;padding: 0 1px !important;<br>
+&nbsp;&nbsp;font-size: 100% !important;<br>
+&nbsp;&nbsp;border: 1px solid black;<br>
+&nbsp;&nbsp;background-color: #ccc;<br>
+}<br>
+<br>
+ul.toolbar li{<br>
+&nbsp;&nbsp;float: left;<br>
+&nbsp;&nbsp;display: inline;<br>
+&nbsp;&nbsp;text-align: center;<br>
+&nbsp;&nbsp;margin: 0;<br>
+&nbsp;&nbsp;padding: 3px;<br>
+&nbsp;&nbsp;height: 36px;<br>
+&nbsp;&nbsp;height: 34px;<br>
+}<br>
+<br>
+ul div.italic{<br>
+&nbsp;&nbsp; font-style: italic;<br>
+}<br>
+<br>
+textarea.example {<br>
+&nbsp;&nbsp;clear: both;<br>
+&nbsp;&nbsp;margin: 0;<br>
+&nbsp;&nbsp;padding: .25em;<br>
+&nbsp;&nbsp;width: 60%;<br>
+&nbsp;&nbsp;height: 200px;<br>
+&nbsp;&nbsp;<br>
+}<br>
+<br>
+.italic {<br>
+&nbsp;&nbsp;font-style:italic;<br>
+}<br>
+<br>
+.bold {<br>
+&nbsp;&nbsp;font-weight:bold;<br>
+}<br>
+<br>
+.hide {<br>
+position: absolute;<br>
+top: -20em;<br>
+left: -200em;<br>
+} <br>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br>
+var KEY_ENTER = 13;<br>
+var KEY_SPACE = 32;<br>
+var KEY_LEFT&nbsp;&nbsp;= 37;<br>
+var KEY_UP&nbsp;&nbsp;&nbsp;&nbsp;= 38;<br>
+var KEY_RIGHT = 39;<br>
+var KEY_DOWN&nbsp;&nbsp;= 40;<br>
+<br>
+$(document).ready(function() {<br>
+<br>
+&nbsp;&nbsp;$('ul.toolbar li').mousedown(function(event) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var ariaControls = '#' + $(this).attr('aria-controls');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var button = $(this).attr('aria-labelledby');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// remove "_label" from the button string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;button = button.substr(0, button.length - 6);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// trigger the blur event to reset the button images to the unfocused state.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// this is necessary because blur is not triggered for li elements when using the mouse<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$('ul.toolbar li').trigger('blur');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$(this).siblings().attr('tabindex', "-1");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('tabindex', "0");<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switch(button) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'bigger': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;increaseFontSize(ariaControls);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-biggerPressed-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'smaller': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decreaseFontSize(ariaControls);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-smallerPressed-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'italic':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'bold': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(ariaControls).toggleClass(button);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($(ariaControls).hasClass(button) == true) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "Pressed-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'left':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'center':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'right':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'justify': {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Set the pressed-focus button state<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "Pressed-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('aria-pressed', "true");<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setAlignment(button, ariaControls);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// clear the other alignment buttons<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).siblings().each(function(index) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var sib = $(this).attr('id');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sib = sib.substr(0, sib.length - 1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + sib + ".png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('aria-pressed', "false");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;} // end switch<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if ($(this).hasClass('toggleButton') == true) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// This is a toggle button: toggle aria-pressed state<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;togglePressed(this);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else if ($(this).hasClass('radioButton') == false) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// This is a momentary pushbutton: Set aria-pressed to true<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('aria-pressed', 'true');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// Give the current button focus<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$(this).focus();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;event.stopPropagation();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+&nbsp;&nbsp;}); // end button click handler<br>
+<br>
+&nbsp;&nbsp;// bind a mouseup handler to the buttons to enable momentary pushbuttons<br>
+&nbsp;&nbsp;// to return to unpressed state and toggle buttons to remain pressed<br>
+&nbsp;&nbsp;// <br>
+&nbsp;&nbsp;$('ul.toolbar li').mouseup(function(event) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if ($(this).hasClass('toggleButton') == false &amp;&amp; $(this).hasClass('radioButton') == false) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Set aria-pressed to false<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('aria-pressed', 'false');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// change button image to reflect unpressed state<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch ($(this).attr('aria-labelledby')) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'bigger_label': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-bigger-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'smaller_label': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-smaller-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} // end switch<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;event.stopPropagation();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+&nbsp;&nbsp;}); // end mouseup handler<br>
+<br>
+&nbsp;&nbsp; // keypress handler<br>
+&nbsp;&nbsp; //<br>
+&nbsp;&nbsp; // The Opera browser performs some window commands from the keypress event,<br>
+&nbsp;&nbsp; // not keydown like Firefox, Safari, and IE. This event handler consumes<br>
+&nbsp;&nbsp; // keypresses for relevant keys so that Opera behaves when the user is<br>
+&nbsp;&nbsp; // manipulating the buttons with the keyboard.<br>
+&nbsp;&nbsp; //<br>
+&nbsp;&nbsp;$('ul.toolbar li').keypress(function(event) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switch (event.keyCode) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_UP:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_DOWN:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_ENTER:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_SPACE: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event.stopPropagation;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} // end case<br>
+&nbsp;&nbsp;&nbsp;&nbsp;} //end switch<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+&nbsp;&nbsp;}); //end keypress event<br>
+<br>
+&nbsp;&nbsp;$('ul.toolbar li').keydown(function(event) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var ariaControls = '#' + $(this).attr('aria-controls');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$(this).siblings().attr('tabindex', "-1");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('tabindex', "0");<br>
+<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switch (event.keyCode) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_UP:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_LEFT: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selectedButton = $(this).prev();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!$(selectedButton).length) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selectedButton = $(this).parent().children('li:last');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Blur the other buttons in the toolbar<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(selectedButton).siblings().trigger('blur');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Set focus to the selected button<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(selectedButton).focus();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event.stopPropagation();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} // end case<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_DOWN:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_RIGHT: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selectedButton = $(this).next();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (!$(selectedButton).length) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;selectedButton = $(this).parent().children('li:first');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Blur the other buttons in the toolbar<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(selectedButton).siblings().trigger('blur');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Set focus to the selected button<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(selectedButton).focus();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event.stopPropagation();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} // end case<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_ENTER:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_SPACE: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var button = $(this).attr('aria-labelledby');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// remove "_label" from the button string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;button = button.substr(0, button.length - 6);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch(button) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'bigger': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;increaseFontSize(ariaControls);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-biggerPressed-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'smaller': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;decreaseFontSize(ariaControls);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-smallerPressed-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'italic':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'bold': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(ariaControls).toggleClass(button);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($(ariaControls).hasClass(button) == true) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "Pressed-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'left':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'center':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'right':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'justify': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// Set the pressed-focus button state<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + "Pressed-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('aria-pressed', "true");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;setAlignment(button, ariaControls);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// clear the other alignment buttons<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).siblings().each(function(index) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;var sib = $(this).attr('id');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sib = sib.substr(0, sib.length - 1);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + sib + ".png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('aria-pressed', "false");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;});<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} // end switch&nbsp;&nbsp;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($(this).hasClass('toggleButton') == true) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// This is a toggle button: toggle aria-pressed state<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;togglePressed(this);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;else if ($(this).hasClass('radioButton') == false) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// This is a momentary pushbutton: Set aria-pressed to true<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).attr('aria-pressed', 'true');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event.stopPropagation();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} // end case<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;} // end switch<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+&nbsp;&nbsp;}); // end button click handler<br>
+<br>
+&nbsp;&nbsp;// bind a keyup handler to the buttons to enable momentary pushbuttons<br>
+&nbsp;&nbsp;// to return to unpressed state and toggle buttons to remain pressed<br>
+&nbsp;&nbsp;// <br>
+&nbsp;&nbsp;$('ul.toolbar li').keyup(function(event) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var id = this;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var selectedButton;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;switch (event.keyCode) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_ENTER:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case KEY_SPACE: {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if ($(this).hasClass('toggleButton') == false &amp;&amp; $(this).hasClass('radioButton') == false) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// set aria-pressed to false<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(id).attr('aria-pressed', 'false');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// change button image to reflect unpressed state<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch ($(this).attr('aria-labelledby')) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'bigger_label': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-bigger-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;case 'smaller_label': {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-smaller-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;break;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} // end switch<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;event.stopPropagation();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return false;<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;} // end case<br>
+&nbsp;&nbsp;&nbsp;&nbsp;} // end switch<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return true;<br>
+&nbsp;&nbsp;}); // end mouseup handler<br>
+<br>
+&nbsp;&nbsp;// bind a focus handler to set button image to show focus<br>
+&nbsp;&nbsp;// <br>
+&nbsp;&nbsp;$('ul.toolbar li').focus(function(event) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var pressed = "Pressed";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var button = $(this).attr('aria-labelledby');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// Remove "_label" from the button string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;button = button.substr(0, button.length - 6);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// If aria-pressed is false, set pressed to be an empty string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if ($(this).attr('aria-pressed') == 'false') {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pressed = '';<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + pressed + "-focus.png");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;}); // end focus handler<br>
+<br>
+&nbsp;&nbsp;// bind a blur handler to set button image to show focus<br>
+&nbsp;&nbsp;// <br>
+&nbsp;&nbsp;$('ul.toolbar li').blur(function(event) {<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var pressed = "Pressed";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var button = $(this).attr('aria-labelledby');<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// Remove "_label" from the button string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;button = button.substr(0, button.length - 6);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// If aria-pressed is false, set pressed to be an empty string<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if ($(this).attr('aria-pressed') == 'false') {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;pressed = '';<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$(this).children('img').attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-" + button + pressed + ".png");<br>
+<br>
+&nbsp;&nbsp;}); // end blur handler<br>
+<br>
+&nbsp;&nbsp;/**<br>
+&nbsp;&nbsp; * increaseFontSize() increases the font size for the controlled area<br>
+&nbsp;&nbsp; *<br>
+&nbsp;&nbsp; * @param (ariaControls) id of text area to modify<br>
+&nbsp;&nbsp; *<br>
+&nbsp;&nbsp; * @return N/A<br>
+&nbsp;&nbsp; */<br>
+&nbsp;&nbsp;function increaseFontSize(ariaControls) {<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var $text = $(ariaControls);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var fontSize = parseFloat($text.css('fontSize'), 10);<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// increase the font size<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fontSize *= 1.4;<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (fontSize &gt; 120) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// write the new value to the css property<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// note: 'px' must be appended for valid css<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$text.css('fontSize', fontSize+'px');<br>
+&nbsp;&nbsp;} // end increaseFontSize()<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;/**<br>
+&nbsp;&nbsp; * decreaseFontSize() decreases the font size for the controlled area<br>
+&nbsp;&nbsp; *<br>
+&nbsp;&nbsp; * @param (ariaControls) id of text area to modify<br>
+&nbsp;&nbsp; *<br>
+&nbsp;&nbsp; * @return N/A<br>
+&nbsp;&nbsp; */<br>
+&nbsp;&nbsp;function decreaseFontSize(ariaControls) {<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var $text = $(ariaControls);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;var fontSize = parseFloat($text.css('fontSize'), 10);<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// increase the font size<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fontSize /= 1.4;<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if (fontSize &lt; 4) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// write the new value to the css property<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// note: 'px' must be appended for valid css<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$text.css('fontSize', fontSize+'px');<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;} // end decreaseFontSize<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;/**<br>
+&nbsp;&nbsp; * setAlignment() sets the aligment of text according to the values passed into the function<br>
+&nbsp;&nbsp; *<br>
+&nbsp;&nbsp; * @param (align) value of alignment to set<br>
+&nbsp;&nbsp; * @param (id) button to be operated on<br>
+&nbsp;&nbsp; *<br>
+&nbsp;&nbsp; * @return N/A<br>
+&nbsp;&nbsp; */<br>
+&nbsp;&nbsp;function setAlignment(align, id) {<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// reverse the aria-pressed state<br>
+&nbsp;&nbsp;&nbsp;&nbsp;$(id).css('text-align', align);<br>
+&nbsp;&nbsp;}<br>
+<br>
+&nbsp;&nbsp;/**<br>
+&nbsp;&nbsp; * togglePressed() toggles the aria-pressed atribute between true or false<br>
+&nbsp;&nbsp; *<br>
+&nbsp;&nbsp; * @param ( id object) button to be operated on<br>
+&nbsp;&nbsp; *<br>
+&nbsp;&nbsp; * @return N/A<br>
+&nbsp;&nbsp; */<br>
+&nbsp;&nbsp;function togglePressed(id) {<br>
+&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;// reverse the aria-pressed state<br>
+&nbsp;&nbsp;&nbsp;&nbsp;if ($(id).attr('aria-pressed') == 'true') {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(id).attr('aria-pressed', 'false');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;else {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$(id).attr('aria-pressed', 'true');<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;}<br>
+<br>
+}); // end ready<br>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      © 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+
+
+<div id="feedly-mini" title="feedly Mini tookit"></div></body></html>

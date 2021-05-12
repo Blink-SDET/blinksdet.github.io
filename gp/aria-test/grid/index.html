@@ -1,0 +1,3283 @@
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 18 - Grid Example: Reimbursement Form</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+table#expenses {
+	margin: 0;
+	padding: 0;
+	border: 1px solid black;
+	border-spacing: 0;
+}
+
+caption {
+	margin: 0;
+	padding: 5px;
+	border: 2px solid black;
+	font-weight: bold;
+	font-size: 1.25em;
+	color: #027;
+	background-color: #eee;
+}
+
+table#expenses th {
+	margin: 0;
+	padding: 5px;
+	border: 1px solid black;
+	background-color: #eee;
+	color: #027;
+}
+table#expenses th.date {
+background-color: #fff;
+font-weight: normal;
+}
+
+table#expenses td {
+	margin: 0;
+	padding: 2px;
+   background-color: #fff;
+	border: 1px solid black;
+	border: 1px solid black;
+}
+
+.expense, .miles {
+	text-align: right;
+}
+.calc, .reimbursement {
+	background-color: #ffe !important;
+	font-weight: bold;
+	text-align: right;
+	color: #027;
+}
+
+#msg, #alert {
+	border-top: 3px solid black !important;
+}
+
+.offscreen {
+	position: absolute;
+	top: -30em;
+	left: -300em;
+}
+
+.edt {
+	margin: 1px;
+	padding: 0;
+	width: 100%;
+	border: none;
+	background-color: white;
+	display: none;
+}
+.data {
+	margin: 0;
+	padding: 0;
+	width: 100%;
+}
+div.addButton {
+   float: left;
+   display: inline;
+   width: 1.5em;
+   text-align: center;
+   font-weight: bold;
+   color: #800;
+   background-color: #eee;
+   border-top: 1px solid #777;
+   border-left: 1px solid #777;
+   border-right: 2px solid #000;
+   border-bottom: 2px solid #000;
+}
+div.pressed {
+   background-color: #fff;
+   border-top: 2px solid #000;
+   border-left: 2px solid #000;
+   border-bottom: 1px solid #777;
+   border-right: 1px solid #777;
+}
+div.disabled {
+   background-color: #eee;
+   color: #444;
+   border-top: 1px solid #777;
+   border-left: 1px solid #777;
+   border-bottom: 2px solid #000;
+   border-right: 2px solid #000;
+}
+.focus {
+	background-color: #79e !important;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+$(document).ready(function () {
+
+	// Create an instance of the travel Calculator. Parameters are the table to use,
+	// the per-mile reimbursement, the maximum number of data rows, and the initial
+	// number of rows to create.
+	var app = new travelCalc('table#expenses', 0.15, 5, 1);
+	$('#addRow').focus();
+}); // end ready function
+
+function keyCodes () {
+	// Define values for keycodes
+	this.backspace  = 168; // Rewind key, 8;
+	this.tab        = 9;
+	this.enter      = 13;
+	this.esc        = 403; // 27;
+
+	this.space      = 406; //32;
+	this.pageup     = 33;
+	this.pagedown   = 34;
+	this.end        = 404; //35;
+	this.home       = 405; //36;
+
+	this.left       = 37;
+	this.up         = 38;
+	this.right      = 39;
+	this.down       = 40; 
+
+	this.insert     = 358;//info key, 45; 
+	this.del        = 128;//stop key, 46; 
+
+	this.f2         = 119; //pause key, 113; 
+}
+
+//
+// travelCalc() is a class to implement a simple travel reimbusement calculator
+//
+// @param (table string) table is the id of the table to operate on
+//
+// @param (maxRows integer) maxRows is the maximum number of rows an instance of
+// travelCalc may have
+//
+// @param (initNum integer) initNum is the number of rows to add during object instantiation
+//
+// @return N/A
+//
+function travelCalc(table, reimbursement, maxRows, initNum) {
+
+	var thisObj = this; // Store the this pointer
+
+	// Define class properties
+	this.reimbursement = reimbursement;
+	this.maxRows = maxRows; // maximum number of rows allowed this instance
+	this.numRows = 0;	// The current number of rows belonging to instance
+	this.curRow = 0;	// The currently selected row
+	this.curCol = 0;	// The currently selected column
+	this.$tbody = $(table).find('tbody#data'); // Store the tbody object
+   this.$addButton = $(table).find('.addButton'); // Store the add row button object
+	this.editMode = false;  // True if in edit mode
+
+	this.keys = new keyCodes();
+
+	// Bind handlers
+	this.bindHandlers();
+
+	// Add rows
+	for (var ndx = 0; ndx < initNum; ndx += 1) {
+		this.addRow();
+	}
+
+	// Store the collection of editable table cells in an object property
+	// this property must be updated when adding new rows.
+	this.$editableCells = this.$tbody.find('td.editable,th.editable');
+
+	// Make first row navigable
+	$('#row1-date').attr('tabindex', '0');
+
+} // end travelCalc constructor
+
+//
+// addRow() is a member function to add a row to the data grid. Function builds a string containing
+// the elements to add, and appends the string to the table. addRow() will not add a new row if
+// maxRows has been reached.
+//
+// @return N/A
+//
+travelCalc.prototype.addRow = function() {
+	var thisObj = this;	// store a pointer to this object
+
+	// Do not add a new row if maxRows has been reached
+	if (this.numRows < this.maxRows) { 
+		var label;
+
+		// Increment the number of rows
+		this.numRows += 1;
+
+		var row = '<tr role="row" id="row' + (this.numRows) + '">';
+
+		// date cell
+		label = 'aria-labelledby="date r' + this.numRows + '"';
+		row += '<th id="row' + this.numRows + '-date" role="gridcell" ' +
+			'class="date editable" ' + label + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-date-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-date-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter travel date of trip ' + this.numRows + '" />' +
+			'</th>';
+
+		// Departure location cell
+		headers = 'headers="location1 row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-location1" role="gridcell" ' +
+			'class="location editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-location1-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-location1-edt" class="edt" type="text" aria-hidden="true" size="12" title="Enter departure location for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Departure time cell
+		headers = 'headers="time1 row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-time1" role="gridcell" ' +
+			'class="time editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-time1-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-time1-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter departure time for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Arrived at cell
+		headers = 'headers="location2 row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-location2" role="gridcell" ' +
+			'class="location editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-location2-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-location2-edt" class="edt" type="text" aria-hidden="true" size="12" title="Enter destination for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Arrival time cell
+		headers = 'headers="time2 row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-time2" role="gridcell" ' +
+			'class="time editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-time2-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-time2-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter arrival time for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Automobile miles cell
+		headers = 'headers="miles row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-miles" role="gridcell" ' +
+			'class="miles editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-miles-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-miles-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter miles driven for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Mileage reimbursement cell
+		headers = 'headers="mileage row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-mileage" role="gridcell" ' +
+			'class="calc" ' + headers + 'tabindex="-1">-</td>';
+
+		// Air et al. transportation cost cell
+		headers = 'headers="trans-other row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-trans-other" role="gridcell" ' +
+			'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-trans-other-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-trans-other-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter air, rail, or other major travel expense for trip ' +
+         this.numRows + '" />' +
+			'</td>';
+
+		// Car rental transportation cost cell
+		headers = 'headers="trans-rental row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-trans-rental" role="gridcell" ' +
+			'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-trans-rental-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-trans-rental-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter car rental expense for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Misc. transportation cost cell
+		headers = 'headers="trans-misc row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-trans-misc" role="gridcell" ' +
+			'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-trans-misc-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-trans-misc-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter miscellaneous expenses, such as parking, tolls, or taxi, for trip ' +
+         this.numRows + '" />' +
+			'</td>';
+
+		// Lodging cost cell
+		headers = 'headers="lodging row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-lodging" role="gridcell" ' +
+			'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-lodging-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-lodging-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter lodging expense for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Meals cost cell
+		headers = 'headers="meals row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-meals" role="gridcell" ' +
+			'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-meals-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-meals-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter meal expense for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Misc. cost cell
+		headers = 'headers="misc row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-misc" role="gridcell" ' +
+			'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1">' +
+			'<span id="row' + this.numRows + '-misc-dta" class="data" aria-hidden="false"></span>' +
+			'<input id="row' + this.numRows + '-misc-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter other miscellaneous expenses for trip ' + this.numRows + '" />' +
+			'</td>';
+
+		// Row total cell and closing tr
+		headers = 'headers="total row' + this.numRows + '-date"';
+		row += '<td id="row' + this.numRows + '-total" class="calc" ' + headers + '>-</td></tr>'
+
+		// Append the new row to the grid
+		$('tbody').find('tr#totals').before(row);
+
+		// Add an entry for this row in the list of rows
+		$('#row_numbers').append('<div id="r' + this.numRows + '">Row ' + this.numRows + '</div>');
+		
+	}
+   else {
+			$('td#alert').text('Maximum number of rows (' + this.maxRows + ') reached.');
+         this.$addButton.unbind('mousedown mouseup keydown keyup');
+         this.$addButton.addClass('disabled');
+         this.$addButton.attr('aria-disabled', 'true');
+         this.$addButton.removeClass('pressed');
+         this.$addButton.attr('aria-pressed', 'false');
+   }
+
+} //end addRow()
+
+//
+// bindHandlers() is a member function to bind event handlers to the tbody of the data table. This uses event
+// delegation to manage events for the children cells. Event delegation is much faster than binding to each cell,
+// and it also allows new table rows to be handled.
+//
+// @return N/A
+//
+travelCalc.prototype.bindHandlers = function() {
+	var thisObj = this;	// store a pointer to this object
+	var $tbody = this.$tbody; // store a pointer to the table body property (saves a dereference)
+	var $button = this.$addButton; // store a pointer to the add row button property (saves a dereference)
+
+	/************ Bind the handlers for the editable grid cells  in the data table **********/
+	//
+
+	// bind a click handler
+	$tbody.delegate('.editable', 'click', function (e) {
+			return thisObj.handleCellClick(this, e);
+	}); // end click handler
+
+	// bind a double click handler
+	$tbody.delegate('.editable', 'dblclick', function (e) {
+			return thisObj.handleCellDblclick(this, e);
+	}); // end double click handler
+
+	// bind a keydown handler
+	$tbody.delegate('.editable', 'keydown', function (e) {
+			return thisObj.handleCellKeyDown(this, e);
+	}); // end keydown handler
+
+	// bind a keypress handler - consume events for Opera
+	$tbody.delegate('.editable', 'keypress', function (e) {
+			return thisObj.handleCellKeyPress(this, e);
+	}); // end keyup handler
+
+	// bind a focus handler
+	$tbody.delegate('.editable', 'focus', function (e) {
+			return thisObj.handleCellFocus(this, e);
+	}); // end focus handler
+
+	// bind a blur handler
+	$tbody.delegate('.editable', 'blur', function (e) {
+			return thisObj.handleCellBlur(this, e);
+	}); // end blur handler
+
+
+	/************ Bind the handlers for the edit boxes in the editable cells **********/
+	
+	// bind a keydown handler
+	$tbody.delegate('input.edt', 'keydown', function (e) {
+			return thisObj.handleEditKeyDown(this, e);
+	}); // end edit box keydown handler
+
+	// bind a keypress handler - consume events for Opera
+	$tbody.delegate('input.edt', 'keypress', function (e) {
+			return thisObj.handleEditKeyPress(this, e);
+	}); // end edit box keyup handler
+
+	// bind a focus handler
+	$tbody.delegate('input.edt', 'focus', function (e) {
+			return thisObj.handleEditFocus(this, e);
+	}); // end edit box focus handler
+
+	// bind a blur handler
+	$tbody.delegate('input.edt', 'blur', function (e) {
+			return thisObj.handleEditBlur(this, e);
+	}); // end edit box blurhandler
+
+	/************ Bind the handlers for the add row button **********/
+	
+	// bind a mousedown handler
+	$button.mousedown(function (e) {
+			return thisObj.handleAddMouseDown(this, e);
+	}); // end add button mousedown handler
+
+	// bind a mouseup handler
+	$button.mouseup(function (e) {
+			return thisObj.handleAddMouseUp(this, e);
+	}); // end add button mouseup handler
+
+	// bind a keydown handler
+	$button.keydown(function (e) {
+			return thisObj.handleAddKeyDown(this, e);
+	}); // end add button keydown handler
+
+	// bind a keyup handler
+	$button.keyup(function (e) {
+			return thisObj.handleAddKeyUp(this, e);
+	}); // end add button keyup handler
+
+	// bind a focus handler
+	$button.focus(function (e) {
+			return thisObj.handleAddFocus(this, e);
+	}); // end add button focus handler
+
+	// bind a blur handler
+	$button.blur(function (e) {
+			return thisObj.handleAddBlur(this, e);
+	}); // end add button blur handler
+
+} // end bindHandlers()
+
+
+//
+// enterEditMode() is a member function to enter the edit mode of an editable cell
+//
+// @param (id object) id is the jQuery object of the cell to operate on
+//
+// @return N/A
+//
+travelCalc.prototype.enterEditMode = function($id) {
+
+	var $edt = $id.find('.edt');
+	var $data = $id.find('.data');
+	
+	// Clear any old alert messages
+	$('td#alert').text('');
+
+	// Set the editMode flag to true -- make edit mode modal
+	// This is faster than unbinding edit cell event handlers
+	this.editMode = true;
+
+	// Copy the data from the cell's data span into the edit box
+	$edt.val($data.text());
+
+	// hide the data and show the edit box
+	$data.hide();
+   $data.attr('aria-hidden', 'true');
+	$edt.show();
+   $edt.attr('aria-hidden', 'false');
+
+	// give the edit box focus
+	$edt.focus();
+
+} // end enterEditMode()
+
+//
+// leaveEditMode() is a member function to exit the edit mode of an editable cell
+//
+// @param (id object) id is the jQuery object of the cell to operate on
+//
+// @return N/A
+//
+travelCalc.prototype.leaveEditMode = function(id) {
+
+	var $cell = $(id);
+	var $edt = $cell.find('.edt');
+	var $data = $cell.find('.data');
+	var thisObj = this;
+	var validEntry = true;
+
+
+	// Make sure we are actually in edit mode
+	if (this.editMode == false) {
+		return;
+	}
+
+	// Validate the input
+	if ($cell.hasClass('date')) {
+
+		if (this.validateDate($edt) == true) {
+
+			// Store the changes
+			$data.text($edt.val());
+		}
+	}
+	else if ($cell.hasClass('time')) {
+
+		if (this.validateTime($edt) == true) {
+
+			// Store the changes
+			$data.text($edt.val());
+		}
+	}
+	else if ($cell.hasClass('miles')) {
+
+		if (this.validateMiles($edt) == true) {
+
+			var $reimbursementCell = $cell.next(); 
+
+			// Store the changes
+			$data.text($edt.val());
+
+			// Calculate the mileage reimbursement
+			$reimbursementCell.text( this.calcMileAmount($edt.val()) );
+
+			// recalculate the daily total
+			this.calcDaily($cell.attr('id').split('-')[0])
+
+			// recalculate the mileage reimbursement total
+			this.calcMileageTotal();
+
+			// recalculate the total reimbursement
+			this.calcTotalReimbursement();
+		}
+	}
+	else if ($cell.hasClass('expense')) {
+
+		if (this.validateExpense($edt) == true) {
+
+			// Store the changes
+			$data.text($edt.val());
+
+			// recalculate the daily total
+			this.calcDaily($cell.attr('id').split('-')[0])
+
+			// recalculate the column total
+			this.calcExpenseTotal($cell.attr('id'))
+
+			// recalculate the total reimbursement
+			this.calcTotalReimbursement();
+		}
+	}
+	else {
+		// Don't validate; just store the changes
+		$data.text($edt.val());
+	}
+
+	// Set the editMode flag to false
+	this.editMode = false;
+
+	// Hide the edit box and show the data
+	$edt.hide();
+   $edt.attr('aria-hidden', 'true');
+	$data.show();
+   $data.attr('aria-hidden', 'false');
+
+	// Give the parent focus
+	$cell.focus();
+
+
+} // end leaveEditMode()
+
+//
+// validateDate() is a member function to validate data entered in the date column
+//
+// @param (id object) id is the jQuery object of the edit box the user modified
+//
+// @return true if valid entry; false if invalid
+//
+travelCalc.prototype.validateDate = function($edt) {
+
+	var curDate = new Date();
+
+	if ($edt.val() != "") {
+		// try parsing as date using JavaScript Date constructor
+		var dateValue = new Date($edt.val().replace(/-/g, '/'));
+
+
+		if (isFinite(dateValue)) {
+
+			// If user entered 2-digit year, the date will be approximately 100 years off. Check for this and correct
+			if (curDate.getFullYear() - dateValue.getFullYear() >= 99) {
+				dateValue.setFullYear(dateValue.getFullYear() + 100);
+			}
+
+			// Check if date entered is in the future
+			if (dateValue > curDate) {
+				$('td#alert').text('Date must be before the current date');
+				return false;
+			}
+
+			// Set date to 60 days in the past
+			curDate.setDate(curDate.getDate() - 60);
+
+			// Check if date entered is older than 60 days ago
+			if (dateValue < curDate) {
+				$('td#alert').text('Date must be within the last 60 days');
+				return false;
+			}
+
+			// format as mm/dd/yyyy
+			$edt.val( (dateValue.getMonth() + 1) + '/' + dateValue.getDate() + '/' + dateValue.getFullYear() );
+			return true;
+		}
+		else {
+			$('td#alert').text('Date needs to be in date format, such as 1/31/2001.');
+			return false;
+		}
+	}
+
+	return false;
+
+} // end validateDate()
+
+//
+// validateTime() is a member function to validate data entered in the time columns
+//
+// @param (id object) id is the jQuery object of the edit box the user modified
+//
+// @return true if valid entry; false if invalid
+//
+travelCalc.prototype.validateTime = function($edt) {
+
+	if ($edt.val() != "") {
+		var str = $.trim($edt.val());
+
+		if (/^(0?[1-9]|1[0-2]):[0-5]\d ?([ap]m?)?$/.test(str) == false) {
+
+			$('td#alert').text('Time must be in valid time format, such as h:mm [am|pm]');
+			return false;
+		}
+	}
+
+	return true;
+
+} // end validateTime()
+
+//
+// validateMiles() is a member function to validate data entered in the Automobile Miles column
+//
+// @param (id object) id is the jQuery object of the edit box the user modified
+//
+// @return true if valid entry; false if invalid
+//
+travelCalc.prototype.validateMiles = function($edt) {
+
+	if ($edt.val() != "") {
+		var str = $.trim($edt.val());
+
+		if (/^\d*$/.test(str) == false) {
+
+			$('td#alert').text('Automobile Miles must be a number');
+			return "Invalid";
+		}
+	}
+
+	return true;
+
+} // end validateMiles()
+
+//
+// validateExpense() is a member function to validate data entered in the expense columns
+//
+// @param (id object) id is the jQuery object of the edit box the user modified
+//
+// @return true if valid entry; false if invalid
+//
+travelCalc.prototype.validateExpense = function($edt) {
+
+	if ($edt.val() != "") {
+		var str = $.trim($edt.val());
+
+		if (/^\$?[1-9]\d{0,2}(,\d{3})*(\.\d{0,2})?$/.test(str) ) {
+
+			if (str.charAt(0) != '$') {
+				str = '$' + str;
+			}
+			
+			if (/\.\d$/.test(str)) {
+				str += "0";
+			}
+			else if (/\.$/.test(str) ) {
+				str += "00";
+			}
+			else if (!/\.\d{2}$/.test(str) ) {
+				str += ".00";
+			}
+			$edt.val(str);
+			return true;
+		}
+		else {
+			$('td#alert').text('Expense must be in valid US money format, such as $1,000.00');
+			return "Invalid";
+		}
+	}
+
+	return true;
+
+} // end validateExpense()
+
+//
+// calcMileAmount() is a member function to calculate the automobile mileage reimbursement for a trip
+//
+// @param (miles int) miles is the total miles entered in the Automobile Miles column
+//
+// @return The calculated reimbursement, in U.S. currency format
+//
+travelCalc.prototype.calcMileAmount = function(miles) {
+
+	var amount = '$' + (miles * this.reimbursement); 
+	var tmp = amount.split('.');
+
+	// If cents is defined, round to the nearest cent
+	if (tmp[1] != undefined) {
+		var rounded = Math.round(tmp[1].substr(0,2) + '.' + tmp[1].substr(2));
+		amount = tmp[0] + '.' + rounded;
+	}
+
+	// Add cents
+	if (/\.\d$/.test(amount)) {
+		amount += "0";
+	}
+	else if (/\.$/.test(amount) ) {
+		amount += "00";
+	}
+	else if (!/\.\d{2}$/.test(amount) ) {
+		amount += ".00";
+	}
+
+	return amount;
+}
+
+//
+// calcDaily() is a member function to calculate the daily total cost of a trip
+//
+// @param (row string) row is the id of the current row the user modified
+//
+// @return N/A
+//
+travelCalc.prototype.calcDaily = function(row) {
+	var total = $('#' + row + '-mileage').text().substr(1); // Strip the '$'
+
+	if (total.length) {
+		// remove any ',' from the value and convert to a float
+		total = parseFloat(total.replace(/,/g, ''));
+	}
+	else {
+		total = 0;
+	}
+
+	// Add the total for each expense
+	$('#' + row).find('td.expense').each(function() {
+		var expense = $(this).find('.data').text().substr(1);
+
+		if (expense.length) {
+			// remove any ',' from the value
+			expense = expense.replace(/,/g, '');
+				
+			total += parseFloat(expense);
+		}
+	});
+
+	// Add cents
+	if (/\.\d$/.test(total)) {
+		total += "0";
+	}
+	else if (/\.$/.test(total) ) {
+		total += "00";
+	}
+	else if (!/\.\d{2}$/.test(total) ) {
+		total += ".00";
+	}
+	
+	$('#' + row + '-total').text('$' + total);
+}
+
+//
+// calcMileageTotal() is a member function to calculate the total mileage Reimbursement amount
+//
+// @return N/A
+//
+travelCalc.prototype.calcMileageTotal = function() {
+
+	var total = 0;
+
+	// Iterate through the column, adding the expense to the total.
+	for (var row = 1; row <= this.numRows ; row++) {
+		var expense = $('#row' + row + '-mileage').text().substr(1); // strip the'$' from the expense
+
+		if (expense.length) {
+			// remove any ',' from the value
+			expense = expense.replace(/,/g, '');
+				
+			total += parseFloat(expense);
+		}
+	}
+
+	// Add cents
+	if (/\.\d$/.test(total)) {
+		total += "0";
+	}
+	else if (/\.$/.test(total) ) {
+		total += "00";
+	}
+	else if (!/\.\d{2}$/.test(total) ) {
+		total += ".00";
+	}
+
+	$('#calc-total-mileage').text('$' + total);
+}
+
+//
+// calcExpenseTotal() is a member function to calculate the total expense for a column
+//
+// @param (id string) id is the id of the column to update
+//
+// @return N/A
+//
+travelCalc.prototype.calcExpenseTotal = function(id) {
+
+	var total = 0;
+	var col = id.substr(id.indexOf('-'));
+
+	// Iterate through the column, adding the expense to the total.
+	for (var row = 1; row <= this.numRows ; row++) {
+		var expense = $('#row' + row + col).find('span').text().substr(1); // strip the'$' from the expense
+
+		if (expense.length) {
+			// remove any ',' from the value
+			expense = expense.replace(/,/g, '');
+				
+			total += parseFloat(expense);
+		}
+	}
+
+	// Add cents
+	if (/\.\d$/.test(total)) {
+		total += "0";
+	}
+	else if (/\.$/.test(total) ) {
+		total += "00";
+	}
+	else if (!/\.\d{2}$/.test(total) ) {
+		total += ".00";
+	}
+
+	$('#calc-total' + col).text('$' + total);
+}
+
+//
+// calcTotalReimbursement() is a member function to calculate the total expense reimbursement
+//
+// @return N/A
+//
+travelCalc.prototype.calcTotalReimbursement = function() {
+
+	var total = 0;
+
+	// Iterate through the column, adding the expense to the total.
+	$('th#total-expenses-lbl').siblings().not('td#calc-total-reimbursement').each(function() {
+		var expense = $(this).text().substr(1); // strip the'$' from the expense
+
+		if (expense.length) {
+			// remove any ',' from the value
+			expense = expense.replace(/,/g, '');
+				
+			total += parseFloat(expense);
+		}
+	});
+
+	// Add cents
+	if (/\.\d$/.test(total)) {
+		total += "0";
+	}
+	else if (/\.$/.test(total) ) {
+		total += "00";
+	}
+	else if (!/\.\d{2}$/.test(total) ) {
+		total += ".00";
+	}
+
+	$('#calc-total-reimbursement').text('$' + total);
+}
+
+//
+// handleCellClick() is a callback for the click event. It is bound to the editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+//
+// @return N/A
+//
+travelCalc.prototype.handleCellClick = function(id, e) {
+
+	$(id).focus();
+
+	e.stopPropagation();
+	return false;
+
+} // end handleCellClick()
+
+//
+// handleCellDblclick() is a callback for the dblclick event. It is bound to the editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleCellDblclick = function(id, e) {
+
+	// do nothing if we are in editMode
+	if (this.editMode == false) {
+
+		// enter the edit mode for the cell
+		this.enterEditMode($(id));
+	}
+
+	e.stopPropagation();
+	return false;
+
+} //end handleCellDblclick()
+
+//
+// handleCellKeyDown() is a callback for the keydown event. It is bound to the editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return False if specified key is pressed, true if other keypress
+//
+travelCalc.prototype.handleCellKeyDown = function(id, e) {
+
+	var $curCell = $(id); // Store the current cell object to prevent repeated DOM traversals
+
+	// do nothing if the shift, alt, or ctrl key is pressed or we are in editMode
+	if (e.ctrlKey == true || e.altKey == true || e.shiftKey == true || this.editMode == true) {
+		return true;
+	}
+
+	switch (e.keyCode) {
+		case 461: // back key input
+		{
+			console.log("handleTabKeyDown: keycode="+e.keyCode);
+			e.stopPropagation();
+			//window.history.back();
+			window.location.replace("../../menu.html");
+			return false;
+		}
+		case this.keys.enter:
+		case this.keys.f2: {
+			// enter the edit mode for the cell
+			this.enterEditMode($curCell);
+
+			e.stopPropagation();
+			return false;
+			break;
+		}
+		case this.keys.left: {
+			var $newCell = $curCell.prev();
+
+			// If there is another editable cell to the right, select it
+			if ($newCell.length) {
+
+				if ($newCell.attr('id').search('mileage') > 0) {
+					// skip this column
+					$newCell = $newCell.prev();
+				}
+
+				if ($newCell.hasClass('editable')) {
+
+					// Make the new cell navigable and give it focus
+					// Use jQuery chaining for optimization
+					$newCell.attr('tabindex', '0').focus();
+				}
+			}
+
+			e.stopPropagation();
+			return false;
+			break;
+		}
+		case this.keys.right: {
+			var $newCell = $curCell.next();
+
+			// If there is another editable cell to the right, select it
+			if ($newCell.length) {
+
+				if ($newCell.attr('id').search('mileage') > 0) {
+					// skip this column
+					$newCell = $newCell.next();
+				}
+
+				if ($newCell.hasClass('editable')) {
+
+					// Make the new cell navigable and give it focus
+					// Use jQuery chaining for optimization
+					$newCell.attr('tabindex', '0').focus();
+				}
+			}
+
+			e.stopPropagation();
+			return false;
+			break;
+		}
+		case this.keys.up: {
+			// Cell id's are of the form "row#-colName". We need to isolate the row number and
+			// column name
+			var curRow = $curCell.attr('id');
+			var len = curRow.indexOf('-');
+			var rowNum = curRow.substr(3, len - 3) - 1;
+
+			if (rowNum > 0)
+			{
+				// build the id string of the new cell
+				var newCell = '#row' + rowNum + '-' + curRow.substr(len + 1);
+
+				// Make the new cell navigable and give it focus
+				// Use jQuery chaining for optimization
+				$(newCell).attr('tabindex', '0').focus();
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.down: {
+			// Cell id's are of the form "row#-colName". We need to isolate the row number and
+			// column name
+			var curRow = $curCell.attr('id');
+			var len = curRow.indexOf('-');
+			var rowNum = parseInt(curRow.substr(3, len - 3)) + 1;
+
+			if (rowNum <= this.numRows)
+			{
+				// build the id string of the new cell
+				var newCell = '#row' + rowNum + '-' + curRow.substr(len + 1);
+
+				// Make the new cell navigable and give it focus
+				// Use jQuery chaining for optimization
+				$(newCell).attr('tabindex', '0').focus();
+			} else {
+				$('#addRow').focus();
+			}
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.pageup: {
+			// Cell id's are of the form "row#-colName". We need to isolate the row number and
+			// column name
+			var curRow = $curCell.attr('id');
+			var len = curRow.indexOf('-');
+			var rowNum = parseInt(curRow.substr(3, len - 3)) - 1;
+
+			if (rowNum > 0)
+			{
+				// build the id string of the new cell
+				var newCell = '#row1-' + curRow.substr(len + 1);
+
+				// Make the new cell navigable and give it focus
+				// Use jQuery chaining for optimization
+				$(newCell).attr('tabindex', '0').focus();
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.pagedown: {
+			// Cell id's are of the form "row#-colName". We need to isolate the row number and
+			// column name
+			var curRow = $curCell.attr('id');
+			var len = curRow.indexOf('-');
+			var rowNum = parseInt(curRow.substr(3, len - 3)) + 1;
+
+			if (rowNum <= this.numRows)
+			{
+				// build the id string of the new cell
+				var newCell = '#row' + this.numRows + '-' + curRow.substr(len + 1);
+
+				// Make the new cell navigable and give it focus
+				// Use jQuery chaining for optimization
+				$(newCell).attr('tabindex', '0').focus();
+			}
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.home: {
+			var row = $curCell.attr('id').split('-')[0];
+
+			// Make the new cell navigable and give it focus
+			// Use jQuery chaining for optimization
+			$('#' + row + '-date').attr('tabindex', '0').focus();
+
+			e.stopPropagation();
+			return false;
+			break;
+		}
+		case this.keys.end: {
+			var row = $curCell.attr('id').split('-')[0];
+
+			// Make the new cell navigable and give it focus
+			// Use jQuery chaining for optimization
+			$('#' + row + '-misc').attr('tabindex', '0').focus();
+
+			e.stopPropagation();
+			return false;
+			break;
+		}
+
+	}
+
+	return true;
+
+} // end handleCellKeyDown
+
+//
+// handleCellKeyPress() is a callback for the keypress event. It is bound to the editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return False if specified key is released, true if other key released
+//
+travelCalc.prototype.handleCellKeyPress = function(id, e) {
+
+	// do nothing if the shift, alt, or ctrl key is pressed or we are in editMode
+	if (e.ctrlKey == true || e.altKey == true || e.shiftKey == true || this.editMode == true) {
+		return true;
+	}
+	
+	switch (e.keyCode) {
+		case this.keys.enter:
+		case this.keys.f2:
+		case this.keys.left:
+		case this.keys.right:
+		case this.keys.up:
+		case this.keys.down:
+		case this.keys.pageup:
+		case this.keys.pagedown:
+		case this.keys.home:
+		case this.keys.end: {
+
+			e.stopPropagation();
+			return false;
+			break;
+		}
+	}
+
+	return true;
+
+} // end handleCellKeyPress
+
+//
+// handleCellFocus() is a callback for the focus event. It is bound to the editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleCellFocus = function(id, e) {
+
+	// Remove the highlighting from the table cells and remove them from the tab order.
+	// Use jQuery chaining for optimization
+	this.$editableCells.attr('tabindex', '-1').removeClass('focus').attr('aria-selected', 'false');
+
+	// Add the highlighting for the focused cell and make it navigable
+	// Use jQuery Chaining for optimization
+	$(id).addClass('focus').attr('tabindex', '0').attr('aria-selected', 'true');
+
+	return true;
+
+} // end handleCellFocus()
+
+//
+// handleCellBlur() is a callback for the blur event. It is bound to the editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleCellBlur = function(id, e) {
+
+	var $cell = $(id);
+	// do nothing if we are in editMode
+	if (this.editMode == false) {
+		$cell.removeClass('focus').attr('aria-selected', 'false');
+	}
+	return true;
+
+} // end handleCellBlur()
+
+//
+// handleEditKeyDown() is a callback for the keydown event. It is bound to the edit boxes in the
+// editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+//
+// @return N/A
+//
+travelCalc.prototype.handleEditKeyDown = function(id, e) {
+
+	var $parentNode = $(id).parent();
+	var $newNode;
+	
+	// do nothing if the ctrl or alt key is pressed
+	if (e.ctrlKey == true || e.altKey == true) {
+		return true;
+	}
+
+	switch (e.keyCode) {
+		case 461: // back key input
+		{
+			console.log("handleTabKeyDown: keycode="+e.keyCode);
+			e.stopPropagation();
+			//window.history.back();
+			window.location.replace("../../menu.html");
+			return false;
+		}
+		case this.keys.tab: {
+			var haveNewCell = false;
+
+			if (e.shiftKey) {
+				// user pressed shift-tab
+				$newNode = $parentNode.prev();
+				if ($newNode.length) {
+					if ($newNode.attr('id').search('mileage') > 0) {
+						$newNode = $newNode.prev();
+					}
+
+					haveNewCell = true;
+				}
+			}
+			else {
+				$newNode = $parentNode.next();
+				if ($newNode.length) {
+					if ($newNode.attr('id').search('mileage') > 0) {
+						$newNode = $newNode.next();
+					}
+
+					haveNewCell = true;
+				}
+			}
+			// leave edit mode
+			this.leaveEditMode($parentNode);
+
+			// Select the next editable cell (if possible)
+			if (haveNewCell == true && $newNode.is('.editable')) {
+				$newNode.focus();
+			}
+
+			e.stopPropagation();
+			return false;
+			break;
+		}
+		case this.keys.enter:
+		case this.keys.f2:
+		case this.keys.esc: {
+			// leave edit mode
+			this.leaveEditMode($parentNode);
+			e.stopPropagation();
+			return false;
+			break;
+		}
+	}
+
+	return true;
+
+} // end handleEditKeyDown()
+
+//
+// handleEditKeyPress() is a callback for the keypress event. It is bound to the edit boxes in the
+// editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleEditKeyPress = function(id, e) {
+
+	// do nothing if the ctrl or alt key is pressed
+	if (e.ctrlKey == true || e.altKey == true) {
+		return true;
+	}
+	switch (e.keyCode) {
+		case this.keys.tab:
+		case this.keys.enter:
+		case this.keys.f2:
+		case this.keys.esc: {
+			e.stopPropagation();
+			return false;
+			break;
+		}
+	}
+	return true;
+} // end handleEditKeyPress()
+
+//
+// handleEditFocus() is a callback for the focus event. It is bound to the edit boxes in the
+// editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleEditFocus = function(id, e) {
+	
+	var $parentNode = $(id).parent();
+	
+	return true;
+}
+
+//
+// handleEditBlur() is a callback for the blur event. It is bound to the edit boxes in the
+// editable grid cells
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleEditBlur = function(id, e) {
+
+	var $parentNode = $(id).parent();
+	
+	// leave edit mode
+	this.leaveEditMode($parentNode);
+
+	e.stopPropagation();
+	return false;
+}
+
+//
+// handleAddMouseDown() is a callback for the mousedown event. It is bound to the add row button
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+//
+// @return N/A
+//
+travelCalc.prototype.handleAddMouseDown = function(id, e) {
+
+   $(id).addClass('pressed');
+   $(id).attr('aria-pressed', 'true')
+   this.addRow();
+   $(id).removeClass('pressed');
+   $(id).attr('aria-pressed', 'false')
+   $(id).focus();
+
+	e.stopPropagation();
+	return false;
+
+} // end handleAddMouseDown()
+
+//
+// handleAddMouseUp() is a callback for the mouseup event. It is bound to the add row button
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+//
+// @return N/A
+//
+travelCalc.prototype.handleAddMouseUp = function(id, e) {
+
+   $(id).removeClass('pressed');
+   $(id).attr('aria-pressed', 'false')
+
+	e.stopPropagation();
+	return false;
+
+} // end handleAddMouseUp()
+
+//
+// handleAddKeyDown() is a callback for the keydown event. It is bound to the add row button
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleAddKeyDown = function(id, e) {
+
+	// do nothing if the ctrl or alt key is pressed
+	if (e.ctrlKey == true || e.altKey == true) {
+		return true;
+	}
+	switch (e.keyCode) {
+		case 461: // back key input
+		{
+			console.log("handleTabKeyDown: keycode="+e.keyCode);
+			e.stopPropagation();
+			//window.history.back();
+			window.location.replace("../../menu.html");
+			return false;
+		}
+		case this.keys.enter:
+		case this.keys.space: {
+         $(id).addClass('pressed');
+         $(id).attr('aria-pressed', 'true')
+         this.addRow();
+			e.stopPropagation();
+			return false;
+			break;
+		}
+		case this.keys.up:
+		case this.keys.left:
+		case this.keys.right:
+		case this.keys.down: {
+			$('th#row1-date').focus();
+			e.stopPropagation();
+			return false;
+			break;
+		}
+		
+	}
+	return true;
+} // end handleAddKeyDown()
+
+//
+// handleAddKeyUp() is a callback for the keyup event. It is bound to the add row button
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleAddKeyUp = function(id, e) {
+
+	// do nothing if the ctrl or alt key is pressed
+	if (e.ctrlKey == true || e.altKey == true) {
+		return true;
+	}
+	switch (e.keyCode) {
+		case this.keys.enter:
+		case this.keys.space: {
+         $(id).removeClass('pressed');
+         $(id).attr('aria-pressed', 'false')
+			e.stopPropagation();
+			return false;
+			break;
+		}
+	}
+	return true;
+} // end handleAddKeyDown()
+
+//
+// handleAddFocus() is a callback for the focus event. It is bound to the add row button
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleAddFocus = function(id, e) {
+	
+	$(id).addClass('buttonFocus');
+	return true;
+}
+
+//
+// handleAddBlur() is a callback for the blur event. It is bound to the add row button
+//
+// @param (id object) id is the element generating the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return N/A
+//
+travelCalc.prototype.handleAddBlur = function(id, e) {
+
+	$(id).removeClass('buttonFocus pressed');
+   $(id).attr('aria-pressed', 'false')
+	return false;
+}
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../17/index.html">Previous</a></li>
+        
+        <li>Example 18</li>
+        
+        <li class="next"><a href="../19/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 18 - Grid Example: Reimbursement Form</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/grid1/index.html">Permanent link for Grid Example: Reimbursement Form</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div role="application">
+
+    <table id="expenses" role="grid" summary="ARIA Enabled Travel Reimbursement Form Example">
+        <caption>ARIA Enabled Travel Reimbursement Form Example</caption>
+        <thead>
+        <tr>
+            <th id="date" rowspan="2" role="columnheader">Date</th>
+            <th id="from" colspan="2" role="columnheader">Departed From</th>
+            <th id="to" colspan="2" role="columnheader">Arrived At</th>
+            <th id="miles" rowspan="2" role="columnheader">Automobile<br/> Miles</th>
+            <th id="mileage" rowspan="2" role="columnheader">Mileage <br/>Reimbursement</th>
+            <th id="trans" colspan="3" role="columnheader">Other Transportation Cost</th>
+            <th id="lodging" rowspan="2" role="columnheader">Lodging</th>
+            <th id="meals" rowspan="2" role="columnheader">Meals</th>
+            <th id="misc" rowspan="2" role="columnheader">Miscellaneous</th>
+            <th id="total" rowspan="2" role="columnheader">Daily<br/>Total</th>
+        </tr>
+        <tr>
+            <th id="location1" role="columnheader">Location</th>
+            <th id="time1" role="columnheader">Time</th>
+            <th id="location2" role="columnheader">Location</th>
+            <th id="time2" role="columnheader">Time</th>
+            <th id="trans-other" role="columnheader">Air, Rails, etc..</th>
+            <th id="trans-rental" role="columnheader">Car Rental</th>
+            <th id="trans-misc" role="columnheader">Taxi, Parking, Tolls, etc..</th>
+        </tr>
+        </thead>
+        <tbody id="data">
+        <tr id="totals" role="row">
+            <th id="total-expenses-lbl" class="calc" role="gridcell" colspan="6">
+               <div id="addRow" role="button" class="addButton" tabindex="0" title="Add new row" aria-pressed="false" aria-disabled="false">+</div>
+               Total Travel Expenses
+            </td>
+            <td id="calc-total-mileage" class="calc" role="gridcell" headers="total-expenses-lbl mileage" aria-label="Total Mileage">-</td>
+            <td id="calc-total-trans-other" class="calc" role="gridcell" headers="total-expenses-lbl trans-other" aria-label="Total air or rail transportation">-</td>
+            <td id="calc-total-trans-rental" class="calc" role="gridcell" headers="total-expenses-lbl trans-rental" aria-label="Total car rental">-</td>
+            <td id="calc-total-trans-misc" class="calc" role="gridcell" headers="total-expenses-lbl trans-misc" aria-label="Total taxi, parking and tolls">-</td>
+            <td id="calc-total-lodging" class="calc" role="gridcell" headers="total-expenses-lbl lodging" aria-label="Total lodging">-</td>
+            <td id="calc-total-meals" class="calc" role="gridcell" headers="total-expenses-lbl meals" aria-label="Total meals">-</td>
+            <td id="calc-total-misc" class="calc" role="gridcell" headers="total-expenses-lbl misc" aria-label="Total miscellaneous">-</td>
+            <td id="calc-total-reimbursement" class="reimbursement" role="gridcell" headers="total-expenses-lbl total" aria-label="Total reimbursement" aria-live="polite">-</td>
+        </tr>
+        <tr>
+            <th id="msg">Messages: </th><td headers="msg" colspan="13" id="alert" role="alert">&nbsp;</td>
+        </tr>  
+        </tbody>
+    </table>
+
+    <div id="debug"></div>  
+    
+    <div id="row_numbers" class="offscreen"></div>  
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a grid widget to implement a travel reimbursement form.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <p><a href="http://dev.aol.com/dhtml_style_guide#grid">Based on the keyboard shortcuts defined in the AOL DHTML Style guide for grid</a></p>
+<ul>
+    <li>Tab (standard mode): Move focus between grid, links and form controls.</li>
+    <li>Tab (actionable mode): Move focus.</li>
+    <li>ENTER or F2 (standard mode): Edit contents of gridcell.</li>
+    <li>ENTER or F2 (Actionable mode): Update the contents of the gridcell.</li>
+    <li>ESC (Actionable mode): Move to standard mode, do not update the contents of the gridcell.</li>
+    <li>Up Arrow: Move focus to gridcell in previous row</li>
+    <li>Down Arrow: Move focus to gridcell in next row</li>
+    <li>Left Arrow: Move focus one gridcell to the left.</li>
+    <li>Right Arrow: Move focus one gridcell to the right.</li>
+    <li>Home: Move focus to first gridcell in the row.</li>
+    <li>End: Move focus to the last gridcell to the row.</li>
+    <li>Page Up: Move focus to the first gridcell in the columm.</li>
+    <li>Page Down: Move focus to the last gridcell in the column.</li>
+</ul>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-disabled]</li>      
+        
+        <li>ARIA 1.0: [aria-hidden]</li>      
+        
+        <li>ARIA 1.0: [aria-label]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [aria-live]</li>      
+        
+        <li>ARIA 1.0: [aria-pressed]</li>      
+        
+        <li>ARIA 1.0: [aria-selected]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;alert&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;application&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;button&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;grid&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;gridcell&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;row&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div role="application"&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&lt;table id="expenses" role="grid" summary="ARIA Enabled Travel Reimbursement Form Example"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;caption&gt;ARIA Enabled Travel Reimbursement Form Example&lt;/caption&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;thead&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;tr&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="date" rowspan="2"&gt;Date&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="from" colspan="2"&gt;Departed From&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="to" colspan="2"&gt;Arrived At&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="miles" rowspan="2"&gt;Automobile&lt;br/&gt; Miles&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="mileage" rowspan="2"&gt;Mileage &lt;br/&gt;Reimbursement&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="trans" colspan="3"&gt;Other Transportation Cost&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="lodging" rowspan="2"&gt;Lodging&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="meals" rowspan="2"&gt;Meals&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="misc" rowspan="2"&gt;Miscellaneous&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="total" rowspan="2"&gt;Daily&lt;br/&gt;Total&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/tr&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;tr&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="location1"&gt;Location&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="time1"&gt;Time&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="location2"&gt;Location&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="time2"&gt;Time&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="trans-other"&gt;Air, Rails, etc..&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="trans-rental"&gt;Car Rental&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="trans-misc"&gt;Taxi, Parking, Tolls, etc..&lt;/th&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/tr&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/thead&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;tbody id="data"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;tr id="totals" role="row"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="total-expenses-lbl" class="calc" role="gridcell" colspan="6"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;div id="addRow" role="button" class="addButton" tabindex="0" title="Add new row" aria-pressed="false" aria-disabled="false"&gt;+&lt;/div&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; Total Travel Expenses<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;td id="calc-total-mileage" class="calc" role="gridcell" headers="total-expenses-lbl mileage" aria-label="Total Mileage"&gt;-&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;td id="calc-total-trans-other" class="calc" role="gridcell" headers="total-expenses-lbl trans-other" aria-label="Total air or rail transportation"&gt;-&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;td id="calc-total-trans-rental" class="calc" role="gridcell" headers="total-expenses-lbl trans-rental" aria-label="Total car rental"&gt;-&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;td id="calc-total-trans-misc" class="calc" role="gridcell" headers="total-expenses-lbl trans-misc" aria-label="Total taxi, parking and tolls"&gt;-&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;td id="calc-total-lodging" class="calc" role="gridcell" headers="total-expenses-lbl lodging" aria-label="Total lodging"&gt;-&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;td id="calc-total-meals" class="calc" role="gridcell" headers="total-expenses-lbl meals" aria-label="Total meals"&gt;-&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;td id="calc-total-misc" class="calc" role="gridcell" headers="total-expenses-lbl misc" aria-label="Total miscellaneous"&gt;-&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;td id="calc-total-reimbursement" class="reimbursement" role="gridcell" headers="total-expenses-lbl total" aria-label="Total reimbursement" aria-live="polite"&gt;-&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/tr&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;tr&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;th id="msg"&gt;Messages: &lt;/th&gt;&lt;td headers="msg" colspan="13" id="alert" role="alert"&gt;&amp;nbsp;&lt;/td&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/tr&gt;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/tbody&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;/table&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&lt;div id="debug"&gt;&lt;/div&gt;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&lt;div id="row_numbers" class="offscreen"&gt;&lt;/div&gt;&#160;&#160;<br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+table#expenses {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+&#160;&#160;border-spacing: 0;<br/>
+}<br/>
+<br/>
+caption {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 5px;<br/>
+&#160;&#160;border: 2px solid black;<br/>
+&#160;&#160;font-weight: bold;<br/>
+&#160;&#160;font-size: 1.25em;<br/>
+&#160;&#160;color: #027;<br/>
+&#160;&#160;background-color: #eee;<br/>
+}<br/>
+<br/>
+table#expenses th {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 5px;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+&#160;&#160;background-color: #eee;<br/>
+&#160;&#160;color: #027;<br/>
+}<br/>
+table#expenses th.date {<br/>
+background-color: #fff;<br/>
+font-weight: normal;<br/>
+}<br/>
+<br/>
+table#expenses td {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 2px;<br/>
+&#160;&#160; background-color: #fff;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+}<br/>
+<br/>
+.expense, .miles {<br/>
+&#160;&#160;text-align: right;<br/>
+}<br/>
+.calc, .reimbursement {<br/>
+&#160;&#160;background-color: #ffe !important;<br/>
+&#160;&#160;font-weight: bold;<br/>
+&#160;&#160;text-align: right;<br/>
+&#160;&#160;color: #027;<br/>
+}<br/>
+<br/>
+#msg, #alert {<br/>
+&#160;&#160;border-top: 3px solid black !important;<br/>
+}<br/>
+<br/>
+.offscreen {<br/>
+&#160;&#160;position: absolute;<br/>
+&#160;&#160;top: -30em;<br/>
+&#160;&#160;left: -300em;<br/>
+}<br/>
+<br/>
+.edt {<br/>
+&#160;&#160;margin: 1px;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;width: 100%;<br/>
+&#160;&#160;border: none;<br/>
+&#160;&#160;background-color: white;<br/>
+&#160;&#160;display: none;<br/>
+}<br/>
+.data {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;width: 100%;<br/>
+}<br/>
+div.addButton {<br/>
+&#160;&#160; float: left;<br/>
+&#160;&#160; display: inline;<br/>
+&#160;&#160; width: 1.5em;<br/>
+&#160;&#160; text-align: center;<br/>
+&#160;&#160; font-weight: bold;<br/>
+&#160;&#160; color: #800;<br/>
+&#160;&#160; background-color: #eee;<br/>
+&#160;&#160; border-top: 1px solid #777;<br/>
+&#160;&#160; border-left: 1px solid #777;<br/>
+&#160;&#160; border-right: 2px solid #000;<br/>
+&#160;&#160; border-bottom: 2px solid #000;<br/>
+}<br/>
+div.pressed {<br/>
+&#160;&#160; background-color: #fff;<br/>
+&#160;&#160; border-top: 2px solid #000;<br/>
+&#160;&#160; border-left: 2px solid #000;<br/>
+&#160;&#160; border-bottom: 1px solid #777;<br/>
+&#160;&#160; border-right: 1px solid #777;<br/>
+}<br/>
+div.disabled {<br/>
+&#160;&#160; background-color: #eee;<br/>
+&#160;&#160; color: #444;<br/>
+&#160;&#160; border-top: 1px solid #777;<br/>
+&#160;&#160; border-left: 1px solid #777;<br/>
+&#160;&#160; border-bottom: 2px solid #000;<br/>
+&#160;&#160; border-right: 2px solid #000;<br/>
+}<br/>
+.focus {<br/>
+&#160;&#160;background-color: #79e !important;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+$(document).ready(function () {<br/>
+<br/>
+&#160;&#160;// Create an instance of the travel Calculator. Parameters are the table to use,<br/>
+&#160;&#160;// the per-mile reimbursement, the maximum number of data rows, and the initial<br/>
+&#160;&#160;// number of rows to create.<br/>
+&#160;&#160;var app = new travelCalc('table#expenses', 0.15, 5, 1);<br/>
+<br/>
+}); // end ready function<br/>
+<br/>
+function keyCodes () {<br/>
+&#160;&#160;// Define values for keycodes<br/>
+&#160;&#160;this.backspace&#160;&#160;= 8;<br/>
+&#160;&#160;this.tab&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;= 9;<br/>
+&#160;&#160;this.enter&#160;&#160;&#160;&#160;&#160;&#160;= 13;<br/>
+&#160;&#160;this.esc&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;= 27;<br/>
+<br/>
+&#160;&#160;this.space&#160;&#160;&#160;&#160;&#160;&#160;= 32;<br/>
+&#160;&#160;this.pageup&#160;&#160;&#160;&#160; = 33;<br/>
+&#160;&#160;this.pagedown&#160;&#160; = 34;<br/>
+&#160;&#160;this.end&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;= 35;<br/>
+&#160;&#160;this.home&#160;&#160;&#160;&#160;&#160;&#160; = 36;<br/>
+<br/>
+&#160;&#160;this.left&#160;&#160;&#160;&#160;&#160;&#160; = 37;<br/>
+&#160;&#160;this.up&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; = 38;<br/>
+&#160;&#160;this.right&#160;&#160;&#160;&#160;&#160;&#160;= 39;<br/>
+&#160;&#160;this.down&#160;&#160;&#160;&#160;&#160;&#160; = 40; <br/>
+<br/>
+&#160;&#160;this.insert&#160;&#160;&#160;&#160; = 45; <br/>
+&#160;&#160;this.del&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;= 46; <br/>
+<br/>
+&#160;&#160;this.f2&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; = 113; <br/>
+}<br/>
+<br/>
+//<br/>
+// travelCalc() is a class to implement a simple travel reimbusement calculator<br/>
+//<br/>
+// @param (table string) table is the id of the table to operate on<br/>
+//<br/>
+// @param (maxRows integer) maxRows is the maximum number of rows an instance of<br/>
+// travelCalc may have<br/>
+//<br/>
+// @param (initNum integer) initNum is the number of rows to add during object instantiation<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+function travelCalc(table, reimbursement, maxRows, initNum) {<br/>
+<br/>
+&#160;&#160;var thisObj = this; // Store the this pointer<br/>
+<br/>
+&#160;&#160;// Define class properties<br/>
+&#160;&#160;this.reimbursement = reimbursement;<br/>
+&#160;&#160;this.maxRows = maxRows; // maximum number of rows allowed this instance<br/>
+&#160;&#160;this.numRows = 0;&#160;&#160;// The current number of rows belonging to instance<br/>
+&#160;&#160;this.curRow = 0;&#160;&#160;// The currently selected row<br/>
+&#160;&#160;this.curCol = 0;&#160;&#160;// The currently selected column<br/>
+&#160;&#160;this.$tbody = $(table).find('tbody#data'); // Store the tbody object<br/>
+&#160;&#160; this.$addButton = $(table).find('.addButton'); // Store the add row button object<br/>
+&#160;&#160;this.editMode = false;&#160;&#160;// True if in edit mode<br/>
+<br/>
+&#160;&#160;this.keys = new keyCodes();<br/>
+<br/>
+&#160;&#160;// Bind handlers<br/>
+&#160;&#160;this.bindHandlers();<br/>
+<br/>
+&#160;&#160;// Add rows<br/>
+&#160;&#160;for (var ndx = 0; ndx &lt; initNum; ndx += 1) {<br/>
+&#160;&#160;&#160;&#160;this.addRow();<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// Store the collection of editable table cells in an object property<br/>
+&#160;&#160;// this property must be updated when adding new rows.<br/>
+&#160;&#160;this.$editableCells = this.$tbody.find('td.editable,th.editable');<br/>
+<br/>
+&#160;&#160;// Make first row navigable<br/>
+&#160;&#160;$('#row1-date').attr('tabindex', '0');<br/>
+<br/>
+} // end travelCalc constructor<br/>
+<br/>
+//<br/>
+// addRow() is a member function to add a row to the data grid. Function builds a string containing<br/>
+// the elements to add, and appends the string to the table. addRow() will not add a new row if<br/>
+// maxRows has been reached.<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.addRow = function() {<br/>
+&#160;&#160;var thisObj = this;&#160;&#160;// store a pointer to this object<br/>
+<br/>
+&#160;&#160;// Do not add a new row if maxRows has been reached<br/>
+&#160;&#160;if (this.numRows &lt; this.maxRows) { <br/>
+&#160;&#160;&#160;&#160;var label;<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Increment the number of rows<br/>
+&#160;&#160;&#160;&#160;this.numRows += 1;<br/>
+<br/>
+&#160;&#160;&#160;&#160;var row = '&lt;tr role="row" id="row' + (this.numRows) + '"&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// date cell<br/>
+&#160;&#160;&#160;&#160;label = 'aria-labelledby="date r' + this.numRows + '"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;th id="row' + this.numRows + '-date" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="date editable" ' + label + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-date-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-date-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter travel date of trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/th&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Departure location cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="location1 row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-location1" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="location editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-location1-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-location1-edt" class="edt" type="text" aria-hidden="true" size="12" title="Enter departure location for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Departure time cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="time1 row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-time1" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="time editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-time1-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-time1-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter departure time for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Arrived at cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="location2 row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-location2" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="location editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-location2-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-location2-edt" class="edt" type="text" aria-hidden="true" size="12" title="Enter destination for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Arrival time cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="time2 row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-time2" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="time editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-time2-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-time2-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter arrival time for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Automobile miles cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="miles row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-miles" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="miles editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-miles-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-miles-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter miles driven for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Mileage reimbursement cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="mileage row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-mileage" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="calc" ' + headers + 'tabindex="-1"&gt;-&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Air et al. transportation cost cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="trans-other row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-trans-other" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-trans-other-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-trans-other-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter air, rail, or other major travel expense for trip ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Car rental transportation cost cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="trans-rental row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-trans-rental" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-trans-rental-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-trans-rental-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter car rental expense for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Misc. transportation cost cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="trans-misc row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-trans-misc" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-trans-misc-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-trans-misc-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter miscellaneous expenses, such as parking, tolls, or taxi, for trip ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Lodging cost cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="lodging row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-lodging" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-lodging-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-lodging-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter lodging expense for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Meals cost cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="meals row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-meals" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-meals-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-meals-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter meal expense for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Misc. cost cell<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="misc row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-misc" role="gridcell" ' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'class="expense editable" ' + headers + 'aria-selected="false" tabindex="-1"&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;span id="row' + this.numRows + '-misc-dta" class="data" aria-hidden="false"&gt;&lt;/span&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;input id="row' + this.numRows + '-misc-edt" class="edt" type="text" aria-hidden="true" size="6" title="Enter other miscellaneous expenses for trip ' + this.numRows + '" /&gt;' +<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;'&lt;/td&gt;';<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Row total cell and closing tr<br/>
+&#160;&#160;&#160;&#160;headers = 'headers="total row' + this.numRows + '-date"';<br/>
+&#160;&#160;&#160;&#160;row += '&lt;td id="row' + this.numRows + '-total" class="calc" ' + headers + '&gt;-&lt;/td&gt;&lt;/tr&gt;'<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Append the new row to the grid<br/>
+&#160;&#160;&#160;&#160;$('tbody').find('tr#totals').before(row);<br/>
+<br/>
+&#160;&#160;&#160;&#160;// Add an entry for this row in the list of rows<br/>
+&#160;&#160;&#160;&#160;$('#row_numbers').append('&lt;div id="r' + this.numRows + '"&gt;Row ' + this.numRows + '&lt;/div&gt;');<br/>
+&#160;&#160;}<br/>
+&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('td#alert').text('Maximum number of rows (' + this.maxRows + ') reached.');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$addButton.unbind('mousedown mouseup keydown keyup');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$addButton.addClass('disabled');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$addButton.attr('aria-disabled', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$addButton.removeClass('pressed');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$addButton.attr('aria-pressed', 'false');<br/>
+&#160;&#160; }<br/>
+<br/>
+} //end addRow()<br/>
+<br/>
+//<br/>
+// bindHandlers() is a member function to bind event handlers to the tbody of the data table. This uses event<br/>
+// delegation to manage events for the children cells. Event delegation is much faster than binding to each cell,<br/>
+// and it also allows new table rows to be handled.<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.bindHandlers = function() {<br/>
+&#160;&#160;var thisObj = this;&#160;&#160;// store a pointer to this object<br/>
+&#160;&#160;var $tbody = this.$tbody; // store a pointer to the table body property (saves a dereference)<br/>
+&#160;&#160;var $button = this.$addButton; // store a pointer to the add row button property (saves a dereference)<br/>
+<br/>
+&#160;&#160;/************ Bind the handlers for the editable grid cells&#160;&#160;in the data table **********/<br/>
+&#160;&#160;//<br/>
+<br/>
+&#160;&#160;// bind a click handler<br/>
+&#160;&#160;$tbody.delegate('.editable', 'click', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleCellClick(this, e);<br/>
+&#160;&#160;}); // end click handler<br/>
+<br/>
+&#160;&#160;// bind a double click handler<br/>
+&#160;&#160;$tbody.delegate('.editable', 'dblclick', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleCellDblclick(this, e);<br/>
+&#160;&#160;}); // end double click handler<br/>
+<br/>
+&#160;&#160;// bind a keydown handler<br/>
+&#160;&#160;$tbody.delegate('.editable', 'keydown', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleCellKeyDown(this, e);<br/>
+&#160;&#160;}); // end keydown handler<br/>
+<br/>
+&#160;&#160;// bind a keypress handler - consume events for Opera<br/>
+&#160;&#160;$tbody.delegate('.editable', 'keypress', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleCellKeyPress(this, e);<br/>
+&#160;&#160;}); // end keyup handler<br/>
+<br/>
+&#160;&#160;// bind a focus handler<br/>
+&#160;&#160;$tbody.delegate('.editable', 'focus', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleCellFocus(this, e);<br/>
+&#160;&#160;}); // end focus handler<br/>
+<br/>
+&#160;&#160;// bind a blur handler<br/>
+&#160;&#160;$tbody.delegate('.editable', 'blur', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleCellBlur(this, e);<br/>
+&#160;&#160;}); // end blur handler<br/>
+<br/>
+<br/>
+&#160;&#160;/************ Bind the handlers for the edit boxes in the editable cells **********/<br/>
+&#160;&#160;<br/>
+&#160;&#160;// bind a keydown handler<br/>
+&#160;&#160;$tbody.delegate('input.edt', 'keydown', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleEditKeyDown(this, e);<br/>
+&#160;&#160;}); // end edit box keydown handler<br/>
+<br/>
+&#160;&#160;// bind a keypress handler - consume events for Opera<br/>
+&#160;&#160;$tbody.delegate('input.edt', 'keypress', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleEditKeyPress(this, e);<br/>
+&#160;&#160;}); // end edit box keyup handler<br/>
+<br/>
+&#160;&#160;// bind a focus handler<br/>
+&#160;&#160;$tbody.delegate('input.edt', 'focus', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleEditFocus(this, e);<br/>
+&#160;&#160;}); // end edit box focus handler<br/>
+<br/>
+&#160;&#160;// bind a blur handler<br/>
+&#160;&#160;$tbody.delegate('input.edt', 'blur', function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleEditBlur(this, e);<br/>
+&#160;&#160;}); // end edit box blurhandler<br/>
+<br/>
+&#160;&#160;/************ Bind the handlers for the add row button **********/<br/>
+&#160;&#160;<br/>
+&#160;&#160;// bind a mousedown handler<br/>
+&#160;&#160;$button.mousedown(function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleAddMouseDown(this, e);<br/>
+&#160;&#160;}); // end add button mousedown handler<br/>
+<br/>
+&#160;&#160;// bind a mouseup handler<br/>
+&#160;&#160;$button.mouseup(function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleAddMouseUp(this, e);<br/>
+&#160;&#160;}); // end add button mouseup handler<br/>
+<br/>
+&#160;&#160;// bind a keydown handler<br/>
+&#160;&#160;$button.keydown(function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleAddKeyDown(this, e);<br/>
+&#160;&#160;}); // end add button keydown handler<br/>
+<br/>
+&#160;&#160;// bind a keyup handler<br/>
+&#160;&#160;$button.keyup(function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleAddKeyUp(this, e);<br/>
+&#160;&#160;}); // end add button keyup handler<br/>
+<br/>
+&#160;&#160;// bind a focus handler<br/>
+&#160;&#160;$button.focus(function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleAddFocus(this, e);<br/>
+&#160;&#160;}); // end add button focus handler<br/>
+<br/>
+&#160;&#160;// bind a blur handler<br/>
+&#160;&#160;$button.blur(function (e) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return thisObj.handleAddBlur(this, e);<br/>
+&#160;&#160;}); // end add button blur handler<br/>
+<br/>
+} // end bindHandlers()<br/>
+<br/>
+<br/>
+//<br/>
+// enterEditMode() is a member function to enter the edit mode of an editable cell<br/>
+//<br/>
+// @param (id object) id is the jQuery object of the cell to operate on<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.enterEditMode = function($id) {<br/>
+<br/>
+&#160;&#160;var $edt = $id.find('.edt');<br/>
+&#160;&#160;var $data = $id.find('.data');<br/>
+&#160;&#160;<br/>
+&#160;&#160;// Clear any old alert messages<br/>
+&#160;&#160;$('td#alert').text('');<br/>
+<br/>
+&#160;&#160;// Set the editMode flag to true -- make edit mode modal<br/>
+&#160;&#160;// This is faster than unbinding edit cell event handlers<br/>
+&#160;&#160;this.editMode = true;<br/>
+<br/>
+&#160;&#160;// Copy the data from the cell's data span into the edit box<br/>
+&#160;&#160;$edt.val($data.text());<br/>
+<br/>
+&#160;&#160;// hide the data and show the edit box<br/>
+&#160;&#160;$data.hide();<br/>
+&#160;&#160; $data.attr('aria-hidden', 'true');<br/>
+&#160;&#160;$edt.show();<br/>
+&#160;&#160; $edt.attr('aria-hidden', 'false');<br/>
+<br/>
+&#160;&#160;// give the edit box focus<br/>
+&#160;&#160;$edt.focus();<br/>
+<br/>
+} // end enterEditMode()<br/>
+<br/>
+//<br/>
+// leaveEditMode() is a member function to exit the edit mode of an editable cell<br/>
+//<br/>
+// @param (id object) id is the jQuery object of the cell to operate on<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.leaveEditMode = function(id) {<br/>
+<br/>
+&#160;&#160;var $cell = $(id);<br/>
+&#160;&#160;var $edt = $cell.find('.edt');<br/>
+&#160;&#160;var $data = $cell.find('.data');<br/>
+&#160;&#160;var thisObj = this;<br/>
+&#160;&#160;var validEntry = true;<br/>
+<br/>
+<br/>
+&#160;&#160;// Make sure we are actually in edit mode<br/>
+&#160;&#160;if (this.editMode == false) {<br/>
+&#160;&#160;&#160;&#160;return;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// Validate the input<br/>
+&#160;&#160;if ($cell.hasClass('date')) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (this.validateDate($edt) == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Store the changes<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$data.text($edt.val());<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if ($cell.hasClass('time')) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (this.validateTime($edt) == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Store the changes<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$data.text($edt.val());<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if ($cell.hasClass('miles')) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (this.validateMiles($edt) == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $reimbursementCell = $cell.next(); <br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Store the changes<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$data.text($edt.val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Calculate the mileage reimbursement<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$reimbursementCell.text( this.calcMileAmount($edt.val()) );<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// recalculate the daily total<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.calcDaily($cell.attr('id').split('-')[0])<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// recalculate the mileage reimbursement total<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.calcMileageTotal();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// recalculate the total reimbursement<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.calcTotalReimbursement();<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if ($cell.hasClass('expense')) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (this.validateExpense($edt) == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Store the changes<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$data.text($edt.val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// recalculate the daily total<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.calcDaily($cell.attr('id').split('-')[0])<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// recalculate the column total<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.calcExpenseTotal($cell.attr('id'))<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// recalculate the total reimbursement<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.calcTotalReimbursement();<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;// Don't validate; just store the changes<br/>
+&#160;&#160;&#160;&#160;$data.text($edt.val());<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// Set the editMode flag to false<br/>
+&#160;&#160;this.editMode = false;<br/>
+<br/>
+&#160;&#160;// Hide the edit box and show the data<br/>
+&#160;&#160;$edt.hide();<br/>
+&#160;&#160; $edt.attr('aria-hidden', 'true');<br/>
+&#160;&#160;$data.show();<br/>
+&#160;&#160; $data.attr('aria-hidden', 'false');<br/>
+<br/>
+&#160;&#160;// Give the parent focus<br/>
+&#160;&#160;$cell.focus();<br/>
+<br/>
+<br/>
+} // end leaveEditMode()<br/>
+<br/>
+//<br/>
+// validateDate() is a member function to validate data entered in the date column<br/>
+//<br/>
+// @param (id object) id is the jQuery object of the edit box the user modified<br/>
+//<br/>
+// @return true if valid entry; false if invalid<br/>
+//<br/>
+travelCalc.prototype.validateDate = function($edt) {<br/>
+<br/>
+&#160;&#160;var curDate = new Date();<br/>
+<br/>
+&#160;&#160;if ($edt.val() != "") {<br/>
+&#160;&#160;&#160;&#160;// try parsing as date using JavaScript Date constructor<br/>
+&#160;&#160;&#160;&#160;var dateValue = new Date($edt.val().replace(/-/g, '/'));<br/>
+<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (isFinite(dateValue)) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// If user entered 2-digit year, the date will be approximately 100 years off. Check for this and correct<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (curDate.getFullYear() - dateValue.getFullYear() &gt;= 99) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;dateValue.setFullYear(dateValue.getFullYear() + 100);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Check if date entered is in the future<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (dateValue &gt; curDate) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$('td#alert').text('Date must be before the current date');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Set date to 60 days in the past<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;curDate.setDate(curDate.getDate() - 60);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Check if date entered is older than 60 days ago<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (dateValue &lt; curDate) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$('td#alert').text('Date must be within the last 60 days');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// format as mm/dd/yyyy<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$edt.val( (dateValue.getMonth() + 1) + '/' + dateValue.getDate() + '/' + dateValue.getFullYear() );<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('td#alert').text('Date needs to be in date format, such as 1/31/2001.');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end validateDate()<br/>
+<br/>
+//<br/>
+// validateTime() is a member function to validate data entered in the time columns<br/>
+//<br/>
+// @param (id object) id is the jQuery object of the edit box the user modified<br/>
+//<br/>
+// @return true if valid entry; false if invalid<br/>
+//<br/>
+travelCalc.prototype.validateTime = function($edt) {<br/>
+<br/>
+&#160;&#160;if ($edt.val() != "") {<br/>
+&#160;&#160;&#160;&#160;var str = $.trim($edt.val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (/^(0?[1-9]|1[0-2]):[0-5]\d ?([ap]m?)?$/.test(str) == false) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('td#alert').text('Time must be in valid time format, such as h:mm [am|pm]');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end validateTime()<br/>
+<br/>
+//<br/>
+// validateMiles() is a member function to validate data entered in the Automobile Miles column<br/>
+//<br/>
+// @param (id object) id is the jQuery object of the edit box the user modified<br/>
+//<br/>
+// @return true if valid entry; false if invalid<br/>
+//<br/>
+travelCalc.prototype.validateMiles = function($edt) {<br/>
+<br/>
+&#160;&#160;if ($edt.val() != "") {<br/>
+&#160;&#160;&#160;&#160;var str = $.trim($edt.val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (/^\d*$/.test(str) == false) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('td#alert').text('Automobile Miles must be a number');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return "Invalid";<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end validateMiles()<br/>
+<br/>
+//<br/>
+// validateExpense() is a member function to validate data entered in the expense columns<br/>
+//<br/>
+// @param (id object) id is the jQuery object of the edit box the user modified<br/>
+//<br/>
+// @return true if valid entry; false if invalid<br/>
+//<br/>
+travelCalc.prototype.validateExpense = function($edt) {<br/>
+<br/>
+&#160;&#160;if ($edt.val() != "") {<br/>
+&#160;&#160;&#160;&#160;var str = $.trim($edt.val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (/^\$?[1-9]\d{0,2}(,\d{3})*(\.\d{0,2})?$/.test(str) ) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (str.charAt(0) != '$') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;str = '$' + str;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (/\.\d$/.test(str)) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;str += "0";<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else if (/\.$/.test(str) ) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;str += "00";<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else if (!/\.\d{2}$/.test(str) ) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;str += ".00";<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$edt.val(str);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('td#alert').text('Expense must be in valid US money format, such as $1,000.00');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return "Invalid";<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end validateExpense()<br/>
+<br/>
+//<br/>
+// calcMileAmount() is a member function to calculate the automobile mileage reimbursement for a trip<br/>
+//<br/>
+// @param (miles int) miles is the total miles entered in the Automobile Miles column<br/>
+//<br/>
+// @return The calculated reimbursement, in U.S. currency format<br/>
+//<br/>
+travelCalc.prototype.calcMileAmount = function(miles) {<br/>
+<br/>
+&#160;&#160;var amount = '$' + (miles * this.reimbursement); <br/>
+&#160;&#160;var tmp = amount.split('.');<br/>
+<br/>
+&#160;&#160;// If cents is defined, round to the nearest cent<br/>
+&#160;&#160;if (tmp[1] != undefined) {<br/>
+&#160;&#160;&#160;&#160;var rounded = Math.round(tmp[1].substr(0,2) + '.' + tmp[1].substr(2));<br/>
+&#160;&#160;&#160;&#160;amount = tmp[0] + '.' + rounded;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// Add cents<br/>
+&#160;&#160;if (/\.\d$/.test(amount)) {<br/>
+&#160;&#160;&#160;&#160;amount += "0";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (/\.$/.test(amount) ) {<br/>
+&#160;&#160;&#160;&#160;amount += "00";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (!/\.\d{2}$/.test(amount) ) {<br/>
+&#160;&#160;&#160;&#160;amount += ".00";<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return amount;<br/>
+}<br/>
+<br/>
+//<br/>
+// calcDaily() is a member function to calculate the daily total cost of a trip<br/>
+//<br/>
+// @param (row string) row is the id of the current row the user modified<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.calcDaily = function(row) {<br/>
+&#160;&#160;var total = $('#' + row + '-mileage').text().substr(1); // Strip the '$'<br/>
+<br/>
+&#160;&#160;if (total.length) {<br/>
+&#160;&#160;&#160;&#160;// remove any ',' from the value and convert to a float<br/>
+&#160;&#160;&#160;&#160;total = parseFloat(total.replace(/,/g, ''));<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;total = 0;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// Add the total for each expense<br/>
+&#160;&#160;$('#' + row).find('td.expense').each(function() {<br/>
+&#160;&#160;&#160;&#160;var expense = $(this).find('.data').text().substr(1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (expense.length) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// remove any ',' from the value<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;expense = expense.replace(/,/g, '');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;total += parseFloat(expense);<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// Add cents<br/>
+&#160;&#160;if (/\.\d$/.test(total)) {<br/>
+&#160;&#160;&#160;&#160;total += "0";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (/\.$/.test(total) ) {<br/>
+&#160;&#160;&#160;&#160;total += "00";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (!/\.\d{2}$/.test(total) ) {<br/>
+&#160;&#160;&#160;&#160;total += ".00";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;<br/>
+&#160;&#160;$('#' + row + '-total').text('$' + total);<br/>
+}<br/>
+<br/>
+//<br/>
+// calcMileageTotal() is a member function to calculate the total mileage Reimbursement amount<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.calcMileageTotal = function() {<br/>
+<br/>
+&#160;&#160;var total = 0;<br/>
+<br/>
+&#160;&#160;// Iterate through the column, adding the expense to the total.<br/>
+&#160;&#160;for (var row = 1; row &lt;= this.numRows ; row++) {<br/>
+&#160;&#160;&#160;&#160;var expense = $('#row' + row + '-mileage').text().substr(1); // strip the'$' from the expense<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (expense.length) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// remove any ',' from the value<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;expense = expense.replace(/,/g, '');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;total += parseFloat(expense);<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// Add cents<br/>
+&#160;&#160;if (/\.\d$/.test(total)) {<br/>
+&#160;&#160;&#160;&#160;total += "0";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (/\.$/.test(total) ) {<br/>
+&#160;&#160;&#160;&#160;total += "00";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (!/\.\d{2}$/.test(total) ) {<br/>
+&#160;&#160;&#160;&#160;total += ".00";<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;$('#calc-total-mileage').text('$' + total);<br/>
+}<br/>
+<br/>
+//<br/>
+// calcExpenseTotal() is a member function to calculate the total expense for a column<br/>
+//<br/>
+// @param (id string) id is the id of the column to update<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.calcExpenseTotal = function(id) {<br/>
+<br/>
+&#160;&#160;var total = 0;<br/>
+&#160;&#160;var col = id.substr(id.indexOf('-'));<br/>
+<br/>
+&#160;&#160;// Iterate through the column, adding the expense to the total.<br/>
+&#160;&#160;for (var row = 1; row &lt;= this.numRows ; row++) {<br/>
+&#160;&#160;&#160;&#160;var expense = $('#row' + row + col).find('span').text().substr(1); // strip the'$' from the expense<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (expense.length) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// remove any ',' from the value<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;expense = expense.replace(/,/g, '');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;total += parseFloat(expense);<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// Add cents<br/>
+&#160;&#160;if (/\.\d$/.test(total)) {<br/>
+&#160;&#160;&#160;&#160;total += "0";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (/\.$/.test(total) ) {<br/>
+&#160;&#160;&#160;&#160;total += "00";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (!/\.\d{2}$/.test(total) ) {<br/>
+&#160;&#160;&#160;&#160;total += ".00";<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;$('#calc-total' + col).text('$' + total);<br/>
+}<br/>
+<br/>
+//<br/>
+// calcTotalReimbursement() is a member function to calculate the total expense reimbursement<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.calcTotalReimbursement = function() {<br/>
+<br/>
+&#160;&#160;var total = 0;<br/>
+<br/>
+&#160;&#160;// Iterate through the column, adding the expense to the total.<br/>
+&#160;&#160;$('th#total-expenses-lbl').siblings().not('td#calc-total-reimbursement').each(function() {<br/>
+&#160;&#160;&#160;&#160;var expense = $(this).text().substr(1); // strip the'$' from the expense<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (expense.length) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// remove any ',' from the value<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;expense = expense.replace(/,/g, '');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;total += parseFloat(expense);<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// Add cents<br/>
+&#160;&#160;if (/\.\d$/.test(total)) {<br/>
+&#160;&#160;&#160;&#160;total += "0";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (/\.$/.test(total) ) {<br/>
+&#160;&#160;&#160;&#160;total += "00";<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else if (!/\.\d{2}$/.test(total) ) {<br/>
+&#160;&#160;&#160;&#160;total += ".00";<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;$('#calc-total-reimbursement').text('$' + total);<br/>
+}<br/>
+<br/>
+//<br/>
+// handleCellClick() is a callback for the click event. It is bound to the editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleCellClick = function(id, e) {<br/>
+<br/>
+&#160;&#160;$(id).focus();<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleCellClick()<br/>
+<br/>
+//<br/>
+// handleCellDblclick() is a callback for the dblclick event. It is bound to the editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleCellDblclick = function(id, e) {<br/>
+<br/>
+&#160;&#160;// do nothing if we are in editMode<br/>
+&#160;&#160;if (this.editMode == false) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// enter the edit mode for the cell<br/>
+&#160;&#160;&#160;&#160;this.enterEditMode($(id));<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} //end handleCellDblclick()<br/>
+<br/>
+//<br/>
+// handleCellKeyDown() is a callback for the keydown event. It is bound to the editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return False if specified key is pressed, true if other keypress<br/>
+//<br/>
+travelCalc.prototype.handleCellKeyDown = function(id, e) {<br/>
+<br/>
+&#160;&#160;var $curCell = $(id); // Store the current cell object to prevent repeated DOM traversals<br/>
+<br/>
+&#160;&#160;// do nothing if the shift, alt, or ctrl key is pressed or we are in editMode<br/>
+&#160;&#160;if (e.ctrlKey == true || e.altKey == true || e.shiftKey == true || this.editMode == true) {<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.f2: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// enter the edit mode for the cell<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.enterEditMode($curCell);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.left: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $newCell = $curCell.prev();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// If there is another editable cell to the right, select it<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if ($newCell.length) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($newCell.attr('id').search('mileage') &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// skip this column<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newCell = $newCell.prev();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($newCell.hasClass('editable')) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Make the new cell navigable and give it focus<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newCell.attr('tabindex', '0').focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.right: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $newCell = $curCell.next();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// If there is another editable cell to the right, select it<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if ($newCell.length) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($newCell.attr('id').search('mileage') &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// skip this column<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newCell = $newCell.next();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($newCell.hasClass('editable')) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Make the new cell navigable and give it focus<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newCell.attr('tabindex', '0').focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.up: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Cell id's are of the form "row#-colName". We need to isolate the row number and<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// column name<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var curRow = $curCell.attr('id');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var len = curRow.indexOf('-');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var rowNum = curRow.substr(3, len - 3) - 1;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (rowNum &gt; 0)<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;{<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// build the id string of the new cell<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var newCell = '#row' + rowNum + '-' + curRow.substr(len + 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Make the new cell navigable and give it focus<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(newCell).attr('tabindex', '0').focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Cell id's are of the form "row#-colName". We need to isolate the row number and<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// column name<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var curRow = $curCell.attr('id');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var len = curRow.indexOf('-');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var rowNum = parseInt(curRow.substr(3, len - 3)) + 1;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (rowNum &lt;= this.numRows)<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;{<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// build the id string of the new cell<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var newCell = '#row' + rowNum + '-' + curRow.substr(len + 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Make the new cell navigable and give it focus<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(newCell).attr('tabindex', '0').focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.pageup: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Cell id's are of the form "row#-colName". We need to isolate the row number and<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// column name<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var curRow = $curCell.attr('id');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var len = curRow.indexOf('-');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var rowNum = parseInt(curRow.substr(3, len - 3)) - 1;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (rowNum &gt; 0)<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;{<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// build the id string of the new cell<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var newCell = '#row1-' + curRow.substr(len + 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Make the new cell navigable and give it focus<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(newCell).attr('tabindex', '0').focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.pagedown: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Cell id's are of the form "row#-colName". We need to isolate the row number and<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// column name<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var curRow = $curCell.attr('id');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var len = curRow.indexOf('-');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var rowNum = parseInt(curRow.substr(3, len - 3)) + 1;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (rowNum &lt;= this.numRows)<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;{<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// build the id string of the new cell<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var newCell = '#row' + this.numRows + '-' + curRow.substr(len + 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Make the new cell navigable and give it focus<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$(newCell).attr('tabindex', '0').focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.home: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var row = $curCell.attr('id').split('-')[0];<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Make the new cell navigable and give it focus<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('#' + row + '-date').attr('tabindex', '0').focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.end: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var row = $curCell.attr('id').split('-')[0];<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Make the new cell navigable and give it focus<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$('#' + row + '-misc').attr('tabindex', '0').focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleCellKeyDown<br/>
+<br/>
+//<br/>
+// handleCellKeyPress() is a callback for the keypress event. It is bound to the editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return False if specified key is released, true if other key released<br/>
+//<br/>
+travelCalc.prototype.handleCellKeyPress = function(id, e) {<br/>
+<br/>
+&#160;&#160;// do nothing if the shift, alt, or ctrl key is pressed or we are in editMode<br/>
+&#160;&#160;if (e.ctrlKey == true || e.altKey == true || e.shiftKey == true || this.editMode == true) {<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+&#160;&#160;<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.f2:<br/>
+&#160;&#160;&#160;&#160;case this.keys.left:<br/>
+&#160;&#160;&#160;&#160;case this.keys.right:<br/>
+&#160;&#160;&#160;&#160;case this.keys.up:<br/>
+&#160;&#160;&#160;&#160;case this.keys.down:<br/>
+&#160;&#160;&#160;&#160;case this.keys.pageup:<br/>
+&#160;&#160;&#160;&#160;case this.keys.pagedown:<br/>
+&#160;&#160;&#160;&#160;case this.keys.home:<br/>
+&#160;&#160;&#160;&#160;case this.keys.end: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleCellKeyPress<br/>
+<br/>
+//<br/>
+// handleCellFocus() is a callback for the focus event. It is bound to the editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleCellFocus = function(id, e) {<br/>
+<br/>
+&#160;&#160;// Remove the highlighting from the table cells and remove them from the tab order.<br/>
+&#160;&#160;// Use jQuery chaining for optimization<br/>
+&#160;&#160;this.$editableCells.attr('tabindex', '-1').removeClass('focus').attr('aria-selected', 'false');<br/>
+<br/>
+&#160;&#160;// Add the highlighting for the focused cell and make it navigable<br/>
+&#160;&#160;// Use jQuery Chaining for optimization<br/>
+&#160;&#160;$(id).addClass('focus').attr('tabindex', '0').attr('aria-selected', 'true');<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleCellFocus()<br/>
+<br/>
+//<br/>
+// handleCellBlur() is a callback for the blur event. It is bound to the editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleCellBlur = function(id, e) {<br/>
+<br/>
+&#160;&#160;var $cell = $(id);<br/>
+&#160;&#160;// do nothing if we are in editMode<br/>
+&#160;&#160;if (this.editMode == false) {<br/>
+&#160;&#160;&#160;&#160;$cell.removeClass('focus').attr('aria-selected', 'false');<br/>
+&#160;&#160;}<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleCellBlur()<br/>
+<br/>
+//<br/>
+// handleEditKeyDown() is a callback for the keydown event. It is bound to the edit boxes in the<br/>
+// editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleEditKeyDown = function(id, e) {<br/>
+<br/>
+&#160;&#160;var $parentNode = $(id).parent();<br/>
+&#160;&#160;var $newNode;<br/>
+&#160;&#160;<br/>
+&#160;&#160;// do nothing if the ctrl or alt key is pressed<br/>
+&#160;&#160;if (e.ctrlKey == true || e.altKey == true) {<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.tab: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var haveNewCell = false;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// user pressed shift-tab<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newNode = $parentNode.prev();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($newNode.length) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($newNode.attr('id').search('mileage') &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newNode = $newNode.prev();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;haveNewCell = true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newNode = $parentNode.next();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($newNode.length) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($newNode.attr('id').search('mileage') &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newNode = $newNode.next();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;haveNewCell = true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// leave edit mode<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.leaveEditMode($parentNode);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Select the next editable cell (if possible)<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (haveNewCell == true &amp;&amp; $newNode.is('.editable')) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$newNode.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.f2:<br/>
+&#160;&#160;&#160;&#160;case this.keys.esc: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// leave edit mode<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.leaveEditMode($parentNode);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleEditKeyDown()<br/>
+<br/>
+//<br/>
+// handleEditKeyPress() is a callback for the keypress event. It is bound to the edit boxes in the<br/>
+// editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleEditKeyPress = function(id, e) {<br/>
+<br/>
+&#160;&#160;// do nothing if the ctrl or alt key is pressed<br/>
+&#160;&#160;if (e.ctrlKey == true || e.altKey == true) {<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.tab:<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.f2:<br/>
+&#160;&#160;&#160;&#160;case this.keys.esc: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;return true;<br/>
+} // end handleEditKeyPress()<br/>
+<br/>
+//<br/>
+// handleEditFocus() is a callback for the focus event. It is bound to the edit boxes in the<br/>
+// editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleEditFocus = function(id, e) {<br/>
+&#160;&#160;<br/>
+&#160;&#160;var $parentNode = $(id).parent();<br/>
+&#160;&#160;<br/>
+&#160;&#160;return true;<br/>
+}<br/>
+<br/>
+//<br/>
+// handleEditBlur() is a callback for the blur event. It is bound to the edit boxes in the<br/>
+// editable grid cells<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleEditBlur = function(id, e) {<br/>
+<br/>
+&#160;&#160;var $parentNode = $(id).parent();<br/>
+&#160;&#160;<br/>
+&#160;&#160;// leave edit mode<br/>
+&#160;&#160;this.leaveEditMode($parentNode);<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+}<br/>
+<br/>
+//<br/>
+// handleAddMouseDown() is a callback for the mousedown event. It is bound to the add row button<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleAddMouseDown = function(id, e) {<br/>
+<br/>
+&#160;&#160; $(id).addClass('pressed');<br/>
+&#160;&#160; $(id).attr('aria-pressed', 'true')<br/>
+&#160;&#160; this.addRow();<br/>
+&#160;&#160; $(id).removeClass('pressed');<br/>
+&#160;&#160; $(id).attr('aria-pressed', 'false')<br/>
+&#160;&#160; $(id).focus();<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleAddMouseDown()<br/>
+<br/>
+//<br/>
+// handleAddMouseUp() is a callback for the mouseup event. It is bound to the add row button<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleAddMouseUp = function(id, e) {<br/>
+<br/>
+&#160;&#160; $(id).removeClass('pressed');<br/>
+&#160;&#160; $(id).attr('aria-pressed', 'false')<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleAddMouseUp()<br/>
+<br/>
+//<br/>
+// handleAddKeyDown() is a callback for the keydown event. It is bound to the add row button<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleAddKeyDown = function(id, e) {<br/>
+<br/>
+&#160;&#160;// do nothing if the ctrl or alt key is pressed<br/>
+&#160;&#160;if (e.ctrlKey == true || e.altKey == true) {<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.space: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(id).addClass('pressed');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(id).attr('aria-pressed', 'true')<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.addRow();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;return true;<br/>
+} // end handleAddKeyDown()<br/>
+<br/>
+//<br/>
+// handleAddKeyUp() is a callback for the keyup event. It is bound to the add row button<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleAddKeyUp = function(id, e) {<br/>
+<br/>
+&#160;&#160;// do nothing if the ctrl or alt key is pressed<br/>
+&#160;&#160;if (e.ctrlKey == true || e.altKey == true) {<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.space: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(id).removeClass('pressed');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(id).attr('aria-pressed', 'false')<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;break;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;return true;<br/>
+} // end handleAddKeyDown()<br/>
+<br/>
+//<br/>
+// handleAddFocus() is a callback for the focus event. It is bound to the add row button<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleAddFocus = function(id, e) {<br/>
+&#160;&#160;<br/>
+&#160;&#160;$(id).addClass('buttonFocus');<br/>
+&#160;&#160;return true;<br/>
+}<br/>
+<br/>
+//<br/>
+// handleAddBlur() is a callback for the blur event. It is bound to the add row button<br/>
+//<br/>
+// @param (id object) id is the element generating the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+travelCalc.prototype.handleAddBlur = function(id, e) {<br/>
+<br/>
+&#160;&#160;$(id).removeClass('buttonFocus pressed');<br/>
+&#160;&#160; $(id).attr('aria-pressed', 'false')<br/>
+&#160;&#160;return false;<br/>
+}<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

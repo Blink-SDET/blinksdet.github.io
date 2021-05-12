@@ -1,0 +1,48 @@
+<!DOCTYPE HTML><!-- HTML 5 -->
+<html lang="en">
+<head>
+	<title>ARIA Multiselectable Listbox Example</title>
+	<meta http-equiv="Content-type" content="text/html; charset=utf-8">
+	<link rel="stylesheet" href="css/simple.css" type="text/css">
+	<script type="text/javascript" src="js/prototype.js"></script>
+	<script type="text/javascript" src="js/aria.js"></script>
+	<script type="text/javascript" src="js/init.js"></script>
+	<script type="text/javascript">
+	window.onload = function(){
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }
+		}		
+	}
+  </script>
+</head>
+<body>
+	
+	<h1>Directions</h1>
+	<ol>
+		<li>Tab into the list control.</li>
+		<li>Use the up/down arrow keys to change the active descendant.</li>
+		<li>Click or activate to change the selection.</li>
+	</ol>
+	
+	<p>Some <a href="javascript:$('list0').focus();">focusable</a> content before the ARIA application.</p>
+
+	<div role="application">
+		<h1 id="listlabel">ARIA Multiselectable Listbox Example</h1>
+		<ul id="list0" role="listbox" aria-labelledby="listlabel" aria-activedescendant="list0_item0" tabindex="0">
+			<!-- all the ids and aria-* attributes are hardcoded here for sake of example -->
+			<li id="list0_item0" role="option" aria-selected="false" class="activedescendant">foo</li>
+			<li id="list0_item1" role="option" aria-selected="false">bar</li>
+			<li id="list0_item2" role="option" aria-selected="false">baz</li>
+			<li id="list0_item3" role="option" aria-selected="false">bif</li>
+			<li id="list0_item4" role="option" aria-selected="false">bop</li>
+		</ul>
+	</div>
+	
+	<p>More <a href="javascript:$('list0').focus();">focusable</a> content after the ARIA application.</p>
+	
+</body>
+</html>

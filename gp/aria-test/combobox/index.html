@@ -1,0 +1,2155 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 9 - Combobox with aria-autocomplete=&quot;none&quot;</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+* {
+	font-family: "Times New Roman,Georgia,Serif"; 
+}
+.hidden {
+	position: absolute;
+	top: -20em;
+	left: -200em;
+}
+
+.wrapper {
+	height: 24px;
+	overflow: auto;
+}
+.cb {
+	margin: 20px;
+	padding: 0;
+	height: 24px;
+	display: block;
+	overflow: visible;
+}
+
+.cb_label {
+	margin: 0;
+	padding: 2px;
+	width: 45px;
+	font-weight: bold;
+	float: left;
+	display: inline;
+}
+.cb_edit {
+	margin: 0;
+	padding: 2px 3px;
+	width: 240px;
+	height: 18px;
+	border: 1px solid black;
+	font-size: 1em;
+	float: left;
+	display: inline;
+}
+.cb_button {
+	margin: 0;
+	padding: 0;
+	height: 24px;
+	width: 24px;
+	border: 1px solid black;
+	background-color: #999;
+	float: left;
+	display: inline;
+	text-align: center;
+}
+
+button.cb_button img {
+	margin: 0;
+	padding: 0;
+	height: 22px;
+	width: 22px;
+	position: relative;
+	top: -1px;
+	left: -3px;
+}
+
+.cb_list {
+	clear: both;
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	margin-left: 49px;
+	border: 1px solid black;
+	width: 246px;
+	height: 200px;
+	overflow: auto;
+	background-color: #fff;
+	position: relative;
+	z-index: 300;
+}
+
+.cb_option {
+	margin: 0 1px 0 0;
+	padding: 2px 5px;
+}
+.selected {
+	border-top: 1px solid #44e;
+	border-bottom: 1px solid #44e;
+	padding: 1px 5px;
+	background-color: #77a;
+	color: #fff;
+}
+.cb_option:hover {
+	border-top: 1px solid #44e;
+	border-bottom: 1px solid #44e;
+	padding: 1px 5px;
+	font-weight: bold;
+	background-color: #77f;
+	color: #fff;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+var g_cb1 = null;  // set to active combobox for blur function
+
+$(document).ready(function() {
+
+	g_cb1 = new combobox('cb1', false);
+}); // end ready
+
+//
+// keyCodes() is an object to contain keycodes needed for the application
+//
+function keyCodes() {
+	// Define values for keycodes
+	this.backspace  = 8;
+	this.tab        = 9;
+	this.enter      = 13;
+	this.esc        = 27;
+
+	this.space      = 32;
+	this.pageup     = 33;
+	this.pagedown   = 34;
+	this.end        = 35;
+	this.home       = 36;
+
+	this.up         = 38;
+	this.down       = 40; 
+	
+	this.del        = 46;
+
+} // end keyCodes
+
+//
+// Function combobox() is a class for an ARIA-enabled combobox widget
+//
+// @param (id string) id is the id of the div containing the combobox. Text input must have role="combobox".
+//
+// @param (editable boolean) editable is true if the edit box should be editable; false if read-only.
+//
+// @return N/A
+//
+function combobox(id, editable) {
+
+	// Define the object properties
+
+	this.$id = $('#' + id);  // The jQuery object of the div containing the combobox
+	this.editable = editable;  // True if the edit box is editable
+	this.keys = new keyCodes();
+
+	// Store jQuery objects for the elements of the combobox
+	this.$edit = $('#' + id + '-edit');  // The jQuery object of the edit box
+	this.$button = $('#' + id + '-button');  // The jQuery object of the button
+	this.$buttonImg = $('#' + id).find('img'); // The jQuery object of the button image
+	this.$list = $('#' + id + '-list');  // The jQuery object of the option list
+	this.$options = this.$list.find('li');  // An array of jQuery objects for the combobox options
+
+	this.$selected; // the current value of the combobox
+	this.$focused; // the currently selected option in the combo list
+	this.timer = null; // stores the close list timer that is set when combo looses focus
+
+	// Initalize the combobox
+	this.init();
+
+	// bind event handlers for the widget
+	this.bindHandlers();
+
+} // end combobox constructor
+
+
+//
+// Function init() is a member function to initialize the combobox elements. Hides the list
+// and sets ARIA attributes
+//
+// @return N/A
+//
+combobox.prototype.init = function() {
+
+	// Hide the list of options
+	this.$list.hide().attr('aria-expanded', 'false');
+
+	// If the edit box is to be readonly, aria-readonly must be defined as true
+	if (this.editable == false) {
+		this.$edit.attr('aria-readonly', 'true');
+	}
+
+	// Set initial value for the edit box
+	this.$selected = this.$options.filter('.selected');
+
+	if (this.$selected.length > 0) {
+		this.$edit.val(this.$selected.text());
+	}
+
+} // end initCombo()
+
+//
+// Function bindHandlers() is a member function to bind event handlers for the combobox elements
+//
+// @return N/A
+//
+combobox.prototype.bindHandlers = function() {
+
+	var thisObj = this;
+
+	///////////////// bind editbox handlers /////////////////////////
+
+	this.$edit.keydown(function(e) {
+		return thisObj.handleEditKeyDown($(this), e);
+	});
+
+	this.$edit.keypress(function(e) {
+		return thisObj.handleEditKeyPress($(this), e);
+	});
+
+	this.$edit.blur(function(e) {
+		return thisObj.handleComboBlur($(this), e);
+	});
+
+	///////////////// bind handlers for the button /////////////////////////
+	
+	this.$button.click(function(e) {
+		return thisObj.handleButtonClick($(this), e);
+	});
+
+	this.$button.mouseover(function(e) {
+		return thisObj.handleButtonMouseOver($(this), e);
+	});
+
+	this.$button.mouseout(function(e) {
+		return thisObj.handleButtonMouseOut($(this), e);
+	});
+
+	this.$button.mousedown(function(e) {
+		return thisObj.handleButtonMouseDown($(this), e);
+	});
+
+	this.$button.mouseup(function(e) {
+		return thisObj.handleButtonMouseUp($(this), e);
+	});
+
+	///////////////// bind listbox handlers /////////////////////////
+
+	this.$list.focus(function(e) {
+		return thisObj.handleComboFocus($(this), e);
+	});
+
+	this.$list.blur(function(e) {
+		return thisObj.handleComboBlur($(this), e);
+	});
+
+	///////////////// bind list option handlers /////////////////////////
+
+	this.$options.keydown(function(e) {
+		return thisObj.handleOptionKeyDown($(this), e);
+	});
+
+	this.$options.keypress(function(e) {
+		return thisObj.handleOptionKeyPress($(this), e);
+	});
+
+	this.$options.click(function(e) {
+		return thisObj.handleOptionClick($(this), e);
+	});
+
+	this.$options.focus(function(e) {
+		return thisObj.handleComboFocus($(this), e);
+	});
+
+	this.$options.blur(function(e) {
+		return thisObj.handleComboBlur($(this), e);
+	});
+
+} // end bindHandlers()
+
+//
+// Function isOpen() is a member function to get the current state of the list box
+//
+// @return (boolean) returns true if list box is open; false if it is not
+//
+combobox.prototype.isOpen = function() {
+
+	if (this.$list.attr('aria-expanded') == 'true') {
+		return true;
+	}
+	else {
+		return false;
+	}
+
+} // end isOpen
+
+//
+// Function closeList() is a member function to close the list box if it is open
+//
+// @param (restore booleam) restore is true if function should restore higlight to stored list selection
+//
+// @return N/A
+//
+combobox.prototype.closeList = function(restore) {
+
+	var $curOption = this.$options.filter('.selected');
+
+	if (restore == true) {
+		$curOption = this.$selected;
+
+		// remove the selected class from the other list items
+		this.$options.removeClass('selected');
+
+		// add selected class to the stored selection
+		$curOption.addClass('selected');
+	}
+
+	this.$list.hide().attr('aria-expanded', 'false');
+
+	// set focus on the edit box
+	this.$edit.focus();
+
+} // end closeList()
+
+//
+// Function openList() is a member function to open the list box if it is closed
+//
+// @param (restore booleam) restore is true if function should restore higlight to stored list selection
+//
+// @return N/A
+//
+combobox.prototype.openList = function(restore) {
+
+	var $curOption = this.$options.filter('.selected');
+
+
+	if (restore == true) {
+
+		if (this.$selected.length == 0) {
+			// select the first item
+			this.selectOption(this.$options.first());
+		}
+
+		$curOption = this.$selected;
+
+		// remove the selected class from the other list items
+		this.$options.removeClass('selected');
+
+		// add selected class to the stored selection
+		$curOption.addClass('selected');
+	}
+
+	this.$list.show().attr('aria-expanded', 'true');
+
+	// scroll to the currently selected option
+	this.$list.scrollTop(this.calcOffset($curOption));
+
+	// set focus on the selected item
+	this.$selected.focus();
+
+} // end openList();
+
+//
+// Function toggleList() is a member function to toggle the display of the combobox options.
+//
+// @param (restore booleam) restore is true if toggle should restore higlight to stored list selection
+//
+// Return N/A
+//
+combobox.prototype.toggleList = function(restore) {
+
+	if (this.isOpen() == true) {
+
+		this.closeList(restore);
+	}
+	else {
+		this.openList(restore);
+	}
+
+} // end toggleList()
+
+//
+// Function selectOption() is a member function to select a new combobox option.
+// The jQuery object for the new option is stored and the selected class is added
+//
+// @param ($id object) $id is the jQuery object of the new option to select
+//
+// @return N/A
+// 
+combobox.prototype.selectOption = function($id) {
+
+	// If there is a selected option, remove the selected class from it
+	if (this.$selected.length > 0) {
+		this.$selected.removeClass('selected');
+	}
+	
+	// add the selected class to the new option
+	$id.addClass('selected');
+
+	// store the newly selected option
+	this.$selected = $id;
+
+	// update the edit box
+	this.$edit.val($id.text());
+	
+} // end selectOption
+
+//
+// Function calcOffset() is a member function to calculate the pixel offset of a list option from the top
+// of the list
+//
+// @param ($id obj) $id is the jQuery object of the option to scroll to
+//
+// @return (integer) returns the pixel offset of the option
+//
+combobox.prototype.calcOffset = function($id) {
+	var offset = 0;
+	var selectedNdx = this.$options.index($id);
+
+	for (var ndx = 0; ndx < selectedNdx; ndx++) {
+		offset += this.$options.eq(ndx).outerHeight();
+	}
+
+	return offset;
+
+} // end calcOffset
+
+//
+// Function handleButtonClick() is a member function to consume button click events. This handler prevents
+// clicks on the button from reloading the page. This could also be done by adding 'onclick="false";' to the
+// button HTML markup.
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean)  returns false;
+//
+combobox.prototype.handleButtonClick = function($id,  e) {
+
+	e.stopPropagation();
+	return false;
+
+} // end handleButtonClick();
+
+//
+// Function handleButtonMouseOver() is a member function to process button mouseover events
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean)  returns false;
+//
+combobox.prototype.handleButtonMouseOver = function($id,  e) {
+
+	// change the button image to reflect the highlight state
+	$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-hl.png');
+
+	e.stopPropagation();
+	return false;
+
+} // end handleButtonMouseOver();
+
+//
+// Function handleButtonMouseOut() is a member function to process button mouseout events
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean)  returns false;
+//
+combobox.prototype.handleButtonMouseOut = function($id,  e) {
+
+	// reset image to normal state
+	$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png');
+
+	e.stopPropagation();
+	return false;
+
+} // end handleButtonMouseOut();
+
+//
+// Function handleButtonMouseDown() is a member function to process button mousedown events
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean)  returns false;
+//
+combobox.prototype.handleButtonMouseDown = function($id,  e) {
+
+	// change the button image to reflect the pressed state
+	$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-pressed-hl.png');
+
+	// toggle the display of the option list
+	this.toggleList(true);
+
+	e.stopPropagation();
+	return false;
+
+} // end handleButtonMouseDown();
+
+//
+// Function handleButtonMouseUp() is a member function to process button mouseup events
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean)  returns false;
+//
+combobox.prototype.handleButtonMouseUp = function($id,  e) {
+
+	// reset button image
+	$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-hl.png');
+
+	e.stopPropagation();
+	return false;
+
+} // end handleButtonMouseUp();
+
+//
+// Function handleOptionKeyDown() is a member function to process keydown events for
+// the combobox
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean) Returns false if consuming; true if not processing
+//
+combobox.prototype.handleOptionKeyDown = function($id,  e) {
+
+	var curNdx = this.$options.index($id);
+
+	if (e.ctrlKey) {
+		// do not process
+		return true;
+	}
+
+	switch(e.keyCode) {
+		case this.keys.tab: {
+			// update and close the combobox
+
+			if ($id.text() != this.$selected.text()) {
+
+				// store the new selection
+				this.selectOption($id);
+			}
+
+			// Close the option list
+			this.closeList(false);
+
+			// allow tab to propagate
+			return true;
+		}
+		case this.keys.esc: {
+			// Do not change combobox value
+
+			// Close the option list
+			this.closeList(true);
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.enter: {
+			// change the combobox value
+
+			if ($id.text() != this.$selected.text()) {
+
+				// store the new selection
+				this.selectOption($id);
+			}
+
+			// Close the option list
+			this.closeList(false);
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.up: {
+			
+			if (e.altKey) {
+				// alt+up toggles the list
+				this.toggleList(true);
+
+			}
+			else {
+				// move to the previous item in the list
+			
+				if (curNdx > 0) {
+					var $prev = this.$options.eq(curNdx - 1);
+
+					// remove the selected class from the current selection
+					$id.removeClass('selected');
+
+					// Add the selected class to the new selection
+					$prev.addClass('selected');
+
+					// scroll the list window to the new option
+					this.$list.scrollTop(this.calcOffset($prev));
+
+					// Set focus on the new item
+					$prev.focus();
+				}
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.down: {
+
+			if (e.altKey) {
+				// alt+up toggles the list
+				this.toggleList(true);
+			}
+			else {
+				// move to the next item in the list
+			
+				if (curNdx < this.$options.length - 1) {
+					var $next = this.$options.eq(curNdx + 1);
+
+					// remove the selected from the current selection
+					$id.removeClass('selected');
+
+					// Add the selected class to the new selection
+					$next.addClass('selected');
+
+					// scroll the list window to the new option
+					this.$list.scrollTop(this.calcOffset($next));
+
+					// Set focus on the new item
+					$next.focus();
+				}
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.home: {
+			// select the first list item
+
+			var $first = this.$options.first();
+
+			// remove the selected class from the current selection
+			this.$options.eq(curNdx).removeClass('selected');
+
+			// Add the selected class to the new selection
+			$first.addClass('selected');
+
+			// scroll the list window to the new option
+			this.$list.scrollTop(0);
+
+			// set focus on the first item
+			$first.focus();
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.end: {
+			// select the last list item
+
+			var $last = this.$options.last();
+
+			// remove the selected class from the current selection
+			this.$options.eq(curNdx).removeClass('selected');
+
+			// Add the selected class to the new selection
+			$last.addClass('selected');
+
+			// scroll the list window to the new option
+			this.$list.scrollTop(this.calcOffset($last));
+
+			// set focus on last item
+			$last.focus();
+
+			e.stopPropagation();
+			return false;
+		}
+	}
+
+	return true;
+
+} // end handleOptionKeyDown()
+
+//
+// Function handleOptionKeyPress() is a member function to process keypress events for
+// the combobox. Needed for browsers that use keypress to manipulate the window
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean) Returns false if consuming; true if not processing
+//
+combobox.prototype.handleOptionKeyPress = function($id,  e) {
+
+	var curNdx = this.$options.index($id);
+
+	if (e.altKey || e.ctrlKey || e.shiftKey) {
+		// do not process
+		return true;
+	}
+
+	switch(e.keyCode) {
+		case this.keys.esc:
+		case this.keys.enter:
+		case this.keys.up:
+		case this.keys.down:
+		case this.keys.home:
+		case this.keys.end: {
+			e.stopPropagation();
+			return false;
+		}
+	}
+
+	return true;
+
+} // end handleOptionKeyPress()
+
+//
+// Function handleEditKeyDown() is a member function to process keydown events for
+// the edit box.
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @param (e object) e is the event object associated with the event
+//
+// @return (boolean) Returns false if consuming; true if not processing
+//
+combobox.prototype.handleEditKeyDown = function($id,  e) {
+
+	var curNdx = this.$options.index(this.$selected);
+
+	if (e.altKey && (e.keyCode == this.keys.up || e.keyCode == this.keys.down)) {
+
+		this.toggleList(true);
+
+		e.stopPropagation();
+		return false;
+	}
+
+	switch (e.keyCode) {
+		case this.keys.backspace:
+		case this.keys.del: {
+			this.$edit.val(this.$selected.text());
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.enter: {
+
+			// toggle the option list
+			this.toggleList(false);
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.up: {
+			
+			// move to the previous item in the list
+			
+			if (curNdx > 0) {
+				var $prev = this.$options.eq(curNdx - 1);
+
+				this.selectOption($prev);
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.down: {
+
+			// move to the next item in the list
+			
+			if (curNdx < this.$options.length - 1) {
+				var $next = this.$options.eq(curNdx + 1);
+
+				this.selectOption($next);
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+	}
+
+	return true;
+
+} // end handleEditKeyDown()
+
+//
+// Function handleEditKeyPress() is a member function to process keypress events for
+// the edit box. Needed for browsers that use keypress events to manipulate the window.
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean) Returns false if consuming; true if not processing
+//
+combobox.prototype.handleEditKeyPress = function($id,  e) {
+
+	var curNdx = this.$options.index($id);
+
+	if (e.altKey && (e.keyCode == this.keys.up || e.keyCode == this.keys.down)) {
+		e.stopPropagation();
+		return false;
+	}
+
+	switch(e.keyCode) {
+		case this.keys.esc:
+		case this.keys.enter: {
+
+			e.stopPropagation();
+			return false;
+		}
+	}
+
+	return true;
+
+} // end handleOptionKeyPress()
+
+//
+// Function handleOptionClick() is a member function to process click events for
+// the combobox.
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean) Returns false
+//
+combobox.prototype.handleOptionClick = function($id, e) {
+
+	// select the clicked item
+	this.selectOption($id);
+
+	// close the list
+	this.closeList(false);
+
+	e.stopPropagation();
+	return false;	
+
+} // end handleOptionClick()
+
+//
+// Function handleComboFocus() is a member function to process focus events for
+// the list box
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean) Returns true
+//
+combobox.prototype.handleComboFocus = function($id,  e) {
+
+	if (this.timer != null) {
+		window.clearTimeout(this.timer);
+		this.timer = null;
+	}
+
+	return true;
+
+} // end handleComboFocus()
+
+//
+// Function handleComboBlur() is a member function to process blur events for
+// the combobox
+//
+// @param (e object) e is the event object associated with the event
+//
+// @param ($id object) $id is the jQuery object for the element firing the event
+//
+// @return (boolean) Returns true
+//
+combobox.prototype.handleComboBlur = function($id,  e) {
+
+	// store the currently selected value
+	this.selectOption(this.$options.filter('.selected'));
+
+	// close the list box
+	if (this.isOpen() == true) {
+		this.timer = window.setTimeout(function() {g_cb1.closeList(false);}, 40);
+	}
+
+	return true;
+
+} // end handleComboBlur()
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+
+<script type="text/javascript">
+	window.onload = function(){
+		document.getElementById("cb1-edit").focus();
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }
+		}		
+	}
+</script>
+
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../8/index.html">Previous</a></li>
+        
+        <li>Example 9</li>
+        
+        <li class="next"><a href="../10/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 9 - Combobox with aria-autocomplete=&quot;none&quot;</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/combobox1/index.html">Permanent link for Combobox with aria-autocomplete=&quot;none&quot;</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div role="application" tabindex="-1">
+
+<form autocomplete="off">
+<div id="cb1" class="cb">
+	<div class="cb_label"><label id="cb1-label" for="cb1-edit">State</label>:</div>
+	<input id="cb1-edit" class="cb_edit" type="text"
+      role="combobox"
+		aria-labelledby="cb1-label"
+		aria-autocomplete="none"
+		aria-readonly="true"
+		aria-owns="cb1-list"
+		tabindex="0" />
+	<div id="cb1-button-label" class="hidden">Open list of states</div>
+	<button id="cb1-button" class="cb_button" aria-labelledby="cb1-button-label" aria-controls="cb1-list" tabindex="-1">
+		<img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png" alt="Open or close the list box" />
+	</button>
+
+	<ul id="cb1-list" class="cb_list" tabindex="-1" aria-expanded="true" role="listbox">
+		<li id="cb1-opt1" role="option" class="cb_option" tabindex="-1">Alabama</li>
+		<li id="cb1-opt2" role="option" class="cb_option" tabindex="-1">Alaska</li>
+		<li id="cb1-opt3" role="option" class="cb_option" tabindex="-1">American Samoa</li>
+		<li id="cb1-opt4" role="option" class="cb_option" tabindex="-1">Arizona</li>
+		<li id="cb1-opt5" role="option" class="cb_option" tabindex="-1">Arkansas</li>
+		<li id="cb1-opt6" role="option" class="cb_option" tabindex="-1">California</li>
+		<li id="cb1-opt7" role="option" class="cb_option" tabindex="-1">Colorado</li>
+		<li id="cb1-opt8" role="option" class="cb_option" tabindex="-1">Connecticut</li>
+		<li id="cb1-opt9" role="option" class="cb_option" tabindex="-1">Delaware</li>
+		<li id="cb1-opt10" role="option" class="cb_option" tabindex="-1">District of Columbia</li>
+		<li id="cb1-opt11" role="option" class="cb_option" tabindex="-1">Florida</li>
+		<li id="cb1-opt12" role="option" class="cb_option" tabindex="-1">Georgia</li>
+		<li id="cb1-opt13" role="option" class="cb_option" tabindex="-1">Guam</li>
+		<li id="cb1-opt14" role="option" class="cb_option" tabindex="-1">Hawaii</li>
+		<li id="cb1-opt15" role="option" class="cb_option" tabindex="-1">Idaho</li>
+		<li id="cb1-opt16" role="option" class="cb_option selected" tabindex="-1">Illinois</li>
+		<li id="cb1-opt17" role="option" class="cb_option" tabindex="-1">Indiana</li>
+		<li id="cb1-opt18" role="option" class="cb_option" tabindex="-1">Iowa</li>
+		<li id="cb1-opt19" role="option" class="cb_option" tabindex="-1">Kansas</li>
+		<li id="cb1-opt20" role="option" class="cb_option" tabindex="-1">Kentucky</li>
+		<li id="cb1-opt21" role="option" class="cb_option" tabindex="-1">Louisiana</li>
+		<li id="cb1-opt22" role="option" class="cb_option" tabindex="-1">Maine</li>
+		<li id="cb1-opt23" role="option" class="cb_option" tabindex="-1">Maryland</li>
+		<li id="cb1-opt24" role="option" class="cb_option" tabindex="-1">Massachusetts</li>
+		<li id="cb1-opt25" role="option" class="cb_option" tabindex="-1">Michigan</li>
+		<li id="cb1-opt26" role="option" class="cb_option" tabindex="-1">Minnesota</li>
+		<li id="cb1-opt27" role="option" class="cb_option" tabindex="-1">Mississippi</li>
+		<li id="cb1-opt28" role="option" class="cb_option" tabindex="-1">Missouri</li>
+		<li id="cb1-opt29" role="option" class="cb_option" tabindex="-1">Montana</li>
+		<li id="cb1-opt30" role="option" class="cb_option" tabindex="-1">Nebraska</li>
+		<li id="cb1-opt31" role="option" class="cb_option" tabindex="-1">Nevada</li>
+		<li id="cb1-opt32" role="option" class="cb_option" tabindex="-1">New Hampshire</li>
+		<li id="cb1-opt33" role="option" class="cb_option" tabindex="-1">New Jersey</li>
+		<li id="cb1-opt34" role="option" class="cb_option" tabindex="-1">New Mexico</li>
+		<li id="cb1-opt35" role="option" class="cb_option" tabindex="-1">New York</li>
+		<li id="cb1-opt36" role="option" class="cb_option" tabindex="-1">North Carolina</li>
+		<li id="cb1-opt37" role="option" class="cb_option" tabindex="-1">North Dakota</li>
+		<li id="cb1-opt38" role="option" class="cb_option" tabindex="-1">Northern Marianas Islands</li>
+		<li id="cb1-opt39" role="option" class="cb_option" tabindex="-1">Ohio</li>
+		<li id="cb1-opt40" role="option" class="cb_option" tabindex="-1">Oklahoma</li>
+		<li id="cb1-opt41" role="option" class="cb_option" tabindex="-1">Oregon</li>
+		<li id="cb1-opt42" role="option" class="cb_option" tabindex="-1">Pennsylvania</li>
+		<li id="cb1-opt43" role="option" class="cb_option" tabindex="-1">Puerto Rico</li>
+		<li id="cb1-opt44" role="option" class="cb_option" tabindex="-1">Rhode Island</li>
+		<li id="cb1-opt45" role="option" class="cb_option" tabindex="-1">South Carolina</li>
+		<li id="cb1-opt47" role="option" class="cb_option" tabindex="-1">South Dakota</li>
+		<li id="cb1-opt48" role="option" class="cb_option" tabindex="-1">Tennessee</li>
+		<li id="cb1-opt49" role="option" class="cb_option" tabindex="-1">Texas</li>
+		<li id="cb1-opt50" role="option" class="cb_option" tabindex="-1">Utah</li>
+		<li id="cb1-opt51" role="option" class="cb_option" tabindex="-1">Vermont</li>
+		<li id="cb1-opt52" role="option" class="cb_option" tabindex="-1">Virginia</li>
+		<li id="cb1-opt53" role="option" class="cb_option" tabindex="-1">Virgin Islands</li>
+		<li id="cb1-opt54" role="option" class="cb_option" tabindex="-1">Washington</li>
+		<li id="cb1-opt55" role="option" class="cb_option" tabindex="-1">West Virginia</li>
+		<li id="cb1-opt56" role="option" class="cb_option" tabindex="-1">Wisconsin</li>
+		<li id="cb1-opt57" role="option" class="cb_option" tabindex="-1">Wyoming</li>
+	</ul>
+</div>
+</form>
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>This is example implements a combobox widget with aria-autocomplete=&#8220;none&#8221;. The edit box is readonly. The application is required to manage focus for the list box so assistive technologies can follow the currently selected option. For clarity, this example was designed not to update the edit box until the user makes a choice from the list.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <p>If focus is on the edit box:</p>
+<ul>
+    <li>Up Arrow: Move upward in list, even if the list box is closed.</li>
+    <li>Down Arrow: Move downward in list, even if the list box is closed.</li>
+    <li>Alt + Up Arrow/Down Arrow: Open or close the list box. Focus moves to selected option in list.<br />Note: Opera does not propagate alt key modifer events to the web page. Alt+Arrow key combinations will not work in Opera.</li>
+</ul>
+
+<p>If focus is on the list box:</p>
+<ul>
+    <li>Enter: Select highlighted option and close the list box. Focus moves to the edit box.</li>
+    <li>Escape: Close list box without changing the combobox value (e.g. no selection is made). Focus moves to the edit box.</li>
+    <li>Up Arrow: Move upward in list.</li>
+    <li>Down Arrow: Move downward in list.</li>
+    <li>Home: Move to first option in list.</li>
+    <li>End: Move to last option in list.</li>
+    <li>Tab: Select highlighted option and close list box. Focus moves to the next focusable element in page.</li>
+    <li>Shift+Tab: Same as tab key except focus moves to previous focusable item in page.</li>
+</ul>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-expanded]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [aria-owns]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;combobox&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;listbox&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;option&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div role="application" tabindex="-1"&gt;<br/>
+<br/>
+&lt;form autocomplete="off"&gt;<br/>
+&lt;div id="cb1" class="cb"&gt;<br/>
+&#160;&#160;&lt;div class="cb_label"&gt;&lt;label id="cb1-label" for="cb1-edit"&gt;State&lt;/label&gt;:&lt;/div&gt;<br/>
+&#160;&#160;&lt;input id="cb1-edit" class="cb_edit" type="text"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;role="combobox"<br/>
+&#160;&#160;&#160;&#160;aria-labelledby="cb1-label"<br/>
+&#160;&#160;&#160;&#160;aria-autocomplete="none"<br/>
+&#160;&#160;&#160;&#160;aria-readonly="true"<br/>
+&#160;&#160;&#160;&#160;aria-owns="cb1-list"<br/>
+&#160;&#160;&#160;&#160;tabindex="0" /&gt;<br/>
+&#160;&#160;&lt;div id="cb1-button-label" class="hidden"&gt;Open list of states&lt;/div&gt;<br/>
+&#160;&#160;&lt;button id="cb1-button" class="cb_button" aria-labelledby="cb1-button-label" aria-controls="cb1-list" tabindex="-1"&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png" alt="Open or close the list box" /&gt;<br/>
+&#160;&#160;&lt;/button&gt;<br/>
+<br/>
+&#160;&#160;&lt;ul id="cb1-list" class="cb_list" tabindex="-1" aria-expanded="true" role="listbox"&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt1" role="option" class="cb_option" tabindex="-1"&gt;Alabama&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt2" role="option" class="cb_option" tabindex="-1"&gt;Alaska&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt3" role="option" class="cb_option" tabindex="-1"&gt;American Samoa&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt4" role="option" class="cb_option" tabindex="-1"&gt;Arizona&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt5" role="option" class="cb_option" tabindex="-1"&gt;Arkansas&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt6" role="option" class="cb_option" tabindex="-1"&gt;California&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt7" role="option" class="cb_option" tabindex="-1"&gt;Colorado&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt8" role="option" class="cb_option" tabindex="-1"&gt;Connecticut&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt9" role="option" class="cb_option" tabindex="-1"&gt;Delaware&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt10" role="option" class="cb_option" tabindex="-1"&gt;District of Columbia&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt11" role="option" class="cb_option" tabindex="-1"&gt;Florida&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt12" role="option" class="cb_option" tabindex="-1"&gt;Georgia&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt13" role="option" class="cb_option" tabindex="-1"&gt;Guam&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt14" role="option" class="cb_option" tabindex="-1"&gt;Hawaii&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt15" role="option" class="cb_option" tabindex="-1"&gt;Idaho&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt16" role="option" class="cb_option selected" tabindex="-1"&gt;Illinois&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt17" role="option" class="cb_option" tabindex="-1"&gt;Indiana&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt18" role="option" class="cb_option" tabindex="-1"&gt;Iowa&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt19" role="option" class="cb_option" tabindex="-1"&gt;Kansas&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt20" role="option" class="cb_option" tabindex="-1"&gt;Kentucky&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt21" role="option" class="cb_option" tabindex="-1"&gt;Louisiana&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt22" role="option" class="cb_option" tabindex="-1"&gt;Maine&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt23" role="option" class="cb_option" tabindex="-1"&gt;Maryland&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt24" role="option" class="cb_option" tabindex="-1"&gt;Massachusetts&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt25" role="option" class="cb_option" tabindex="-1"&gt;Michigan&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt26" role="option" class="cb_option" tabindex="-1"&gt;Minnesota&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt27" role="option" class="cb_option" tabindex="-1"&gt;Mississippi&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt28" role="option" class="cb_option" tabindex="-1"&gt;Missouri&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt29" role="option" class="cb_option" tabindex="-1"&gt;Montana&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt30" role="option" class="cb_option" tabindex="-1"&gt;Nebraska&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt31" role="option" class="cb_option" tabindex="-1"&gt;Nevada&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt32" role="option" class="cb_option" tabindex="-1"&gt;New Hampshire&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt33" role="option" class="cb_option" tabindex="-1"&gt;New Jersey&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt34" role="option" class="cb_option" tabindex="-1"&gt;New Mexico&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt35" role="option" class="cb_option" tabindex="-1"&gt;New York&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt36" role="option" class="cb_option" tabindex="-1"&gt;North Carolina&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt37" role="option" class="cb_option" tabindex="-1"&gt;North Dakota&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt38" role="option" class="cb_option" tabindex="-1"&gt;Northern Marianas Islands&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt39" role="option" class="cb_option" tabindex="-1"&gt;Ohio&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt40" role="option" class="cb_option" tabindex="-1"&gt;Oklahoma&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt41" role="option" class="cb_option" tabindex="-1"&gt;Oregon&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt42" role="option" class="cb_option" tabindex="-1"&gt;Pennsylvania&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt43" role="option" class="cb_option" tabindex="-1"&gt;Puerto Rico&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt44" role="option" class="cb_option" tabindex="-1"&gt;Rhode Island&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt45" role="option" class="cb_option" tabindex="-1"&gt;South Carolina&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt47" role="option" class="cb_option" tabindex="-1"&gt;South Dakota&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt48" role="option" class="cb_option" tabindex="-1"&gt;Tennessee&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt49" role="option" class="cb_option" tabindex="-1"&gt;Texas&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt50" role="option" class="cb_option" tabindex="-1"&gt;Utah&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt51" role="option" class="cb_option" tabindex="-1"&gt;Vermont&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt52" role="option" class="cb_option" tabindex="-1"&gt;Virginia&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt53" role="option" class="cb_option" tabindex="-1"&gt;Virgin Islands&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt54" role="option" class="cb_option" tabindex="-1"&gt;Washington&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt55" role="option" class="cb_option" tabindex="-1"&gt;West Virginia&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt56" role="option" class="cb_option" tabindex="-1"&gt;Wisconsin&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;li id="cb1-opt57" role="option" class="cb_option" tabindex="-1"&gt;Wyoming&lt;/li&gt;<br/>
+&#160;&#160;&lt;/ul&gt;<br/>
+&lt;/div&gt;<br/>
+&lt;/form&gt;<br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+* {<br/>
+&#160;&#160;font-family: "Times New Roman,Georgia,Serif"; <br/>
+}<br/>
+.hidden {<br/>
+&#160;&#160;position: absolute;<br/>
+&#160;&#160;top: -20em;<br/>
+&#160;&#160;left: -200em;<br/>
+}<br/>
+<br/>
+.wrapper {<br/>
+&#160;&#160;height: 24px;<br/>
+&#160;&#160;overflow: auto;<br/>
+}<br/>
+.cb {<br/>
+&#160;&#160;margin: 20px;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;height: 24px;<br/>
+&#160;&#160;display: block;<br/>
+&#160;&#160;overflow: visible;<br/>
+}<br/>
+<br/>
+.cb_label {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 2px;<br/>
+&#160;&#160;width: 45px;<br/>
+&#160;&#160;font-weight: bold;<br/>
+&#160;&#160;float: left;<br/>
+&#160;&#160;display: inline;<br/>
+}<br/>
+.cb_edit {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 2px 3px;<br/>
+&#160;&#160;width: 240px;<br/>
+&#160;&#160;height: 18px;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+&#160;&#160;font-size: 1em;<br/>
+&#160;&#160;float: left;<br/>
+&#160;&#160;display: inline;<br/>
+}<br/>
+.cb_button {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;height: 24px;<br/>
+&#160;&#160;width: 24px;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+&#160;&#160;background-color: #999;<br/>
+&#160;&#160;float: left;<br/>
+&#160;&#160;display: inline;<br/>
+&#160;&#160;text-align: center;<br/>
+}<br/>
+<br/>
+button.cb_button img {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;height: 22px;<br/>
+&#160;&#160;width: 22px;<br/>
+&#160;&#160;position: relative;<br/>
+&#160;&#160;top: -1px;<br/>
+&#160;&#160;left: -3px;<br/>
+}<br/>
+<br/>
+.cb_list {<br/>
+&#160;&#160;clear: both;<br/>
+&#160;&#160;list-style: none;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;margin-left: 49px;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+&#160;&#160;width: 246px;<br/>
+&#160;&#160;height: 200px;<br/>
+&#160;&#160;overflow: auto;<br/>
+&#160;&#160;background-color: #fff;<br/>
+&#160;&#160;position: relative;<br/>
+&#160;&#160;z-index: 300;<br/>
+}<br/>
+<br/>
+.cb_option {<br/>
+&#160;&#160;margin: 0 1px 0 0;<br/>
+&#160;&#160;padding: 2px 5px;<br/>
+}<br/>
+.selected {<br/>
+&#160;&#160;border-top: 1px solid #44e;<br/>
+&#160;&#160;border-bottom: 1px solid #44e;<br/>
+&#160;&#160;padding: 1px 5px;<br/>
+&#160;&#160;background-color: #77a;<br/>
+&#160;&#160;color: #fff;<br/>
+}<br/>
+.cb_option:hover {<br/>
+&#160;&#160;border-top: 1px solid #44e;<br/>
+&#160;&#160;border-bottom: 1px solid #44e;<br/>
+&#160;&#160;padding: 1px 5px;<br/>
+&#160;&#160;font-weight: bold;<br/>
+&#160;&#160;background-color: #77f;<br/>
+&#160;&#160;color: #fff;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+var g_cb1 = null;&#160;&#160;// set to active combobox for blur function<br/>
+<br/>
+$(document).ready(function() {<br/>
+<br/>
+&#160;&#160;g_cb1 = new combobox('cb1', false);<br/>
+}); // end ready<br/>
+<br/>
+//<br/>
+// keyCodes() is an object to contain keycodes needed for the application<br/>
+//<br/>
+function keyCodes() {<br/>
+&#160;&#160;// Define values for keycodes<br/>
+&#160;&#160;this.backspace&#160;&#160;= 8;<br/>
+&#160;&#160;this.tab&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;= 9;<br/>
+&#160;&#160;this.enter&#160;&#160;&#160;&#160;&#160;&#160;= 13;<br/>
+&#160;&#160;this.esc&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;= 27;<br/>
+<br/>
+&#160;&#160;this.space&#160;&#160;&#160;&#160;&#160;&#160;= 32;<br/>
+&#160;&#160;this.pageup&#160;&#160;&#160;&#160; = 33;<br/>
+&#160;&#160;this.pagedown&#160;&#160; = 34;<br/>
+&#160;&#160;this.end&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;= 35;<br/>
+&#160;&#160;this.home&#160;&#160;&#160;&#160;&#160;&#160; = 36;<br/>
+<br/>
+&#160;&#160;this.up&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; = 38;<br/>
+&#160;&#160;this.down&#160;&#160;&#160;&#160;&#160;&#160; = 40; <br/>
+&#160;&#160;<br/>
+&#160;&#160;this.del&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;= 46;<br/>
+<br/>
+} // end keyCodes<br/>
+<br/>
+//<br/>
+// Function combobox() is a class for an ARIA-enabled combobox widget<br/>
+//<br/>
+// @param (id string) id is the id of the div containing the combobox. Text input must have role="combobox".<br/>
+//<br/>
+// @param (editable boolean) editable is true if the edit box should be editable; false if read-only.<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+function combobox(id, editable) {<br/>
+<br/>
+&#160;&#160;// Define the object properties<br/>
+<br/>
+&#160;&#160;this.$id = $('#' + id);&#160;&#160;// The jQuery object of the div containing the combobox<br/>
+&#160;&#160;this.editable = editable;&#160;&#160;// True if the edit box is editable<br/>
+&#160;&#160;this.keys = new keyCodes();<br/>
+<br/>
+&#160;&#160;// Store jQuery objects for the elements of the combobox<br/>
+&#160;&#160;this.$edit = $('#' + id + '-edit');&#160;&#160;// The jQuery object of the edit box<br/>
+&#160;&#160;this.$button = $('#' + id + '-button');&#160;&#160;// The jQuery object of the button<br/>
+&#160;&#160;this.$buttonImg = $('#' + id).find('img'); // The jQuery object of the button image<br/>
+&#160;&#160;this.$list = $('#' + id + '-list');&#160;&#160;// The jQuery object of the option list<br/>
+&#160;&#160;this.$options = this.$list.find('li');&#160;&#160;// An array of jQuery objects for the combobox options<br/>
+<br/>
+&#160;&#160;this.$selected; // the current value of the combobox<br/>
+&#160;&#160;this.$focused; // the currently selected option in the combo list<br/>
+&#160;&#160;this.timer = null; // stores the close list timer that is set when combo looses focus<br/>
+<br/>
+&#160;&#160;// Initalize the combobox<br/>
+&#160;&#160;this.init();<br/>
+<br/>
+&#160;&#160;// bind event handlers for the widget<br/>
+&#160;&#160;this.bindHandlers();<br/>
+<br/>
+} // end combobox constructor<br/>
+<br/>
+<br/>
+//<br/>
+// Function init() is a member function to initialize the combobox elements. Hides the list<br/>
+// and sets ARIA attributes<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+combobox.prototype.init = function() {<br/>
+<br/>
+&#160;&#160;// Hide the list of options<br/>
+&#160;&#160;this.$list.hide().attr('aria-expanded', 'false');<br/>
+<br/>
+&#160;&#160;// If the edit box is to be readonly, aria-readonly must be defined as true<br/>
+&#160;&#160;if (this.editable == false) {<br/>
+&#160;&#160;&#160;&#160;this.$edit.attr('aria-readonly', 'true');<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// Set initial value for the edit box<br/>
+&#160;&#160;this.$selected = this.$options.filter('.selected');<br/>
+<br/>
+&#160;&#160;if (this.$selected.length &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;this.$edit.val(this.$selected.text());<br/>
+&#160;&#160;}<br/>
+<br/>
+} // end initCombo()<br/>
+<br/>
+//<br/>
+// Function bindHandlers() is a member function to bind event handlers for the combobox elements<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+combobox.prototype.bindHandlers = function() {<br/>
+<br/>
+&#160;&#160;var thisObj = this;<br/>
+<br/>
+&#160;&#160;///////////////// bind editbox handlers /////////////////////////<br/>
+<br/>
+&#160;&#160;this.$edit.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleEditKeyDown($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$edit.keypress(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleEditKeyPress($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$edit.blur(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleComboBlur($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;///////////////// bind handlers for the button /////////////////////////<br/>
+&#160;&#160;<br/>
+&#160;&#160;this.$button.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleButtonClick($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$button.mouseover(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleButtonMouseOver($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$button.mouseout(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleButtonMouseOut($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$button.mousedown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleButtonMouseDown($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$button.mouseup(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleButtonMouseUp($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;///////////////// bind listbox handlers /////////////////////////<br/>
+<br/>
+&#160;&#160;this.$list.focus(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleComboFocus($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$list.blur(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleComboBlur($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;///////////////// bind list option handlers /////////////////////////<br/>
+<br/>
+&#160;&#160;this.$options.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleOptionKeyDown($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$options.keypress(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleOptionKeyPress($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$options.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleOptionClick($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$options.focus(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleComboFocus($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$options.blur(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleComboBlur($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+} // end bindHandlers()<br/>
+<br/>
+//<br/>
+// Function isOpen() is a member function to get the current state of the list box<br/>
+//<br/>
+// @return (boolean) returns true if list box is open; false if it is not<br/>
+//<br/>
+combobox.prototype.isOpen = function() {<br/>
+<br/>
+&#160;&#160;if (this.$list.attr('aria-expanded') == 'true') {<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;}<br/>
+<br/>
+} // end isOpen<br/>
+<br/>
+//<br/>
+// Function closeList() is a member function to close the list box if it is open<br/>
+//<br/>
+// @param (restore booleam) restore is true if function should restore higlight to stored list selection<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+combobox.prototype.closeList = function(restore) {<br/>
+<br/>
+&#160;&#160;var $curOption = this.$options.filter('.selected');<br/>
+<br/>
+&#160;&#160;if (restore == true) {<br/>
+&#160;&#160;&#160;&#160;$curOption = this.$selected;<br/>
+<br/>
+&#160;&#160;&#160;&#160;// remove the selected class from the other list items<br/>
+&#160;&#160;&#160;&#160;this.$options.removeClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;// add selected class to the stored selection<br/>
+&#160;&#160;&#160;&#160;$curOption.addClass('selected');<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;this.$list.hide().attr('aria-expanded', 'false');<br/>
+<br/>
+&#160;&#160;// set focus on the edit box<br/>
+&#160;&#160;this.$edit.focus();<br/>
+<br/>
+} // end closeList()<br/>
+<br/>
+//<br/>
+// Function openList() is a member function to open the list box if it is closed<br/>
+//<br/>
+// @param (restore booleam) restore is true if function should restore higlight to stored list selection<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+combobox.prototype.openList = function(restore) {<br/>
+<br/>
+&#160;&#160;var $curOption = this.$options.filter('.selected');<br/>
+<br/>
+<br/>
+&#160;&#160;if (restore == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;if (this.$selected.length == 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// select the first item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.selectOption(this.$options.first());<br/>
+&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;$curOption = this.$selected;<br/>
+<br/>
+&#160;&#160;&#160;&#160;// remove the selected class from the other list items<br/>
+&#160;&#160;&#160;&#160;this.$options.removeClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;// add selected class to the stored selection<br/>
+&#160;&#160;&#160;&#160;$curOption.addClass('selected');<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;this.$list.show().attr('aria-expanded', 'true');<br/>
+<br/>
+&#160;&#160;// scroll to the currently selected option<br/>
+&#160;&#160;this.$list.scrollTop(this.calcOffset($curOption));<br/>
+<br/>
+&#160;&#160;// set focus on the selected item<br/>
+&#160;&#160;this.$selected.focus();<br/>
+<br/>
+} // end openList();<br/>
+<br/>
+//<br/>
+// Function toggleList() is a member function to toggle the display of the combobox options.<br/>
+//<br/>
+// @param (restore booleam) restore is true if toggle should restore higlight to stored list selection<br/>
+//<br/>
+// Return N/A<br/>
+//<br/>
+combobox.prototype.toggleList = function(restore) {<br/>
+<br/>
+&#160;&#160;if (this.isOpen() == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;this.closeList(restore);<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;this.openList(restore);<br/>
+&#160;&#160;}<br/>
+<br/>
+} // end toggleList()<br/>
+<br/>
+//<br/>
+// Function selectOption() is a member function to select a new combobox option.<br/>
+// The jQuery object for the new option is stored and the selected class is added<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object of the new option to select<br/>
+//<br/>
+// @return N/A<br/>
+// <br/>
+combobox.prototype.selectOption = function($id) {<br/>
+<br/>
+&#160;&#160;// If there is a selected option, remove the selected class from it<br/>
+&#160;&#160;if (this.$selected.length &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;this.$selected.removeClass('selected');<br/>
+&#160;&#160;}<br/>
+&#160;&#160;<br/>
+&#160;&#160;// add the selected class to the new option<br/>
+&#160;&#160;$id.addClass('selected');<br/>
+<br/>
+&#160;&#160;// store the newly selected option<br/>
+&#160;&#160;this.$selected = $id;<br/>
+<br/>
+&#160;&#160;// update the edit box<br/>
+&#160;&#160;this.$edit.val($id.text());<br/>
+&#160;&#160;<br/>
+} // end selectOption<br/>
+<br/>
+//<br/>
+// Function calcOffset() is a member function to calculate the pixel offset of a list option from the top<br/>
+// of the list<br/>
+//<br/>
+// @param ($id obj) $id is the jQuery object of the option to scroll to<br/>
+//<br/>
+// @return (integer) returns the pixel offset of the option<br/>
+//<br/>
+combobox.prototype.calcOffset = function($id) {<br/>
+&#160;&#160;var offset = 0;<br/>
+&#160;&#160;var selectedNdx = this.$options.index($id);<br/>
+<br/>
+&#160;&#160;for (var ndx = 0; ndx &lt; selectedNdx; ndx++) {<br/>
+&#160;&#160;&#160;&#160;offset += this.$options.eq(ndx).outerHeight();<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return offset;<br/>
+<br/>
+} // end calcOffset<br/>
+<br/>
+//<br/>
+// Function handleButtonClick() is a member function to consume button click events. This handler prevents<br/>
+// clicks on the button from reloading the page. This could also be done by adding 'onclick="false";' to the<br/>
+// button HTML markup.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean)&#160;&#160;returns false;<br/>
+//<br/>
+combobox.prototype.handleButtonClick = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleButtonClick();<br/>
+<br/>
+//<br/>
+// Function handleButtonMouseOver() is a member function to process button mouseover events<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean)&#160;&#160;returns false;<br/>
+//<br/>
+combobox.prototype.handleButtonMouseOver = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;// change the button image to reflect the highlight state<br/>
+&#160;&#160;$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-hl.png');<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleButtonMouseOver();<br/>
+<br/>
+//<br/>
+// Function handleButtonMouseOut() is a member function to process button mouseout events<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean)&#160;&#160;returns false;<br/>
+//<br/>
+combobox.prototype.handleButtonMouseOut = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;// reset image to normal state<br/>
+&#160;&#160;$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png');<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleButtonMouseOut();<br/>
+<br/>
+//<br/>
+// Function handleButtonMouseDown() is a member function to process button mousedown events<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean)&#160;&#160;returns false;<br/>
+//<br/>
+combobox.prototype.handleButtonMouseDown = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;// change the button image to reflect the pressed state<br/>
+&#160;&#160;$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-pressed-hl.png');<br/>
+<br/>
+&#160;&#160;// toggle the display of the option list<br/>
+&#160;&#160;this.toggleList(true);<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleButtonMouseDown();<br/>
+<br/>
+//<br/>
+// Function handleButtonMouseUp() is a member function to process button mouseup events<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean)&#160;&#160;returns false;<br/>
+//<br/>
+combobox.prototype.handleButtonMouseUp = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;// reset button image<br/>
+&#160;&#160;$id.find('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-hl.png');<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleButtonMouseUp();<br/>
+<br/>
+//<br/>
+// Function handleOptionKeyDown() is a member function to process keydown events for<br/>
+// the combobox<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean) Returns false if consuming; true if not processing<br/>
+//<br/>
+combobox.prototype.handleOptionKeyDown = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;var curNdx = this.$options.index($id);<br/>
+<br/>
+&#160;&#160;if (e.ctrlKey) {<br/>
+&#160;&#160;&#160;&#160;// do not process<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch(e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.tab: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// update and close the combobox<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if ($id.text() != this.$selected.text()) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// store the new selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.selectOption($id);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Close the option list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.closeList(false);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// allow tab to propagate<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.esc: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Do not change combobox value<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Close the option list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.closeList(true);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// change the combobox value<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if ($id.text() != this.$selected.text()) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// store the new selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.selectOption($id);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Close the option list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.closeList(false);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.up: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.altKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// alt+up toggles the list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.toggleList(true);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// move to the previous item in the list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (curNdx &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $prev = this.$options.eq(curNdx - 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// remove the selected class from the current selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$id.removeClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Add the selected class to the new selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$prev.addClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// scroll the list window to the new option<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$list.scrollTop(this.calcOffset($prev));<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Set focus on the new item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$prev.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (e.altKey) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// alt+up toggles the list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.toggleList(true);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// move to the next item in the list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (curNdx &lt; this.$options.length - 1) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $next = this.$options.eq(curNdx + 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// remove the selected from the current selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$id.removeClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Add the selected class to the new selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$next.addClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// scroll the list window to the new option<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$list.scrollTop(this.calcOffset($next));<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// Set focus on the new item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$next.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.home: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// select the first list item<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $first = this.$options.first();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// remove the selected class from the current selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$options.eq(curNdx).removeClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Add the selected class to the new selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$first.addClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// scroll the list window to the new option<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$list.scrollTop(0);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// set focus on the first item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$first.focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.end: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// select the last list item<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var $last = this.$options.last();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// remove the selected class from the current selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$options.eq(curNdx).removeClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// Add the selected class to the new selection<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$last.addClass('selected');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// scroll the list window to the new option<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$list.scrollTop(this.calcOffset($last));<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// set focus on last item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$last.focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleOptionKeyDown()<br/>
+<br/>
+//<br/>
+// Function handleOptionKeyPress() is a member function to process keypress events for<br/>
+// the combobox. Needed for browsers that use keypress to manipulate the window<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean) Returns false if consuming; true if not processing<br/>
+//<br/>
+combobox.prototype.handleOptionKeyPress = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;var curNdx = this.$options.index($id);<br/>
+<br/>
+&#160;&#160;if (e.altKey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do not process<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch(e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.esc:<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.up:<br/>
+&#160;&#160;&#160;&#160;case this.keys.down:<br/>
+&#160;&#160;&#160;&#160;case this.keys.home:<br/>
+&#160;&#160;&#160;&#160;case this.keys.end: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleOptionKeyPress()<br/>
+<br/>
+//<br/>
+// Function handleEditKeyDown() is a member function to process keydown events for<br/>
+// the edit box.<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @return (boolean) Returns false if consuming; true if not processing<br/>
+//<br/>
+combobox.prototype.handleEditKeyDown = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;var curNdx = this.$options.index(this.$selected);<br/>
+<br/>
+&#160;&#160;if (e.altKey &amp;&amp; (e.keyCode == this.keys.up || e.keyCode == this.keys.down)) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;this.toggleList(true);<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.backspace:<br/>
+&#160;&#160;&#160;&#160;case this.keys.del: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$edit.val(this.$selected.text());<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// toggle the option list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.toggleList(false);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.up: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// move to the previous item in the list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (curNdx &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $prev = this.$options.eq(curNdx - 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.selectOption($prev);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// move to the next item in the list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (curNdx &lt; this.$options.length - 1) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $next = this.$options.eq(curNdx + 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.selectOption($next);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleEditKeyDown()<br/>
+<br/>
+//<br/>
+// Function handleEditKeyPress() is a member function to process keypress events for<br/>
+// the edit box. Needed for browsers that use keypress events to manipulate the window.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean) Returns false if consuming; true if not processing<br/>
+//<br/>
+combobox.prototype.handleEditKeyPress = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;var curNdx = this.$options.index($id);<br/>
+<br/>
+&#160;&#160;if (e.altKey &amp;&amp; (e.keyCode == this.keys.up || e.keyCode == this.keys.down)) {<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch(e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.esc:<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleOptionKeyPress()<br/>
+<br/>
+//<br/>
+// Function handleOptionClick() is a member function to process click events for<br/>
+// the combobox.<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean) Returns false<br/>
+//<br/>
+combobox.prototype.handleOptionClick = function($id, e) {<br/>
+<br/>
+&#160;&#160;// select the clicked item<br/>
+&#160;&#160;this.selectOption($id);<br/>
+<br/>
+&#160;&#160;// close the list<br/>
+&#160;&#160;this.closeList(false);<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;&#160;&#160;<br/>
+<br/>
+} // end handleOptionClick()<br/>
+<br/>
+//<br/>
+// Function handleComboFocus() is a member function to process focus events for<br/>
+// the list box<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean) Returns true<br/>
+//<br/>
+combobox.prototype.handleComboFocus = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;if (this.timer != null) {<br/>
+&#160;&#160;&#160;&#160;window.clearTimeout(this.timer);<br/>
+&#160;&#160;&#160;&#160;this.timer = null;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleComboFocus()<br/>
+<br/>
+//<br/>
+// Function handleComboBlur() is a member function to process blur events for<br/>
+// the combobox<br/>
+//<br/>
+// @param (e object) e is the event object associated with the event<br/>
+//<br/>
+// @param ($id object) $id is the jQuery object for the element firing the event<br/>
+//<br/>
+// @return (boolean) Returns true<br/>
+//<br/>
+combobox.prototype.handleComboBlur = function($id,&#160;&#160;e) {<br/>
+<br/>
+&#160;&#160;// store the currently selected value<br/>
+&#160;&#160;this.selectOption(this.$options.filter('.selected'));<br/>
+<br/>
+&#160;&#160;// close the list box<br/>
+&#160;&#160;if (this.isOpen() == true) {<br/>
+&#160;&#160;&#160;&#160;this.timer = window.setTimeout(function() {g_cb1.closeList(false);}, 40);<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleComboBlur()<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

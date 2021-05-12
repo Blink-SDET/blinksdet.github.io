@@ -1,0 +1,125 @@
+[aria-pressed="true"] { font-weight: bold; }
+
+[aria-checked="true"]  { 
+	background-image: url(http://www.donaldevans.com/images/CheckBoxChecked.png); 
+	background-repeat: no-repeat;
+}
+[aria-checked="false"] { 
+	background-image: url(http://www.donaldevans.com/images/CheckBoxNotChecked.png); 
+	background-repeat: no-repeat;
+}
+
+td.supported {
+/*   background: none repeat scroll 0 0 #90EE90; */
+
+}
+td.not_supported {
+/*    background: none repeat scroll 0 0 #FFB6C1; */
+	border: 2px solid red;
+}
+.code {
+display:block;
+background-color:#DDD;
+}
+
+.hidden {
+    display: none;
+    visibility: hidden;
+}
+.not_hidden {
+	display: block;
+	visibility: true;
+}
+.hidden_row {
+    display: none;
+    visibility: hidden;
+}
+.not_hidden_row
+{
+	display: table-row;
+	visibility: visible;
+}
+:focus { 
+	background-color:yellow;
+}
+
+.visuallyhidden { 
+	position: absolute; 
+	clip: rect(1px 1px 1px 1px); /* for IE6, IE7 */
+	clip: rect(1px, 1px, 1px, 1px);
+	margin: -1px;
+	border: 0; 
+	padding: 0; 
+	width: 1px;
+	height: 1px !important; 
+	overflow:  
+}
+
+.visuallyhidden.focusable:active,
+.visuallyhidden.focusable:focus { 
+	clip: auto; 
+	height: auto; 
+	margin: 0; 
+	overflow: visible;
+	position: static; 
+	width: auto;
+}
+table
+{
+width:90%;
+border-width: 2px;
+border-spacing: 3px;
+border-style: outset;
+border-color: gray;
+border-collapse: separate;
+background-color: white;
+}
+td
+{
+border-width: 1px;
+	padding: 1px;
+	border-style: inset;
+	border-color: gray;
+	background-color: white;
+	-moz-border-radius: ;
+
+}
+th
+{
+	border-width: 1px;
+	padding: 1px;
+	border-style: inset;
+	border-color: gray;
+	background-color: white;
+	-moz-border-radius: ;
+}
+caption 
+{
+caption-side:top;
+font-weight:bold;
+}
+.myCornerGif
+{
+background-image:url('../image/corner.jpg');
+background-repeat:no-repeat;
+background-attachment:scroll;
+background-position:left; 
+position:relative;
+padding-top:100px;
+padding-bottom:100px;
+padding-right:50px;
+padding-left:50px;
+}
+
+.myHelpIcon
+{
+background-image:url('../image/help.jpg');
+background-repeat:no-repeat;
+background-attachment:scroll;
+background-position:inline; 
+position:relative;
+padding-top:100px;
+padding-bottom:100px;
+padding-right:50px;
+padding-left:50px;
+}

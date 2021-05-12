@@ -1,0 +1,1291 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 33 - Spinbutton using IMG elements for buttons</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+div.spinControl {
+	margin: 20px;
+	margin-left: 40px;
+	width: 100px;
+	height: 44px;
+	border: 1px solid black;
+}
+div.spinbutton {
+	float: left;
+	display: inline;
+	margin: 1px;
+	text-align: right;
+	font-weight: bold;
+	font-size: 1.6em;
+	padding: 7px 10px 7px 0;
+	width: 65px;
+	height: 28px;
+	background-color: #faf7f0;
+}
+div.spinbutton:active,
+div.spinbutton:hover,
+div.spinbutton.focus {
+	margin: 0;
+	background-color: #faf7f0;
+	border: 1px solid red;
+}
+div.button {
+	margin: 0;
+	margin-left: 77px;
+	padding: 0;
+	height: 22px;
+}
+div.button img {
+	margin: 0;
+	padding: 0;
+	border-left: 1px solid black;
+}
+label.sbLabel {
+	font-weight: bold;
+	font-size: 1.2em;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+$(document).ready(function () {
+	var spin1 = new spinbutton('sb1', 'sb1_up', 'sb1_down', 10);	
+	var spin2 = new spinbutton('sb2', 'sb2_up', 'sb2_down', 50);	
+}); // end ready
+
+//
+// Function spinbutton() is a constructor for an ARIA spinbutton widget. The widget
+// binds to an element with role='spinbutton'.
+//
+// @param (id string) id is the html id of the spinbutton element
+//
+// @param (upID string) upID is the html id of the spinbutton control's increase value button
+//
+// @param (downID string) downID is the html id of the spinbutton control's decrease value button
+//
+// @param (skipVal integer) skipVal is the amount to change the control by for pgUp/pgDown
+// @return N/A
+//
+function spinbutton(id, upID, downID, skipVal) {
+
+	// define widget attributes
+	this.$id = $('#' + id);
+
+	this.upID = upID;
+	this.$upButton = $('#' + upID);
+	this.downID = downID;
+	this.$downButton = $('#' + downID);
+	this.skipVal = skipVal;
+
+	this.valMin = parseInt(this.$id.attr('aria-valuemin'));
+	this.valMax = parseInt(this.$id.attr('aria-valuemax'));
+	this.valNow = parseInt(this.$id.attr('aria-valuenow'));
+
+	this.keys = {
+		pageup:   33,
+		pagedown: 34,
+		end:      35,
+		home:     36,
+		left:     37,
+		up:       38,
+		right:    39,
+		down:     40 
+	};
+		
+	// bind event handlers
+	this.bindHandlers();
+}
+
+// Function bindHandlers() is a member function to bind event handlers for the spinbutton control
+//
+// @return N/A
+//
+spinbutton.prototype.bindHandlers = function() {
+
+	var thisObj = this;
+
+	//////// bind mouse event handlers to the up button //////////////
+	this.$upButton.mousedown(function(e) {
+		return thisObj.handleMouseDown(e, $(this)); 
+	});
+
+	this.$upButton.mouseup(function(e) {
+		return thisObj.handleMouseUp(e, $(this)); 
+	});
+
+	this.$upButton.mouseenter(function(e) {
+		return thisObj.handleMouseEnter(e, $(this)); 
+	});
+
+	this.$upButton.mouseout(function(e) {
+		return thisObj.handleMouseOut(e, $(this)); 
+	});
+
+	this.$upButton.click(function(e) {
+		return thisObj.handleClick(e, $(this)); 
+	});
+
+	//////// bind mouse event handlers to the down button //////////////
+	this.$downButton.mousedown(function(e) {
+		return thisObj.handleMouseDown(e, $(this)); 
+	});
+
+	this.$downButton.mouseup(function(e) {
+		return thisObj.handleMouseUp(e, $(this)); 
+	});
+
+	this.$downButton.mouseenter(function(e) {
+		return thisObj.handleMouseEnter(e, $(this)); 
+	});
+
+	this.$downButton.mouseout(function(e) {
+		return thisObj.handleMouseOut(e, $(this)); 
+	});
+
+	this.$downButton.focus(function(e) {
+		return thisObj.handleFocus(e, $(this)); 
+	});
+
+	this.$downButton.click(function(e) {
+		return thisObj.handleClick(e, $(this)); 
+	});
+
+	//////// bind event handlers to the spinbutton //////////////
+	this.$id.keydown(function(e) {
+		return thisObj.handleKeyDown(e); 
+	});
+
+	this.$id.keypress(function(e) {
+		return thisObj.handleKeyPress(e); 
+	});
+
+	this.$id.focus(function(e) {
+		return thisObj.handleFocus(e); 
+	});
+
+	this.$id.blur(function(e) {
+		return thisObj.handleBlur(e); 
+	});
+
+	this.$id.parent().focusout(function(e) {
+		return thisObj.handleBlur(e); 
+	});
+
+} // end bindHandlers()
+
+//
+// Function handleClick() is a member function to handle click events for the control
+// buttons
+//
+// @param (e object) e is the event object
+//
+// @param ($button object) $button is the jQuery object of the button clicked
+//
+// @return (boolean) Returns false
+//
+spinbutton.prototype.handleClick = function(e, $button) {
+
+
+	if ($button.attr('id') == this.upID) {
+
+		// if valuemax isn't met, increment valnow
+		if (this.valNow < this.valMax) {
+			this.valNow++;
+
+			this.$id.text(this.valNow);
+			this.$id.attr('aria-valuenow', this.valNow);
+		}
+	}
+	else {
+
+		// if valuemax isn't met, decrement valnow
+		if (this.valNow > this.valMin) {
+			this.valNow--;
+
+			this.$id.text(this.valNow);
+			this.$id.attr('aria-valuenow', this.valNow);
+		}
+	}
+
+	// set focus on the spinbutton
+	this.$id.focus();
+		
+	e.stopPropagation();
+	return false;
+
+} // end handleClick()
+
+//
+// Function handleMouseDown() is a member function to handle mousedown events for the control
+// buttons
+//
+// @param (e object) e is the event object
+//
+// @param ($button object) $button is the jQuery object of the button clicked
+//
+// @return (boolean) Returns false
+//
+spinbutton.prototype.handleMouseDown = function(e, $button) {
+
+	var $img = $button.find('img');
+
+	if ($button.attr('id') == this.upID) {
+		$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-up-pressed-hl.png");
+	}
+	else {
+		$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-pressed-hl.png");
+	}
+
+	e.stopPropagation();
+	return false;
+
+} // end handleMouseDown()
+
+//
+// Function handleMouseUp() is a member function to handle mouseup events for the control
+// buttons
+//
+// @param (e object) e is the event object
+//
+// @param ($button object) $button is the jQuery object of the button clicked
+//
+// @return (boolean) Returns false
+//
+spinbutton.prototype.handleMouseUp = function(e, $button) {
+
+	var $img = $button.find('img');
+
+	if ($button.attr('id') == this.upID) {
+		$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-up-hl.png");
+	}
+	else {
+		$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-hl.png");
+	}
+
+	e.stopPropagation();
+	return false;
+
+} // end handleMouseUp()
+
+//
+// Function handleMouseEnter() is a member function to handle mouseenter events for the control
+// buttons
+//
+// @param (e object) e is the event object
+//
+// @param ($button object) $button is the jQuery object of the button
+//
+// @return (boolean) Returns false
+//
+spinbutton.prototype.handleMouseEnter = function(e, $button) {
+
+	var $img = $button.find('img');
+
+	if ($button.attr('id') == this.upID) {
+		$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-up-hl.png");
+	}
+	else {
+		$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-hl.png");
+	}
+
+	e.stopPropagation();
+	return false;
+
+} // end handleMouseOutEnter()
+
+//
+// Function handleMouseOut() is a member function to handle mouseout events for the control
+// buttons
+//
+// @param (e object) e is the event object
+//
+// @param ($button object) $button is the jQuery object of the button
+//
+// @return (boolean) Returns false
+//
+spinbutton.prototype.handleMouseOut = function(e, $button) {
+
+	var $img = $button.find('img');
+
+	if ($button.attr('id') == this.upID) {
+		$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-up.png");
+	}
+	else {
+		$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png");
+	}
+
+	e.stopPropagation();
+	return false;
+
+} // end handleMouseOutUp()
+
+//
+// Function handleKeyDown() is a member function to handle keydown events for the control.
+//
+// @param (e object) e is the event object
+//
+// @return (boolean) Returns false if consuming; true if propagating
+//
+spinbutton.prototype.handleKeyDown = function(e) {
+
+	if (e.altKey || e.ctrlKey || e.shiftKey) {
+		// do nothing
+		return true;
+	}
+
+	switch(e.keyCode) {
+		case this.keys.pageup: {
+
+			if (this.valNow < this.valMax) {
+
+				// if valnow is small enough, increase by the skipVal,
+				// otherwise just set to valmax
+				if (this.valNow < this.valMax - this.skipVal) {
+					this.valNow += this.skipVal;
+				}	
+				else {
+					this.valNow = this.valMax;
+				}
+
+				// update the control
+				this.$id.attr('aria-valuenow', this.valNow);
+				this.$id.html(this.valNow);
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.pagedown: {
+
+			if (this.valNow > this.valMin) {
+
+				// if valNow is big enough, decrease by the skipVal,
+				// otherwise just set to valmin
+				if (this.valNow > this.valMin + this.skipVal) {
+					this.valNow -= this.skipVal;
+				}	
+				else {
+					this.valNow = this.valMin;
+				}
+
+				// update the control
+				this.$id.attr('aria-valuenow', this.valNow);
+				this.$id.html(this.valNow);
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.home: {
+
+			if (this.valNow < this.valMax) {
+				this.valNow = this.valMax;
+				this.$id.attr('aria-valuenow', this.valNow);
+				this.$id.html(this.valNow);
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.end: {
+
+			if (this.valNow > this.valMin) {
+				this.valNow = this.valMin;
+				this.$id.attr('aria-valuenow', this.valNow);
+				this.$id.html(this.valNow);
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.right:
+		case this.keys.up: {
+
+			// if valuemin isn't met, increment valnow
+			if (this.valNow < this.valMax) {
+				this.valNow++;
+
+				this.$id.text(this.valNow);
+				this.$id.attr('aria-valuenow', this.valNow);
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+		case this.keys.left:
+		case this.keys.down: {
+
+			// if valuemax isn't met, decrement valnow
+			if (this.valNow > this.valMin) {
+				this.valNow--;
+
+				this.$id.text(this.valNow);
+				this.$id.attr('aria-valuenow', this.valNow);
+			}
+
+			e.stopPropagation();
+			return false;
+		}
+	}
+	return true;
+
+} // end handleKeyDown()
+
+//
+// Function handleKeyPress() is a member function to handle keypress events for the control.
+// This function is required to prevent browser that manipulate the window on keypress (such as Opera)
+// from performing unwanted scrolling.
+//
+// @param (e object) e is the event object
+//
+// @return (boolean) Returns false if consuming; true if propagating
+//
+spinbutton.prototype.handleKeyPress = function(e) {
+
+
+	if (e.altKey || e.ctrlKey || e.shiftKey) {
+		// do nothing
+		return true;
+	}
+
+	switch(e.keyCode) {
+		case this.keys.pageup:
+		case this.keys.pagedown:
+		case this.keys.home:
+		case this.keys.end:
+		case this.keys.left:
+		case this.keys.up:
+		case this.keys.right:
+		case this.keys.down: {
+			// consume the event
+			e.stopPropagation();
+			return false;
+		}
+	}
+	return true;
+
+} // end handleKeyPress()
+
+//
+// Function handleFocus() is a member function to handle focus events for the control.
+//
+// @param (e object) e is the event object
+//
+// @return (boolean) Returns true
+//
+spinbutton.prototype.handleFocus = function(e) {
+
+	// add the focus styling class to the control
+	this.$id.addClass('focus');
+
+	return true;
+
+} // end handleFocus()
+
+//
+// Function handleBlur() is a member function to handle blur events for the control.
+//
+// @param (e object) e is the event object
+//
+// @return (boolean) Returns true
+//
+spinbutton.prototype.handleBlur = function(e) {
+
+	// Remove the focus styling class from the control
+	this.$id.removeClass('focus');
+
+	return true;
+
+} // end handleBlur()
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+
+<script type="text/javascript">
+	window.onload = function(){
+		document.getElementById("sb1").focus();
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }
+		}		
+	}
+</script>
+
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../32/index.html">Previous</a></li>
+        
+        <li>Example 33</li>
+        
+        <li class="next"><a href="../34/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 33 - Spinbutton using IMG elements for buttons</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/spinbutton1/index.html">Permanent link for Spinbutton using IMG elements for buttons</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div role="application">
+<label id="sb1_label" class="sbLabel" for="sb1">Choose a number between 0 and 100</label>
+<div class="spinControl">
+	<div id="sb1" class="spinbutton" role="spinbutton"
+            aria-labelledby="sb1_label"
+            aria-valuemin="0" 
+            aria-valuemax="100" 
+            aria-valuenow="50"
+            tabindex="0">
+            50
+	</div>
+	<div id="sb1_up" class="button" role="button" title="Increase Value">
+		<img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-up.png" role="presentation">
+	</div>
+	<div id="sb1_down" class="button" role="button" title="Decrease Value">
+		<img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png" role="presentation">
+	</div>
+</div>
+
+<label id="sb2_label" class="sbLabel" for="sb2">Choose a number between 500 and 1000</label>
+<div class="spinControl">
+	<div id="sb2" class="spinbutton" role="spinbutton"
+            aria-labelledby="sb2_label"
+            aria-valuemin="500" 
+            aria-valuemax="1000" 
+            aria-valuenow="750"
+            tabindex="0">
+            750
+	</div>
+	<div id="sb2_up" class="button" role="button" title="Increase Value">
+		<img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-up.png" role="presentation">	
+	</div>
+	<div id="sb2_down" class="button" role="button" title="Decrease Value">
+		<img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png" role="presentation">	
+	</div>
+</div>
+
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a spinbutton widget using inline images to display the buttons.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <p>The following keyboard shortcuts are implemented for this example (based on recommended shortcuts specified by the <a href="http://dev.aol.com/dhtml_style_guide"><span class="caps">DHTML</span> Style Guide Working Group</a>.):<br />
+<ul><br />
+    <li>Right and Up Arrows: increase the value</li><br />
+    <li>Left and Down Arrows decrease the value</li><br />
+    <li>Home and End key: move to the maximum or minimum values</li><br />
+    <li>Page Up and Page Down: incrementally increase or decrease the value</li><br />
+    <li>Note: Focus should remain on the edit field</li><br />
+</ul></p>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [aria-valuemax]</li>      
+        
+        <li>ARIA 1.0: [aria-valuemin]</li>      
+        
+        <li>ARIA 1.0: [aria-valuenow]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;button&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;presentation&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;spinbutton&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div role="application"&gt;<br/>
+&lt;label id="sb1_label" class="sbLabel" for="sb1"&gt;Choose a number between 0 and 100&lt;/label&gt;<br/>
+&lt;div class="spinControl"&gt;<br/>
+&#160;&#160;&lt;div id="sb1" class="spinbutton" role="spinbutton"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-labelledby="sb1_label"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-valuemin="0" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-valuemax="100" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-valuenow="50"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;50<br/>
+&#160;&#160;&lt;/div&gt;<br/>
+&#160;&#160;&lt;div id="sb1_up" class="button" role="button" title="Increase Value"&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-up.png" role="presentation"&gt;<br/>
+&#160;&#160;&lt;/div&gt;<br/>
+&#160;&#160;&lt;div id="sb1_down" class="button" role="button" title="Decrease Value"&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png" role="presentation"&gt;<br/>
+&#160;&#160;&lt;/div&gt;<br/>
+&lt;/div&gt;<br/>
+<br/>
+&lt;label id="sb2_label" class="sbLabel" for="sb2"&gt;Choose a number between 500 and 1000&lt;/label&gt;<br/>
+&lt;div class="spinControl"&gt;<br/>
+&#160;&#160;&lt;div id="sb2" class="spinbutton" role="spinbutton"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-labelledby="sb2_label"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-valuemin="500" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-valuemax="1000" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-valuenow="750"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;750<br/>
+&#160;&#160;&lt;/div&gt;<br/>
+&#160;&#160;&lt;div id="sb2_up" class="button" role="button" title="Increase Value"&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-up.png" role="presentation"&gt;&#160;&#160;<br/>
+&#160;&#160;&lt;/div&gt;<br/>
+&#160;&#160;&lt;div id="sb2_down" class="button" role="button" title="Decrease Value"&gt;<br/>
+&#160;&#160;&#160;&#160;&lt;img src="http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png" role="presentation"&gt;&#160;&#160;<br/>
+&#160;&#160;&lt;/div&gt;<br/>
+&lt;/div&gt;<br/>
+<br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+div.spinControl {<br/>
+&#160;&#160;margin: 20px;<br/>
+&#160;&#160;margin-left: 40px;<br/>
+&#160;&#160;width: 100px;<br/>
+&#160;&#160;height: 44px;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+}<br/>
+div.spinbutton {<br/>
+&#160;&#160;float: left;<br/>
+&#160;&#160;display: inline;<br/>
+&#160;&#160;margin: 1px;<br/>
+&#160;&#160;text-align: right;<br/>
+&#160;&#160;font-weight: bold;<br/>
+&#160;&#160;font-size: 1.6em;<br/>
+&#160;&#160;padding: 7px 10px 7px 0;<br/>
+&#160;&#160;width: 65px;<br/>
+&#160;&#160;height: 28px;<br/>
+&#160;&#160;background-color: #faf7f0;<br/>
+}<br/>
+div.spinbutton:active,<br/>
+div.spinbutton:hover,<br/>
+div.spinbutton.focus {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;background-color: #faf7f0;<br/>
+&#160;&#160;border: 1px solid red;<br/>
+}<br/>
+div.button {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;margin-left: 77px;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;height: 22px;<br/>
+}<br/>
+div.button img {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;border-left: 1px solid black;<br/>
+}<br/>
+label.sbLabel {<br/>
+&#160;&#160;font-weight: bold;<br/>
+&#160;&#160;font-size: 1.2em;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+$(document).ready(function () {<br/>
+&#160;&#160;var spin1 = new spinbutton('sb1', 'sb1_up', 'sb1_down', 10);&#160;&#160;<br/>
+&#160;&#160;var spin2 = new spinbutton('sb2', 'sb2_up', 'sb2_down', 50);&#160;&#160;<br/>
+}); // end ready<br/>
+<br/>
+//<br/>
+// Function spinbutton() is a constructor for an ARIA spinbutton widget. The widget<br/>
+// binds to an element with role='spinbutton'.<br/>
+//<br/>
+// @param (id string) id is the html id of the spinbutton element<br/>
+//<br/>
+// @param (upID string) upID is the html id of the spinbutton control's increase value button<br/>
+//<br/>
+// @param (downID string) downID is the html id of the spinbutton control's decrease value button<br/>
+//<br/>
+// @param (skipVal integer) skipVal is the amount to change the control by for pgUp/pgDown<br/>
+// @return N/A<br/>
+//<br/>
+function spinbutton(id, upID, downID, skipVal) {<br/>
+<br/>
+&#160;&#160;// define widget attributes<br/>
+&#160;&#160;this.$id = $('#' + id);<br/>
+<br/>
+&#160;&#160;this.upID = upID;<br/>
+&#160;&#160;this.$upButton = $('#' + upID);<br/>
+&#160;&#160;this.downID = downID;<br/>
+&#160;&#160;this.$downButton = $('#' + downID);<br/>
+&#160;&#160;this.skipVal = skipVal;<br/>
+<br/>
+&#160;&#160;this.valMin = parseInt(this.$id.attr('aria-valuemin'));<br/>
+&#160;&#160;this.valMax = parseInt(this.$id.attr('aria-valuemax'));<br/>
+&#160;&#160;this.valNow = parseInt(this.$id.attr('aria-valuenow'));<br/>
+<br/>
+&#160;&#160;this.keys = {<br/>
+&#160;&#160;&#160;&#160;pageup:&#160;&#160; 33,<br/>
+&#160;&#160;&#160;&#160;pagedown: 34,<br/>
+&#160;&#160;&#160;&#160;end:&#160;&#160;&#160;&#160;&#160;&#160;35,<br/>
+&#160;&#160;&#160;&#160;home:&#160;&#160;&#160;&#160; 36,<br/>
+&#160;&#160;&#160;&#160;left:&#160;&#160;&#160;&#160; 37,<br/>
+&#160;&#160;&#160;&#160;up:&#160;&#160;&#160;&#160;&#160;&#160; 38,<br/>
+&#160;&#160;&#160;&#160;right:&#160;&#160;&#160;&#160;39,<br/>
+&#160;&#160;&#160;&#160;down:&#160;&#160;&#160;&#160; 40 <br/>
+&#160;&#160;};<br/>
+&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;// bind event handlers<br/>
+&#160;&#160;this.bindHandlers();<br/>
+}<br/>
+<br/>
+// Function bindHandlers() is a member function to bind event handlers for the spinbutton control<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+spinbutton.prototype.bindHandlers = function() {<br/>
+<br/>
+&#160;&#160;var thisObj = this;<br/>
+<br/>
+&#160;&#160;//////// bind mouse event handlers to the up button //////////////<br/>
+&#160;&#160;this.$upButton.mousedown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseDown(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$upButton.mouseup(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseUp(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$upButton.mouseenter(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseEnter(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$upButton.mouseout(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseOut(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$upButton.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleClick(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;//////// bind mouse event handlers to the down button //////////////<br/>
+&#160;&#160;this.$downButton.mousedown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseDown(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$downButton.mouseup(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseUp(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$downButton.mouseenter(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseEnter(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$downButton.mouseout(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleMouseOut(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$downButton.focus(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleFocus(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$downButton.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleClick(e, $(this)); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;//////// bind event handlers to the spinbutton //////////////<br/>
+&#160;&#160;this.$id.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleKeyDown(e); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$id.keypress(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleKeyPress(e); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$id.focus(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleFocus(e); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$id.blur(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleBlur(e); <br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;this.$id.parent().focusout(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleBlur(e); <br/>
+&#160;&#160;});<br/>
+<br/>
+} // end bindHandlers()<br/>
+<br/>
+//<br/>
+// Function handleClick() is a member function to handle click events for the control<br/>
+// buttons<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($button object) $button is the jQuery object of the button clicked<br/>
+//<br/>
+// @return (boolean) Returns false<br/>
+//<br/>
+spinbutton.prototype.handleClick = function(e, $button) {<br/>
+<br/>
+<br/>
+&#160;&#160;if ($button.attr('id') == this.upID) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// if valuemax isn't met, increment valnow<br/>
+&#160;&#160;&#160;&#160;if (this.valNow &lt; this.valMax) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.valNow++;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$id.text(this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-valuenow', this.valNow);<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// if valuemax isn't met, decrement valnow<br/>
+&#160;&#160;&#160;&#160;if (this.valNow &gt; this.valMin) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.valNow--;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$id.text(this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-valuenow', this.valNow);<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// set focus on the spinbutton<br/>
+&#160;&#160;this.$id.focus();<br/>
+&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleClick()<br/>
+<br/>
+//<br/>
+// Function handleMouseDown() is a member function to handle mousedown events for the control<br/>
+// buttons<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($button object) $button is the jQuery object of the button clicked<br/>
+//<br/>
+// @return (boolean) Returns false<br/>
+//<br/>
+spinbutton.prototype.handleMouseDown = function(e, $button) {<br/>
+<br/>
+&#160;&#160;var $img = $button.find('img');<br/>
+<br/>
+&#160;&#160;if ($button.attr('id') == this.upID) {<br/>
+&#160;&#160;&#160;&#160;$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-up-pressed-hl.png");<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-pressed-hl.png");<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleMouseDown()<br/>
+<br/>
+//<br/>
+// Function handleMouseUp() is a member function to handle mouseup events for the control<br/>
+// buttons<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($button object) $button is the jQuery object of the button clicked<br/>
+//<br/>
+// @return (boolean) Returns false<br/>
+//<br/>
+spinbutton.prototype.handleMouseUp = function(e, $button) {<br/>
+<br/>
+&#160;&#160;var $img = $button.find('img');<br/>
+<br/>
+&#160;&#160;if ($button.attr('id') == this.upID) {<br/>
+&#160;&#160;&#160;&#160;$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-up-hl.png");<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-hl.png");<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleMouseUp()<br/>
+<br/>
+//<br/>
+// Function handleMouseEnter() is a member function to handle mouseenter events for the control<br/>
+// buttons<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($button object) $button is the jQuery object of the button<br/>
+//<br/>
+// @return (boolean) Returns false<br/>
+//<br/>
+spinbutton.prototype.handleMouseEnter = function(e, $button) {<br/>
+<br/>
+&#160;&#160;var $img = $button.find('img');<br/>
+<br/>
+&#160;&#160;if ($button.attr('id') == this.upID) {<br/>
+&#160;&#160;&#160;&#160;$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-up-hl.png");<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-down-hl.png");<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleMouseOutEnter()<br/>
+<br/>
+//<br/>
+// Function handleMouseOut() is a member function to handle mouseout events for the control<br/>
+// buttons<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @param ($button object) $button is the jQuery object of the button<br/>
+//<br/>
+// @return (boolean) Returns false<br/>
+//<br/>
+spinbutton.prototype.handleMouseOut = function(e, $button) {<br/>
+<br/>
+&#160;&#160;var $img = $button.find('img');<br/>
+<br/>
+&#160;&#160;if ($button.attr('id') == this.upID) {<br/>
+&#160;&#160;&#160;&#160;$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-up.png");<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;$img.attr('src', "http://www.oaa-accessibility.org/media/examples/images/button-arrow-down.png");<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleMouseOutUp()<br/>
+<br/>
+//<br/>
+// Function handleKeyDown() is a member function to handle keydown events for the control.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @return (boolean) Returns false if consuming; true if propagating<br/>
+//<br/>
+spinbutton.prototype.handleKeyDown = function(e) {<br/>
+<br/>
+&#160;&#160;if (e.altKey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch(e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.pageup: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (this.valNow &lt; this.valMax) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// if valnow is small enough, increase by the skipVal,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// otherwise just set to valmax<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (this.valNow &lt; this.valMax - this.skipVal) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.valNow += this.skipVal;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.valNow = this.valMax;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// update the control<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-valuenow', this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.html(this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.pagedown: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (this.valNow &gt; this.valMin) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// if valNow is big enough, decrease by the skipVal,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// otherwise just set to valmin<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (this.valNow &gt; this.valMin + this.skipVal) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.valNow -= this.skipVal;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.valNow = this.valMin;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// update the control<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-valuenow', this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.html(this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.home: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (this.valNow &lt; this.valMax) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.valNow = this.valMax;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-valuenow', this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.html(this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.end: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (this.valNow &gt; this.valMin) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.valNow = this.valMin;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-valuenow', this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.html(this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.right:<br/>
+&#160;&#160;&#160;&#160;case this.keys.up: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// if valuemin isn't met, increment valnow<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (this.valNow &lt; this.valMax) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.valNow++;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.text(this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-valuenow', this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.left:<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// if valuemax isn't met, decrement valnow<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (this.valNow &gt; this.valMin) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.valNow--;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.text(this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$id.attr('aria-valuenow', this.valNow);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleKeyDown()<br/>
+<br/>
+//<br/>
+// Function handleKeyPress() is a member function to handle keypress events for the control.<br/>
+// This function is required to prevent browser that manipulate the window on keypress (such as Opera)<br/>
+// from performing unwanted scrolling.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @return (boolean) Returns false if consuming; true if propagating<br/>
+//<br/>
+spinbutton.prototype.handleKeyPress = function(e) {<br/>
+<br/>
+<br/>
+&#160;&#160;if (e.altKey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch(e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.pageup:<br/>
+&#160;&#160;&#160;&#160;case this.keys.pagedown:<br/>
+&#160;&#160;&#160;&#160;case this.keys.home:<br/>
+&#160;&#160;&#160;&#160;case this.keys.end:<br/>
+&#160;&#160;&#160;&#160;case this.keys.left:<br/>
+&#160;&#160;&#160;&#160;case this.keys.up:<br/>
+&#160;&#160;&#160;&#160;case this.keys.right:<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// consume the event<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleKeyPress()<br/>
+<br/>
+//<br/>
+// Function handleFocus() is a member function to handle focus events for the control.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @return (boolean) Returns true<br/>
+//<br/>
+spinbutton.prototype.handleFocus = function(e) {<br/>
+<br/>
+&#160;&#160;// add the focus styling class to the control<br/>
+&#160;&#160;this.$id.addClass('focus');<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleFocus()<br/>
+<br/>
+//<br/>
+// Function handleBlur() is a member function to handle blur events for the control.<br/>
+//<br/>
+// @param (e object) e is the event object<br/>
+//<br/>
+// @return (boolean) Returns true<br/>
+//<br/>
+spinbutton.prototype.handleBlur = function(e) {<br/>
+<br/>
+&#160;&#160;// Remove the focus styling class from the control<br/>
+&#160;&#160;this.$id.removeClass('focus');<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleBlur()<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

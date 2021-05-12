@@ -1,0 +1,1165 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 23 - Live Region</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+div#application {
+  height: 30em;
+}
+div.controls {
+  margin-left: 10px;
+  padding: 5px 10px;
+  width: 21em;
+  float: left;
+  clear: both;
+  border-bottom: 1px solid #008;
+}
+button,
+select {
+  float: right;
+}
+h2 {
+  clear: both;
+}
+div.example {
+  margin-top: 50px;
+  margin-left: 30px;
+  width: 22em;
+  float: left;
+}
+div#region1Container {
+  margin-left: 4em;
+  padding: 10px;
+  width: 11em;
+  height: 1.6em;
+  float: left;
+}
+div#region1Container label {
+  padding-top: 10px;
+  font-weight: bold;
+}
+div#liveregion1 {
+  margin: 0;
+  padding: 2px 5px;
+  float: right;
+  width: 2em;
+  text-align: right;
+  border: 1px solid black;
+}
+label#region2Label {
+  font-weight: bold;
+  font-size: 1.2em;
+}
+div#liveregion2 {
+  padding: 2px 5px;
+  width: 22em;
+  border: 1px solid black;
+  height: 9em;
+  overflow: auto;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/live.js"></script>
+
+
+
+<script type="text/javascript">
+
+var g_msg1 = {
+	msgArray: new Array("0","1","2","3","4","5","6","7","8","9"),  
+	index: 0
+};
+
+var g_msg2 = {
+	msgArray: new Array(
+		"The birch canoe slid on the smooth planks.",
+		"Glue the sheet to the dark blue background.",
+		"It's easy to tell the depth of a well.",
+		"These days a chicken leg is a rare dish.",
+		"Rice is often served in round bowls.",
+		"The juice of lemons makes fine punch.",
+		"The box was thrown beside the parked truck.",
+		"The hogs were fed chopped corn and garbage.",
+		"Four hours of steady work faced us.",
+		"Large size in stockings is hard to sell."
+	),  
+	index: 0
+};
+
+var g_msg1index = 0;
+var g_msg2index = 0;
+
+$(document).ready(function() {
+
+	var live1 = new liveRegion('liveregion1', function() {updateRegion('liveregion1', g_msg1, false);}, 1000, true);
+	var live2 = new liveRegion('liveregion2', function() {updateRegion('liveregion2', g_msg2, true);}, 5000, true);
+
+   var rgn1Stopped = true;
+   var rgn2Stopped = true;
+
+	// initialize the selects to ensure that their selected values match the markup
+	init();
+
+	///////////////// Bind event handlers for live1 controls //////////////////////////
+
+	// bind a change event handler for the interval select
+	$('#time1').change(function(e) {
+
+		// select the new item
+		var $newItem = selectItem($(this), $(this).find('option'), $(this).val());
+
+		// set the interval
+		live1.setInterval($newItem.text()*1000);
+
+		e.stopPropagation();
+		return false;
+	});
+
+	// bind a change event handler for the politeness select
+	$('#politeness1').change(function(e) {
+
+		// select the new item
+		var $newItem = selectItem($(this), $(this).find('option'), $(this).val());
+
+		// set the politeness
+		live1.setPoliteness($newItem.text());
+
+		e.stopPropagation();
+		return false;
+	});
+
+	// bind a change event handler for the atomic select
+	$('#atomic1').change(function(e) {
+
+		// select the new item
+		var $newItem = selectItem($(this), $(this).find('option'), $(this).val());
+
+		// set the politeness
+		live1.setAtomic($newItem.text());
+
+		e.stopPropagation();
+		return false;
+	});
+
+	// bind a change event handler for the update relevance select
+	$('#relevant1').change(function(e) {
+
+		// select the new item
+		var $newItem = selectItem($(this), $(this).find('option'), $(this).val());
+
+		// set the update revelance setting
+		live1.setRelevant($newItem.text());
+
+		e.stopPropagation();
+		return false;
+	});
+
+	// bind a click handler for the start/stop button
+	$('#rgn1_button').click(function(e) {
+
+		// toggle the region updates
+		live1.toggleUpdates();
+
+      if (rgn1Stopped == false) {
+         $('#liveregion1').html('XXX');
+         $(this).html('Start Counter');
+         rgn1Stopped = true;
+      }
+      else {
+         $(this).html('Stop Counter');
+         rgn1Stopped = false;
+      }
+
+		e.stopImmediatePropagation();
+		return false;
+	});
+
+
+	///////////////// Bind event handlers for live2 controls //////////////////////////
+  
+	$('#time2').change(function(e) {
+
+		// select the new item
+		var $newItem = selectItem($(this), $(this).find('option'), $(this).val());
+
+		// set the interval
+		live2.setInterval($newItem.text()*1000);
+
+		e.stopPropagation();
+		return false;
+	});
+
+	// bind a change event handler for the politeness select
+	$('#politeness2').change(function(e) {
+
+		// select the new item
+		var $newItem = selectItem($(this), $(this).find('option'), $(this).val());
+
+		// set the politeness
+		live2.setPoliteness($newItem.text());
+
+		e.stopPropagation();
+		return false;
+	});
+
+	// bind a change event handler for the atomic select
+	$('#atomic2').change(function(e) {
+
+		// select the new item
+		var $newItem = selectItem($(this), $(this).find('option'), $(this).val());
+
+		// set the politeness
+		live2.setAtomic($newItem.text());
+
+		e.stopPropagation();
+		return false;
+	});
+
+	// bind a change event handler for the update relevance select
+	$('#relevant2').change(function(e) {
+
+		// select the new item
+		var $newItem = selectItem($(this), $(this).find('option'), $(this).val());
+
+		// set the update revelance setting
+		live2.setRelevant($newItem.text());
+
+		e.stopPropagation();
+		return false;
+	});
+
+	// bind a click handler for the start/stop button
+	$('#rgn2_button').click(function(e) {
+
+		// toggle the region updates
+		live2.toggleUpdates();
+
+      if (rgn2Stopped == false) {
+         $(this).html('Start Log');
+         rgn2Stopped = true;
+      }
+      else {
+         rgn2Stopped = false;
+         $(this).html('Stop Log');
+      }
+
+		e.stopImmediatePropagation();
+		return false;
+	});
+
+}); // end ready()
+
+//
+// Function init() is a function to initialize the select elements to match their activedescendant values. This
+// ensures that any page reloads do not introduce erroneous aria attribute values
+function init() {
+
+	var elems = new Array('time1', 'politeness1', 'atomic1', 'relevant1', 'time2', 'politeness2', 'atomic2', 'relevant2');
+	var $id = null;
+	var val = null;
+
+	for (ndx in elems) {
+		// get the jQuery object of select to set
+		$id = $('#' + elems[ndx]);
+
+		// get the value of the active descendant
+		val = $('#' + $id.attr('aria-activedescendant')).text();
+
+		// set the value of the select
+		$id.val(val);
+	}
+
+} // end init()
+
+//
+// Function selectItem() is a function to iterate through an option list to find a new option and select it.
+// The function also updates the aria-seleced attribute of the items.
+//
+// @param ($select object) $select is the jquery object of the select that the option list is part of.
+//
+// @param ($list object) $list is the list of options to iterate through.
+//
+// @param (val string) val is the value to find in the list.
+//
+// @return (object) returns the jquery object of the new item selected. Returns NULL if not found.
+//
+function selectItem($select, $list, val) {
+	var $prevItem = $('#' + $select.attr('aria-activedescendant'));
+	var $newItem = null;
+		
+	// find the list item associated with the new value
+	$list.each(function() {
+		if ($(this).text() == val) {
+	       		$newItem = $(this);
+		}
+	});
+
+	if ($newItem == null) {
+		// no new item found
+		return null;
+	}
+
+	// set the aria-selected attribute to false for the previously selected item
+	$prevItem.attr('aria-selected', 'false');
+
+	// set the aria-selected attribute to true for the new item
+	$newItem.attr('aria-selected', 'true')
+
+	// update the active descendent of the select
+	$select.attr('aria-activedescendant', $newItem.attr('id'));
+
+	// return the new item selected
+	return $newItem;
+
+} // end selectItem()
+
+//
+// The function updateRegion() is called by a liveRegion timer to updates the live region
+// with new content based on the passed messageArray.
+//
+// @param (live_region object) LiveRegion is the liveRegion widget object
+//
+// @param (msgArray array) msgArray is an array of messages to use for the update
+//
+// @param (append boolean) append is true if messages should be appended, false if message should
+// replace live region content
+//
+// @return N/A
+//
+function updateRegion (region, msgObj, append) {
+
+	var $regionID = $('#' + region);
+	var msg = '';
+	
+	if (msgObj.index == msgObj.msgArray.length) {
+		// We've reached the end of the array, reset the index.
+		msgObj.index = 0;
+
+		// clear the region
+		$regionID.empty();
+	}
+
+	if (append == false) {
+
+		msg = msgObj.msgArray[msgObj.index];
+
+		// messages should replace live region contents.
+		// Empty the live region
+		$regionID.empty();
+ 	}
+	else {
+		msg = msgObj.msgArray[msgObj.index] + '<br/>';
+	}
+
+	// append the new message to the live region
+	$regionID.append(msg);
+
+	if (append == true) {
+		$regionID.scrollTop($regionID.attr('scrollHeight'));
+	}
+
+	// increment the message index
+	msgObj.index++;
+	
+
+}
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+
+  <script type="text/javascript">
+	window.onload = function(){
+		document.getElementById("rgn1_button").focus();
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }
+		}		
+	}
+  </script>
+
+
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../22/index.html">Previous</a></li>
+        
+        <li>Example 23</li>
+        
+        <li class="next"><a href="../24/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 23 - Live Region</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/live1/index.html">Permanent link for Live Region</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div id="application" role="application">
+   <div class="controls">
+      <h2>Live Region 1: Simple Counter</h2>
+      <p><label id="time1Label" for="time1">Change Interval (seconds)</label>:
+         <select id="time1" aria-labelledby="time1Label" aria-activedescendant="time1_opt1" tabindex="0">
+            <option id="time1_opt1" role="option" aria-selected="true" selected>1</option>
+            <option id="time1_opt2" role="option" aria-selected="false">2</option>
+            <option id="time1_opt3" role="option" aria-selected="false">3</option>
+            <option id="time1_opt4" role="option" aria-selected="false">4</option>
+            <option id="time1_opt5" role="option" aria-selected="false">5</option>
+            <option id="time1_opt6" role="option" aria-selected="false">6</option>
+            <option id="time1_opt7" role="option" aria-selected="false">7</option>
+            <option id="time1_opt8" role="option" aria-selected="false">8</option>
+            <option id="time1_opt9" role="option" aria-selected="false">9</option>
+            <option id="time1_opt10" role="option" aria-selected="false">10</option>
+         </select>
+      </p>
+
+      <p><label id="politeness1Label" for="politeness1">Live Property Value</label>:
+         <select id="politeness1" aria-labelledby="politeness1Label" aria-activedescendant="polite1_opt2" tabindex="0">
+            <option id="polite1_opt1" role="option" aria-selected="false">off</option>
+            <option id="polite1_opt2" role="option" aria-selected="false" selected>polite</option>
+            <option id="polite1_opt3" role="option" aria-selected="true" >assertive</option>
+            <option id="polite1_opt4" role="option" aria-selected="false">rude</option>
+         </select>
+      </p>
+
+      <p><label id="atomic1Label" for="atomic1">Atomic Property Value</label>:
+         <select id="atomic1" aria-labelledby="atomic1Label" aria-activedescendant="atomic1_opt1" tabindex="0">
+            <option id="atomic1_opt1" role="option" aria-selected="true" selected>true</option>
+            <option id="atomic1_opt2" role="option" aria-selected="false">false</option>
+         </select>
+      </p>
+
+      <p><label id="relevant1Label" for="relevant1">Relevant Property Value</label>:
+         <select id="relevant1" aria-labelledby="relevant1Label" aria-activedescendant="relevant1_opt4" tabindex="0">
+            <option id="relevant1_opt1" role="option" aria-selected="false">additions</option>
+            <option id="relevant1_opt2" role="option" aria-selected="false">removals</option>
+            <option id="relevant1_opt3" role="option" aria-selected="false">text</option>
+            <option id="relevant1_opt4" role="option" aria-selected="true" selected>all</option>
+          </select>
+      </p>
+      <button id="rgn1_button" aria-controls="liveregion1">Start Counter</button>
+   </div>
+   <div class="example">
+      <div id="region1Container">
+         <label id="live1Label" for="liveregion1">Changing value</label>:
+         <div id="liveregion1" 
+            class="region"   
+            role="status" 
+            aria-labelledby="live1Label"
+            aria-live="polite"
+            aria-atomic="true"
+            aria-relevant="all">XXX
+         </div>
+      </div>
+   </div>
+   <div class="controls">
+      <h2>Live Region 2: Text Log</h2>
+      <p><label id="time2Label" for="time2">Change Interval (in seconds)</label>: 
+         <select id="time2" aria-labelledby="time2Label" aria-activedescendant="time2_opt5" tabindex="0">
+            <option id="time2_opt1" role="option" aria-selected="false">1</option>
+            <option id="time2_opt2" role="option" aria-selected="false">2</option>
+            <option id="time2_opt3" role="option" aria-selected="false">3</option>
+            <option id="time2_opt4" role="option" aria-selected="false">4</option>
+            <option id="time2_opt5" role="option" aria-selected="true" selected>5</option>
+            <option id="time2_opt6" role="option" aria-selected="false">6</option>
+            <option id="time2_opt7" role="option" aria-selected="false">7</option>
+            <option id="time2_opt8" role="option" aria-selected="false">8</option>
+            <option id="time2_opt9" role="option" aria-selected="false">9</option>
+            <option id="time2_opt10" role="option" aria-selected="false">10</option>
+         </select>
+      </p>
+
+      <p><label id="politeness2Label" for="politeness2">Live Property Value</label>:
+         <select id="politeness2" aria-labelledby="politeness2Label" aria-activedescendant="polite2_opt2" tabindex="0">
+            <option id="polite2_opt1" role="option" aria-selected="false">off</option>
+            <option id="polite2_opt2" role="option" aria-selected="true" selected>polite</option>
+            <option id="polite2_opt3" role="option" aria-selected="false">assertive</option>
+            <option id="polite2_opt4" role="option" aria-selected="false">rude</option>
+         </select>
+      </p>
+
+      <p><label id="atomic2Label" for="atomic2">Atomic Property Value</label>:
+         <select id="atomic2" aria-labelledby="atomic2Label" aria-activedescendant="atomic2_opt2" tabindex="0">
+            <option id="atomic2_opt1" role="option" aria-selected="false">true</option>
+            <option id="atomic2_opt2" role="option" aria-selected="true" selected>false</option>
+         </select>
+      </p>
+
+      <p><label id="relevant2Label" for="relevant2">Relevant Property Value</label>:
+         <select id="relevant2" aria-labelledby="relevant2Label" aria-activedescendant="relevant2_opt1" tabindex="0">
+            <option id="relevant2_opt1" role="option" aria-selected="true" selected>additions</option>
+            <option id="relevant2_opt2" role="option" aria-selected="false">removals</option>
+            <option id="relevant2_opt3" role="option" aria-selected="false">text</option>
+            <option id="relevant2_opt4" role="option" aria-selected="false">all</option>
+         </select>
+      </p>
+      <button id="rgn2_button" aria-controls="liveregion2">Start Log</button>
+   </div>
+
+   <div class="example">
+      <label id="region2Label" for="liveregion2">Log Text</label>
+
+      <div id="liveregion2" 
+         class="region"
+         role="log"
+         aria-labelledby="region2Label"
+         aria-live="polite"
+         aria-atomic="false"
+         aria-relevant="additions">
+      </div>
+   </div>
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a live region widget with two timers.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <p>No keyboard information</p>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-activedescendant]</li>      
+        
+        <li>ARIA 1.0: [aria-atomic]</li>      
+        
+        <li>ARIA 1.0: [aria-live]</li>      
+        
+        <li>ARIA 1.0: [aria-relevant]</li>      
+        
+        <li>ARIA 1.0: [aria-selected]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;log&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;option&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;timer&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div id="application" role="application"&gt;<br/>
+&#160;&#160; &lt;div class="controls"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;h2&gt;Live Region 1: Simple Counter&lt;/h2&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;&lt;label id="time1Label" for="time1"&gt;Change Interval (seconds)&lt;/label&gt;:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;select id="time1" aria-labelledby="time1Label" aria-activedescendant="time1_opt1" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt1" role="option" aria-selected="true" selected&gt;1&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt2" role="option" aria-selected="false"&gt;2&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt3" role="option" aria-selected="false"&gt;3&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt4" role="option" aria-selected="false"&gt;4&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt5" role="option" aria-selected="false"&gt;5&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt6" role="option" aria-selected="false"&gt;6&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt7" role="option" aria-selected="false"&gt;7&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt8" role="option" aria-selected="false"&gt;8&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt9" role="option" aria-selected="false"&gt;9&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time1_opt10" role="option" aria-selected="false"&gt;10&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/select&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/p&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;&lt;label id="politeness1Label" for="politeness1"&gt;Live Property Value&lt;/label&gt;:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;select id="politeness1" aria-labelledby="politeness1Label" aria-activedescendant="polite1_opt3" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="polite1_opt1" role="option" aria-selected="false"&gt;off&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="polite1_opt2" role="option" aria-selected="false"&gt;polite&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="polite1_opt3" role="option" aria-selected="true" selected&gt;assertive&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="polite1_opt4" role="option" aria-selected="false"&gt;rude&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/select&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/p&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;&lt;label id="atomic1Label" for="atomic1"&gt;Atomic Property Value&lt;/label&gt;:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;select id="atomic1" aria-labelledby="atomic1Label" aria-activedescendant="atomic1_opt1" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="atomic1_opt1" role="option" aria-selected="true" selected&gt;true&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="atomic1_opt2" role="option" aria-selected="false"&gt;false&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/select&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/p&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;&lt;label id="relevant1Label" for="relevant1"&gt;Relevant Property Value&lt;/label&gt;:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;select id="relevant1" aria-labelledby="relevant1Label" aria-activedescendant="relevant1_opt4" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="relevant1_opt1" role="option" aria-selected="false"&gt;additions&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="relevant1_opt2" role="option" aria-selected="false"&gt;removals&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="relevant1_opt3" role="option" aria-selected="false"&gt;text&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="relevant1_opt4" role="option" aria-selected="true" selected&gt;all&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/select&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/p&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;button id="rgn1_button" aria-controls="liveregion1"&gt;Start Counter&lt;/button&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+&#160;&#160; &lt;div class="example"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;div id="region1Container"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;label id="live1Label" for="liveregion1"&gt;Changing value&lt;/label&gt;:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;div id="liveregion1" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;class="region"&#160;&#160; <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;role="timer" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-labelledby="live1Label"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-live="assertive"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-atomic="true"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;aria-relevant="all"&gt;XXX<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/div&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/div&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+&#160;&#160; &lt;div class="controls"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;h2&gt;Live Region 2: Text Log&lt;/h2&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;&lt;label id="time2Label" for="time2"&gt;Change Interval (in seconds)&lt;/label&gt;: <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;select id="time2" aria-labelledby="time2Label" aria-activedescendant="time2_opt5" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt1" role="option" aria-selected="false"&gt;1&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt2" role="option" aria-selected="false"&gt;2&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt3" role="option" aria-selected="false"&gt;3&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt4" role="option" aria-selected="false"&gt;4&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt5" role="option" aria-selected="true" selected&gt;5&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt6" role="option" aria-selected="false"&gt;6&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt7" role="option" aria-selected="false"&gt;7&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt8" role="option" aria-selected="false"&gt;8&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt9" role="option" aria-selected="false"&gt;9&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="time2_opt10" role="option" aria-selected="false"&gt;10&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/select&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/p&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;&lt;label id="politeness2Label" for="politeness2"&gt;Live Property Value&lt;/label&gt;:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;select id="politeness2" aria-labelledby="politeness2Label" aria-activedescendant="polite2_opt2" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="polite2_opt1" role="option" aria-selected="false"&gt;off&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="polite2_opt2" role="option" aria-selected="true" selected&gt;polite&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="polite2_opt3" role="option" aria-selected="false"&gt;assertive&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="polite2_opt4" role="option" aria-selected="false"&gt;rude&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/select&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/p&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;&lt;label id="atomic2Label" for="atomic2"&gt;Atomic Property Value&lt;/label&gt;:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;select id="atomic2" aria-labelledby="atomic2Label" aria-activedescendant="atomic2_opt2" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="atomic2_opt1" role="option" aria-selected="false"&gt;true&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="atomic2_opt2" role="option" aria-selected="true" selected&gt;false&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/select&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/p&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;p&gt;&lt;label id="relevant2Label" for="relevant2"&gt;Relevant Property Value&lt;/label&gt;:<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;select id="relevant2" aria-labelledby="relevant2Label" aria-activedescendant="relevant2_opt1" tabindex="0"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="relevant2_opt1" role="option" aria-selected="true" selected&gt;additions&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="relevant2_opt2" role="option" aria-selected="false"&gt;removals&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="relevant2_opt3" role="option" aria-selected="false"&gt;text&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;option id="relevant2_opt4" role="option" aria-selected="false"&gt;all&lt;/option&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/select&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/p&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;button id="rgn2_button" aria-controls="liveregion2"&gt;Start Log&lt;/button&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+<br/>
+&#160;&#160; &lt;div class="example"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;label id="region2Label" for="liveregion2"&gt;Log Text&lt;/label&gt;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;div id="liveregion2" <br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; class="region"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; role="log"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; aria-labelledby="region2Label"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; aria-live="polite"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; aria-atomic="false"<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; aria-relevant="additions"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/div&gt;<br/>
+&#160;&#160; &lt;/div&gt;<br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+div#application {<br/>
+&#160;&#160;height: 30em;<br/>
+}<br/>
+div.controls {<br/>
+&#160;&#160;margin-left: 10px;<br/>
+&#160;&#160;padding: 5px 10px;<br/>
+&#160;&#160;width: 21em;<br/>
+&#160;&#160;float: left;<br/>
+&#160;&#160;clear: both;<br/>
+&#160;&#160;border-bottom: 1px solid #008;<br/>
+}<br/>
+button,<br/>
+select {<br/>
+&#160;&#160;float: right;<br/>
+}<br/>
+h2 {<br/>
+&#160;&#160;clear: both;<br/>
+}<br/>
+div.example {<br/>
+&#160;&#160;margin-top: 50px;<br/>
+&#160;&#160;margin-left: 30px;<br/>
+&#160;&#160;width: 22em;<br/>
+&#160;&#160;float: left;<br/>
+}<br/>
+div#region1Container {<br/>
+&#160;&#160;margin-left: 4em;<br/>
+&#160;&#160;padding: 10px;<br/>
+&#160;&#160;width: 11em;<br/>
+&#160;&#160;height: 1.6em;<br/>
+&#160;&#160;float: left;<br/>
+}<br/>
+div#region1Container label {<br/>
+&#160;&#160;padding-top: 10px;<br/>
+&#160;&#160;font-weight: bold;<br/>
+}<br/>
+div#liveregion1 {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 2px 5px;<br/>
+&#160;&#160;float: right;<br/>
+&#160;&#160;width: 2em;<br/>
+&#160;&#160;text-align: right;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+}<br/>
+label#region2Label {<br/>
+&#160;&#160;font-weight: bold;<br/>
+&#160;&#160;font-size: 1.2em;<br/>
+}<br/>
+div#liveregion2 {<br/>
+&#160;&#160;padding: 2px 5px;<br/>
+&#160;&#160;width: 22em;<br/>
+&#160;&#160;border: 1px solid black;<br/>
+&#160;&#160;height: 9em;<br/>
+&#160;&#160;overflow: auto;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+var g_msg1 = {<br/>
+&#160;&#160;msgArray: new Array("0","1","2","3","4","5","6","7","8","9"),&#160;&#160;<br/>
+&#160;&#160;index: 0<br/>
+};<br/>
+<br/>
+var g_msg2 = {<br/>
+&#160;&#160;msgArray: new Array(<br/>
+&#160;&#160;&#160;&#160;"The birch canoe slid on the smooth planks.",<br/>
+&#160;&#160;&#160;&#160;"Glue the sheet to the dark blue background.",<br/>
+&#160;&#160;&#160;&#160;"It's easy to tell the depth of a well.",<br/>
+&#160;&#160;&#160;&#160;"These days a chicken leg is a rare dish.",<br/>
+&#160;&#160;&#160;&#160;"Rice is often served in round bowls.",<br/>
+&#160;&#160;&#160;&#160;"The juice of lemons makes fine punch.",<br/>
+&#160;&#160;&#160;&#160;"The box was thrown beside the parked truck.",<br/>
+&#160;&#160;&#160;&#160;"The hogs were fed chopped corn and garbage.",<br/>
+&#160;&#160;&#160;&#160;"Four hours of steady work faced us.",<br/>
+&#160;&#160;&#160;&#160;"Large size in stockings is hard to sell."<br/>
+&#160;&#160;),&#160;&#160;<br/>
+&#160;&#160;index: 0<br/>
+};<br/>
+<br/>
+var g_msg1index = 0;<br/>
+var g_msg2index = 0;<br/>
+<br/>
+$(document).ready(function() {<br/>
+<br/>
+&#160;&#160;var live1 = new liveRegion('liveregion1', function() {updateRegion('liveregion1', g_msg1, false);}, 1000, true);<br/>
+&#160;&#160;var live2 = new liveRegion('liveregion2', function() {updateRegion('liveregion2', g_msg2, true);}, 5000, true);<br/>
+<br/>
+&#160;&#160; var rgn1Stopped = true;<br/>
+&#160;&#160; var rgn2Stopped = true;<br/>
+<br/>
+&#160;&#160;// initialize the selects to ensure that their selected values match the markup<br/>
+&#160;&#160;init();<br/>
+<br/>
+&#160;&#160;///////////////// Bind event handlers for live1 controls //////////////////////////<br/>
+<br/>
+&#160;&#160;// bind a change event handler for the interval select<br/>
+&#160;&#160;$('#time1').change(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// select the new item<br/>
+&#160;&#160;&#160;&#160;var $newItem = selectItem($(this), $(this).find('option'), $(this).val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the interval<br/>
+&#160;&#160;&#160;&#160;live1.setInterval($newItem.text()*1000);<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a change event handler for the politeness select<br/>
+&#160;&#160;$('#politeness1').change(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// select the new item<br/>
+&#160;&#160;&#160;&#160;var $newItem = selectItem($(this), $(this).find('option'), $(this).val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the politeness<br/>
+&#160;&#160;&#160;&#160;live1.setPoliteness($newItem.text());<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a change event handler for the atomic select<br/>
+&#160;&#160;$('#atomic1').change(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// select the new item<br/>
+&#160;&#160;&#160;&#160;var $newItem = selectItem($(this), $(this).find('option'), $(this).val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the politeness<br/>
+&#160;&#160;&#160;&#160;live1.setAtomic($newItem.text());<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a change event handler for the update relevance select<br/>
+&#160;&#160;$('#relevant1').change(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// select the new item<br/>
+&#160;&#160;&#160;&#160;var $newItem = selectItem($(this), $(this).find('option'), $(this).val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the update revelance setting<br/>
+&#160;&#160;&#160;&#160;live1.setRelevant($newItem.text());<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a click handler for the start/stop button<br/>
+&#160;&#160;$('#rgn1_button').click(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// toggle the region updates<br/>
+&#160;&#160;&#160;&#160;live1.toggleUpdates();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (rgn1Stopped == false) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $('#liveregion1').html('XXX');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(this).html('Start Counter');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; rgn1Stopped = true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(this).html('Stop Counter');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; rgn1Stopped = false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopImmediatePropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+<br/>
+&#160;&#160;///////////////// Bind event handlers for live2 controls //////////////////////////<br/>
+&#160;&#160;<br/>
+&#160;&#160;$('#time2').change(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// select the new item<br/>
+&#160;&#160;&#160;&#160;var $newItem = selectItem($(this), $(this).find('option'), $(this).val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the interval<br/>
+&#160;&#160;&#160;&#160;live2.setInterval($newItem.text()*1000);<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a change event handler for the politeness select<br/>
+&#160;&#160;$('#politeness2').change(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// select the new item<br/>
+&#160;&#160;&#160;&#160;var $newItem = selectItem($(this), $(this).find('option'), $(this).val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the politeness<br/>
+&#160;&#160;&#160;&#160;live2.setPoliteness($newItem.text());<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a change event handler for the atomic select<br/>
+&#160;&#160;$('#atomic2').change(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// select the new item<br/>
+&#160;&#160;&#160;&#160;var $newItem = selectItem($(this), $(this).find('option'), $(this).val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the politeness<br/>
+&#160;&#160;&#160;&#160;live2.setAtomic($newItem.text());<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a change event handler for the update relevance select<br/>
+&#160;&#160;$('#relevant2').change(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// select the new item<br/>
+&#160;&#160;&#160;&#160;var $newItem = selectItem($(this), $(this).find('option'), $(this).val());<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the update revelance setting<br/>
+&#160;&#160;&#160;&#160;live2.setRelevant($newItem.text());<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a click handler for the start/stop button<br/>
+&#160;&#160;$('#rgn2_button').click(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// toggle the region updates<br/>
+&#160;&#160;&#160;&#160;live2.toggleUpdates();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (rgn2Stopped == false) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(this).html('Start Log');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; rgn2Stopped = true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; rgn2Stopped = false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(this).html('Stop Log');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;e.stopImmediatePropagation();<br/>
+&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;});<br/>
+<br/>
+}); // end ready()<br/>
+<br/>
+//<br/>
+// Function init() is a function to initialize the select elements to match their activedescendant values. This<br/>
+// ensures that any page reloads do not introduce erroneous aria attribute values<br/>
+function init() {<br/>
+<br/>
+&#160;&#160;var elems = new Array('time1', 'politeness1', 'atomic1', 'relevant1', 'time2', 'politeness2', 'atomic2', 'relevant2');<br/>
+&#160;&#160;var $id = null;<br/>
+&#160;&#160;var val = null;<br/>
+<br/>
+&#160;&#160;for (ndx in elems) {<br/>
+&#160;&#160;&#160;&#160;// get the jQuery object of select to set<br/>
+&#160;&#160;&#160;&#160;$id = $('#' + elems[ndx]);<br/>
+<br/>
+&#160;&#160;&#160;&#160;// get the value of the active descendant<br/>
+&#160;&#160;&#160;&#160;val = $('#' + $id.attr('aria-activedescendant')).text();<br/>
+<br/>
+&#160;&#160;&#160;&#160;// set the value of the select<br/>
+&#160;&#160;&#160;&#160;$id.val(val);<br/>
+&#160;&#160;}<br/>
+<br/>
+} // end init()<br/>
+<br/>
+//<br/>
+// Function selectItem() is a function to iterate through an option list to find a new option and select it.<br/>
+// The function also updates the aria-seleced attribute of the items.<br/>
+//<br/>
+// @param ($select object) $select is the jquery object of the select that the option list is part of.<br/>
+//<br/>
+// @param ($list object) $list is the list of options to iterate through.<br/>
+//<br/>
+// @param (val string) val is the value to find in the list.<br/>
+//<br/>
+// @return (object) returns the jquery object of the new item selected. Returns NULL if not found.<br/>
+//<br/>
+function selectItem($select, $list, val) {<br/>
+&#160;&#160;var $prevItem = $('#' + $select.attr('aria-activedescendant'));<br/>
+&#160;&#160;var $newItem = null;<br/>
+&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;// find the list item associated with the new value<br/>
+&#160;&#160;$list.each(function() {<br/>
+&#160;&#160;&#160;&#160;if ($(this).text() == val) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &#160;&#160;&#160;&#160;$newItem = $(this);<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;if ($newItem == null) {<br/>
+&#160;&#160;&#160;&#160;// no new item found<br/>
+&#160;&#160;&#160;&#160;return null;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// set the aria-selected attribute to false for the previously selected item<br/>
+&#160;&#160;$prevItem.attr('aria-selected', 'false');<br/>
+<br/>
+&#160;&#160;// set the aria-selected attribute to true for the new item<br/>
+&#160;&#160;$newItem.attr('aria-selected', 'true')<br/>
+<br/>
+&#160;&#160;// update the active descendent of the select<br/>
+&#160;&#160;$select.attr('aria-activedescendant', $newItem.attr('id'));<br/>
+<br/>
+&#160;&#160;// return the new item selected<br/>
+&#160;&#160;return $newItem;<br/>
+<br/>
+} // end selectItem()<br/>
+<br/>
+//<br/>
+// The function updateRegion() is called by a liveRegion timer to updates the live region<br/>
+// with new content based on the passed messageArray.<br/>
+//<br/>
+// @param (live_region object) LiveRegion is the liveRegion widget object<br/>
+//<br/>
+// @param (msgArray array) msgArray is an array of messages to use for the update<br/>
+//<br/>
+// @param (append boolean) append is true if messages should be appended, false if message should<br/>
+// replace live region content<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+function updateRegion (region, msgObj, append) {<br/>
+<br/>
+&#160;&#160;var $regionID = $('#' + region);<br/>
+&#160;&#160;var msg = '';<br/>
+&#160;&#160;<br/>
+&#160;&#160;if (msgObj.index == msgObj.msgArray.length) {<br/>
+&#160;&#160;&#160;&#160;// We've reached the end of the array, reset the index.<br/>
+&#160;&#160;&#160;&#160;msgObj.index = 0;<br/>
+<br/>
+&#160;&#160;&#160;&#160;// clear the region<br/>
+&#160;&#160;&#160;&#160;$regionID.empty();<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;if (append == false) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;msg = msgObj.msgArray[msgObj.index];<br/>
+<br/>
+&#160;&#160;&#160;&#160;// messages should replace live region contents.<br/>
+&#160;&#160;&#160;&#160;// Empty the live region<br/>
+&#160;&#160;&#160;&#160;$regionID.empty();<br/>
+ &#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;msg = msgObj.msgArray[msgObj.index] + '&lt;br/&gt;';<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// append the new message to the live region<br/>
+&#160;&#160;$regionID.append(msg);<br/>
+<br/>
+&#160;&#160;if (append == true) {<br/>
+&#160;&#160;&#160;&#160;$regionID.scrollTop($regionID.attr('scrollHeight'));<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// increment the message index<br/>
+&#160;&#160;msgObj.index++;<br/>
+&#160;&#160;<br/>
+<br/>
+}<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

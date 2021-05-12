@@ -1,0 +1,1644 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 41 - Treeview</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+h2#label_1 {
+margin: .5em 0 !important;
+padding: 0 !important;
+font-size: 1.6em !important;
+}
+ul.tree {
+  width: 16em;
+  font-size: 100% !important;
+}
+ul.tree, ul.tree ul {
+  list-style: none;
+  margin: 0 !important;
+  padding-left: 20px !important;
+  font-weight: normal;
+  font-size: 100% !important;
+  background-color: #f9f9f9;
+  color: black;
+}
+
+ul.tree li {
+  margin-left: 17px !important;
+}
+
+li.tree-parent {
+  font-weight: bold;
+  margin-left: 0px;
+}
+
+img.headerImg {
+	margin-right: 5px;
+}
+
+li.tree-focus {
+  color: white;
+  background: black;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+$(document).ready(function() {
+
+  var treeviewApp = new treeview('tree1');
+
+}); // end ready
+
+//
+// Function treeview() is a class constructor for a treeview widget. The widget binds to an
+// unordered list. The top-level <ul> must have role='tree'. All list items must have role='treeitem'.
+//
+// Tree groups must be embedded lists within the listitem that heads the group. the top <ul> of a group
+// must have role='group'. aria-expanded is used to indicate whether a group is expanded or collapsed. This
+// property must be set on the listitem the encapsulates the group.
+//
+// parent nodes must be given the class tree-parent.
+//
+// @param (treeID string) treeID is the html id of the top-level <ul> of the list to bind the widget to
+//
+// @return N/A
+//
+function treeview(treeID) {
+
+  // define the object properties
+  this.$id = $('#' + treeID);
+  this.$items = this.$id.find('li'); // jQuery array of list items
+  this.$parents = this.$id.find('.tree-parent'); // jQuery array of parent nodes
+   this.$visibleItems = null; // holds a jQuery array of the currently visible items in the tree
+   this.$activeItem = null; // holds the jQuery object for the active item
+
+  this.keys = {
+            tab:      9,
+            enter:    13,
+            space:    32,
+            pageup:   33,
+            pagedown: 34,
+            end:      35,
+            home:     36,
+            left:     37,
+            up:       38,
+            right:    39,
+            down:     40,
+            asterisk: 106
+   };
+
+
+  // initialize the treeview
+  this.init();
+
+  // bind event handlers
+  this.bindHandlers();
+
+} // end treeview() constructor
+
+//
+// Function init() is a member function to initialize the treeview widget. It traverses the tree, identifying
+// which listitems are headers for groups and applying initial collapsed are expanded styling
+//
+// @return N/A
+//
+treeview.prototype.init = function() {
+
+   // insert the header image. Note: this method allows the widget to degrade gracefully
+   // if javascript is disabled or there is some other error.
+   this.$parents.prepend('<img class="headerImg" src="http://www.oaa-accessibility.org/media/examples/images/expanded.gif" alt="Group expanded"/>');
+
+   // If the aria-expanded is false, hide the group and display the collapsed state image
+   this.$parents.each(function() {
+      if ($(this).attr('aria-expanded') == 'false') {
+         $(this).children('ul').hide().attr('aria-hidden', 'true');
+         $(this).children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif').attr('alt', 'Group collapsed');
+      }
+   });
+
+   this.$visibleItems = this.$id.find('li:visible');
+
+} // end init()
+
+//
+// Function expandGroup() is a member function to expand a collapsed group
+//
+// @param($item object) $item is the jquery id of the parent item of the group
+//
+// @param(hasFocus boolean) hasFocus is true if the parent has focus, false otherwise
+//
+// @return N/A
+//
+treeview.prototype.expandGroup = function($item, hasFocus) {
+
+  var $group = $item.children('ul'); // find the first child ul node
+
+  // expand the group
+  $group.show().attr('aria-hidden', 'false');
+
+   // set the aria-expanded property
+  $item.attr('aria-expanded', 'true');
+
+  if (hasFocus == true) {
+    $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded-focus.gif').attr('alt', 'Group expanded');
+  }
+  else {
+    $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded.gif').attr('alt', 'Group expanded');
+  }
+
+   // update the list of visible items
+   this.$visibleItems = this.$id.find('li:visible');
+
+} // end expandGroup()
+
+//
+// Function collapseGroup() is a member function to collapse an expanded group
+//
+// @param($item object) $item is the jquery id of the parent item of the group to collapse
+//
+// @param(hasFocus boolean) hasFocus is true if the parent item has focus, false otherwise
+//
+// @return N/A
+//
+treeview.prototype.collapseGroup = function($item, hasFocus) {
+
+  var $group = $item.children('ul');
+
+  // collapse the group
+  $group.hide().attr('aria-hidden', 'true');
+
+   // update the aria-expanded property
+  $item.attr('aria-expanded', 'false');
+
+  if (hasFocus == true) {
+    $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted-focus.gif').attr('alt', 'Group collapsed');
+  }
+  else {
+    $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif').attr('alt', 'Group collapsed');
+  }
+
+   // update the list of visible items
+   this.$visibleItems = this.$id.find('li:visible');
+
+} // end collapseGroup()
+
+//
+// Function toggleGroup() is a member function to toggle the display state of a group
+//
+// @param($item object) $item is the jquery id of the parent item of the group to toggle
+//
+// @param(hasFocus boolean) hasFocus is true if the parent item has focus, false otherwise
+//
+// @return N/A
+//
+treeview.prototype.toggleGroup = function($item, hasFocus) {
+
+  var $group = $item.children('ul');
+
+  if ($item.attr('aria-expanded') == 'true') {
+    // collapse the group
+    this.collapseGroup($item, hasFocus);
+  }
+  else {
+    // expand the group
+    this.expandGroup($item, hasFocus);
+  }
+
+} // end toggleGroup()
+
+//
+// Function bindHandlers() is a member function to bind event handlers to the listitems
+//
+// return N/A
+//
+treeview.prototype.bindHandlers = function() {
+
+  var thisObj = this;
+
+  // bind a dblclick handler to the parent items
+  this.$parents.dblclick(function(e) {
+    return thisObj.handleDblClick($(this), e);
+  });
+
+  // bind a click handler
+  this.$items.click(function(e) {
+    return thisObj.handleClick($(this), e);
+  });
+
+  // bind a keydown handler
+  this.$items.keydown(function(e) {
+    return thisObj.handleKeyDown($(this), e);
+  });
+
+  // bind a keypress handler
+  this.$items.keypress(function(e) {
+    return thisObj.handleKeyPress($(this), e);
+  });
+
+  // bind a focus handler
+  this.$items.focus(function(e) {
+    return thisObj.handleFocus($(this), e);
+  });
+
+  // bind a blur handler
+  this.$items.blur(function(e) {
+    return thisObj.handleBlur($(this), e);
+  });
+
+   // bind a document click handler
+   $(document).click(function(e) {
+
+         if (thisObj.$activeItem != null) {
+            // remove the focus styling
+            thisObj.$activeItem.removeClass('tree-focus');
+
+            if (thisObj.$activeItem.hasClass('tree-parent') == true) {
+
+               // this is a parent item, remove the focus image
+               if (thisObj.$activeItem.attr('aria-expanded') == 'true') {
+                  thisObj.$activeItem.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded.gif');
+               }
+               else {
+                  thisObj.$activeItem.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif');
+               }
+            }
+
+            // set activeItem to null
+            thisObj.$activeItem = null;
+         }
+
+         return true;
+   });
+
+} // end bindHandlers()
+
+//
+// Function updateStyling() is a member function to update the styling for the tree items
+//
+// @param ($item object) $item is the jQuery object of the item to highlight
+//
+// @return N/A
+//
+treeview.prototype.updateStyling = function($item) {
+
+  // remove the focus and highlighting from the treeview items
+  // and remove them from the tab order.
+  this.$items.removeClass('tree-focus').attr('tabindex', '-1');
+
+  // remove the focus image from other parents
+  this.$parents.each(function() {
+
+    // remove the focus image
+    if ($(this).attr('aria-expanded') == 'true') {
+      $(this).children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded.gif');
+    }
+    else {
+      $(this).children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif');
+    }
+  });
+
+   // add the focus image to the current parent
+  if ($item.is('.tree-parent')) {
+    if ($item.attr('aria-expanded') == 'true') {
+      $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded-focus.gif');
+    }
+    else {
+      $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted-focus.gif');
+    }
+  }
+
+
+  // apply the focus and styling and place the element in the tab order
+  $item.addClass('tree-focus').attr('tabindex', '0');
+
+} // end updateStyling()
+
+//
+// Function handleKeyDown() is a member function to process keydown events for the treeview items
+//
+// @param ($item object) $id is the jQuery id of the item firing the event
+//
+// @param (e object) e is the associated event object
+//
+// @return (boolean) returns false if consuming event; true if not
+//
+treeview.prototype.handleKeyDown = function($item, e) {
+
+  var curNdx = this.$visibleItems.index($item);
+
+  if ((e.altKey || e.ctrlKey)
+       || (e.shiftKey && e.keyCode != this.keys.tab)) {
+    // do nothing
+    return true;
+  }
+
+  switch (e.keyCode) {
+      case this.keys.tab: {
+         // set activeItem to null
+         this.$activeItem = null;
+
+         // remove the focus styling
+         $item.removeClass('tree-focus');
+
+         if ($item.hasClass('tree-parent') == true) {
+
+            // this is a parent item, remove the focus image
+            if ($item.attr('aria-expanded') == 'true') {
+               $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded.gif');
+            }
+            else {
+               $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif');
+            }
+         }
+
+         return true;
+      }
+    case this.keys.home: { // jump to first item in tree
+
+         // store the active item
+         this.$activeItem = this.$parents.first();
+
+         // set focus on the active item
+      this.$activeItem.focus();
+
+      e.stopPropagation();
+      return false;
+    }
+    case this.keys.end: { // jump to last visible item
+
+         // store the active item
+         this.$activeItem = this.$visibleItems.last();
+
+         // set focus on the active item
+      this.$activeItem.focus();
+
+      e.stopPropagation();
+      return false;
+    }
+    case this.keys.enter:
+    case this.keys.space: {
+
+      if (!$item.is('.tree-parent')) {
+        // do nothing
+      }
+         else {
+            // toggle the child group open or closed
+         this.toggleGroup($item, true);
+         }
+
+      e.stopPropagation();
+      return false;
+    }
+    case this.keys.left: {
+      
+      if ($item.is('.tree-parent') && $item.attr('aria-expanded') == 'true') {
+            // collapse the group and return
+
+            this.collapseGroup($item, true);
+         }
+         else {
+            // move up to the parent
+            var $itemUL = $item.parent();
+            var $itemParent = $itemUL.parent();
+
+            // store the active item
+            this.$activeItem = $itemParent;
+
+            // set focus on the parent
+            this.$activeItem.focus();
+         }
+
+      e.stopPropagation();
+      return false;
+    }
+    case this.keys.right: {
+      
+      if (!$item.is('.tree-parent')) {
+        // do nothing
+
+         }
+         else if ($item.attr('aria-expanded') == 'false') {
+        this.expandGroup($item, true);
+      }
+         else {
+            // move to the first item in the child group
+            this.$activeItem = $item.children('ul').children('li').first();
+
+            this.$activeItem.focus();
+         }
+
+      e.stopPropagation();
+      return false;
+    }
+    case this.keys.up: {
+
+      if (curNdx > 0) {
+        var $prev = this.$visibleItems.eq(curNdx - 1);
+
+            // store the active item
+            this.$activeItem = $prev;
+
+        $prev.focus();
+      }
+
+      e.stopPropagation();
+      return false;
+    }
+    case this.keys.down: {
+
+      if (curNdx < this.$visibleItems.length - 1) {
+        var $next = this.$visibleItems.eq(curNdx + 1);
+
+            // store the active item
+            this.$activeItem = $next;
+
+        $next.focus();
+      }
+      e.stopPropagation();
+      return false;
+    }
+    case this.keys.asterisk: {
+      // expand all groups
+
+      var thisObj = this;
+
+         this.$parents.each(function() {
+            if (thisObj.$activeItem[0] == $(this)[0]) {
+               thisObj.expandGroup($(this), true);
+            }
+            else {
+               thisObj.expandGroup($(this), false);
+            }
+      });
+
+      e.stopPropagation();
+      return false;
+    }
+  }
+
+  return true;
+
+} // end handleKeyDown
+
+//
+// Function handleKeyPress() is a member function to process keypress events for the treeview items
+// This function is needed for browsers, such as Opera, that perform window manipulation on kepress events
+// rather than keydown. The function simply consumes the event.
+//
+// @param ($item object) $id is the jQuery id of the parent item firing event
+//
+// @param (e object) e is the associated event object
+//
+// @return (boolean) returns false if consuming event; true if not
+//
+treeview.prototype.handleKeyPress = function($item, e) {
+
+  if (e.altKey || e.ctrlKey || e.shiftKey) {
+    // do nothing
+    return true;
+  }
+
+  switch (e.keyCode) {
+    case this.keys.tab: {
+      return true;
+    }
+    case this.keys.enter:
+    case this.keys.home:
+    case this.keys.end:
+    case this.keys.left:
+    case this.keys.right:
+    case this.keys.up:
+    case this.keys.down: {
+      e.stopPropagation();
+      return false;
+    }
+      default : {
+         var chr = String.fromCharCode(e.which);
+         var bMatch = false;
+         var itemNdx = this.$visibleItems.index($item);
+         var itemCnt = this.$visibleItems.length;
+         var curNdx = itemNdx + 1;
+
+         // check if the active item was the last one on the list
+         if (curNdx == itemCnt) {
+            curNdx = 0;
+         }
+
+         // Iterate through the menu items (starting from the current item and wrapping) until a match is found
+         // or the loop returns to the current menu item
+         while (curNdx != itemNdx)  {
+
+            var $curItem = this.$visibleItems.eq(curNdx);
+            var titleChr = $curItem.text().charAt(0);
+            
+            if ($curItem.is('.tree-parent')) {
+               titleChr = $curItem.find('span').text().charAt(0);
+            }
+
+            if (titleChr.toLowerCase() == chr) {
+               bMatch = true;
+               break;
+            }
+
+            curNdx = curNdx+1;
+
+            if (curNdx == itemCnt) {
+               // reached the end of the list, start again at the beginning
+               curNdx = 0;
+            }
+         }
+
+         if (bMatch == true) {
+            this.$activeItem = this.$visibleItems.eq(curNdx);
+            this.$activeItem.focus();
+         }
+
+         e.stopPropagation();
+         return false;
+      }
+  }
+
+  return true;
+
+} // end handleKeyPress
+
+//
+// Function handleDblClick() is a member function to process double-click events for parent items.
+// Double-click expands or collapses a group.
+//
+// @param ($id object) $item is the jQuery object of the tree parent item firing event
+//
+// @param (e object) e is the associated event object
+//
+// @return (boolean) returns false if consuming event; true if not
+//
+treeview.prototype.handleDblClick = function($id, e) {
+
+  if (e.altKey || e.ctrlKey || e.shiftKey) {
+    // do nothing
+    return true;
+  }
+
+   // update the active item
+   this.$activeItem = $id;
+
+  // apply the focus highlighting
+  this.updateStyling($id);
+
+  // expand or collapse the group
+  this.toggleGroup($id, true);
+
+  e.stopPropagation();
+  return false;
+
+} // end handleDblClick
+
+//
+// Function handleClick() is a member function to process click events.
+//
+// @param ($id object) $id is the jQuery id of the parent item firing event
+//
+// @param (e object) e is the associated event object
+//
+// @return (boolean) returns false if consuming event; true if not
+//
+treeview.prototype.handleClick = function($id, e) {
+
+  if (e.altKey || e.ctrlKey || e.shiftKey) {
+    // do nothing
+    return true;
+  }
+
+   // update the active item
+   this.$activeItem = $id;
+
+  // apply the focus highlighting
+  this.updateStyling($id);
+
+  e.stopPropagation();
+  return false;
+
+} // end handleClick
+
+//
+// Function handleFocus() is a member function to process focus events.
+//
+// @param ($item object) $item is the jQuery id of the parent item firing event
+//
+// @param (e object) e is the associated event object
+//
+// @return (boolean) returns true
+//
+treeview.prototype.handleFocus = function($item, e) {
+
+   if (this.$activeItem == null) {
+      this.$activeItem = $item;
+   }
+
+   this.updateStyling(this.$activeItem);
+
+  return true;
+
+} // end handleFocus
+
+//
+// Function handleBlur() is a member function to process blur events.
+//
+// @param ($id object) $id is the jQuery id of the parent item firing event
+//
+// @param (e object) e is the associated event object
+//
+// @return (boolean) returns true
+//
+treeview.prototype.handleBlur = function($id, e) {
+
+  return true;
+
+} // end handleBlur
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+
+<script type="text/javascript">
+	window.onload = function(){
+		document.getElementById("fruits").focus();
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }
+		}		
+	}
+</script>
+
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../40/index.html">Previous</a></li>
+        
+        <li>Example 41</li>
+        
+        <li class="next"><a href="../42/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 41 - Treeview</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/treeview1/index.html">Permanent link for Treeview</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div id="application" role="application">
+
+<h2 id="label_1">Foods</h2>
+<ul id="tree1" class="tree root-level" role="tree" aria-labelledby="label_1">
+   <li id="fruits" class="tree-parent" role="treeitem" tabindex="0" aria-expanded="true"><span>Fruits</span>
+      <ul id="fruit-grp" role="group">
+         <li id="oranges" role="treeitem" tabindex="-1">Oranges</li>
+         <li id="pinapples" role="treeitem" tabindex="-1">Pineapples</li>
+         <li id="apples" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="false"><span>Apples</span>
+            <ul id="apple-grp" role="group">
+               <li id="macintosh" role="treeitem" tabindex="-1">Macintosh</li>
+               <li id="granny_smith" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="false"><span>Granny Smith</span>
+                  <ul id="granny-grp" role="group">
+                     <li id="Washington" role="treeitem" tabindex="-1">Washington State</li>
+                     <li id="Michigan" role="treeitem" tabindex="-1">Michigan</li>
+                     <li id="New_York" role="treeitem" tabindex="-1">New York</li>
+                  </ul>
+               </li>
+               <li id="fuji" role="treeitem" tabindex="-1">Fuji</li>
+            </ul>
+         </li>
+         <li id="bananas" role="treeitem" tabindex="-1">Bananas</li>		
+         <li id="pears" role="treeitem" tabindex="-1">Pears</li>		
+      </ul>
+   </li>
+   <li id="vegetables" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="true"><span>Vegetables</span>
+      <ul id="veg-grp" role="group">
+         <li id="broccoli" role="treeitem" tabindex="-1">Broccoli</li>
+         <li id="carrots" role="treeitem" tabindex="-1">Carrots</li>
+         <li id="lettuce" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="false"><span>Lettuce</span>
+         <ul id="lettuce-grp" role="group">
+               <li id="romaine" role="treeitem" tabindex="-1">Romaine</li>
+               <li id="iceberg" role="treeitem" tabindex="-1">Iceberg</li>
+               <li id="butterhead" role="treeitem" tabindex="-1">Butterhead</li>
+         </ul>
+         </li>
+         <li id="spinach" role="treeitem" tabindex="-1">Spinach</li>		
+         <li id="squash" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="true"><span>Squash</span>
+            <ul id="squash-grp" role="group">
+               <li id="acorn" role="treeitem" tabindex="-1">Acorn</li>
+               <li id="ambercup" role="treeitem" tabindex="-1">Ambercup</li>
+               <li id="autumn_cup" role="treeitem" tabindex="-1">Autumn Cup</li>
+               <li id="hubbard" role="treeitem" tabindex="-1">Hubbard</li>
+               <li id="kobacha" role="treeitem" tabindex="-1">Kabocha</li>
+               <li id="butternut" role="treeitem" tabindex="-1">Butternut</li>
+               <li id="spaghetti" role="treeitem" tabindex="-1">Spaghetti</li>
+               <li id="sweet_dumpling" role="treeitem" tabindex="-1">Sweet Dumpling</li>
+               <li id="turban" role="treeitem" tabindex="-1">Turban</li>
+            </ul>
+         </li>
+      </ul>
+   </li>
+</ul>
+
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a treeview widget.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <p>The following keyboard shortcuts are implemented for this example (based on recommended shortcuts specified by the <a href="http://dev.aol.com/dhtml_style_guide"><span class="caps">DHTML</span> Style Guide Working Group</a>.):<br />
+<ul><br />
+    <li>Up: Select the previous visible tree item.</li><br />
+    <li>Down: Select next visible tree item.</li><br />
+    <li>Left: Collapse the currently selected parent node if it is expanded. Move to the previous parent node (if possible) when the current parent node is collapsed.</li><br />
+    <li>Right: Expand the currently selected parent node and move to the first child list item.</li><br />
+    <li>Enter: Toggle the expanded or collapsed state of the selected parent node.</li><br />
+    <li>Home: Select the root parent node of the tree.</li><br />
+    <li>End: Select the last visible node of the tree.</li><br />
+    <li>Tab: Navigate away from tree.</li><br />
+    <li>* (asterisk on the numpad): Expand all group nodes.</li><br />
+    <li>Double-clicking on a parent node will toggle its expanded or collapsed state.</li><br />
+</ul></p>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-expanded]</li>      
+        
+        <li>ARIA 1.0: [aria-hidden]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;group&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;tree&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;treeitem&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div id="application" role="application"&gt;<br/>
+<br/>
+&lt;h2 id="label_1"&gt;Foods&lt;/h2&gt;<br/>
+&lt;ul id="tree1" class="tree root-level" role="tree" aria-labelledby="label_1"&gt;<br/>
+&#160;&#160; &lt;li id="fruits" class="tree-parent" role="treeitem" tabindex="0" aria-expanded="true"&gt;&lt;span&gt;Fruits&lt;/span&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;ul id="fruit-grp" role="group"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="oranges" role="treeitem" tabindex="-1"&gt;Oranges&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="pinapples" role="treeitem" tabindex="-1"&gt;Pineapples&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="apples" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="false"&gt;&lt;span&gt;Apples&lt;/span&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;ul id="apple-grp" role="group"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="macintosh" role="treeitem" tabindex="-1"&gt;Macintosh&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="granny_smith" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="false"&gt;&lt;span&gt;Granny Smith&lt;/span&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;ul id="granny-grp" role="group"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="Washington" role="treeitem" tabindex="-1"&gt;Washington State&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="Michigan" role="treeitem" tabindex="-1"&gt;Michigan&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="New_York" role="treeitem" tabindex="-1"&gt;New York&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/ul&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="fuji" role="treeitem" tabindex="-1"&gt;Fuji&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/ul&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="bananas" role="treeitem" tabindex="-1"&gt;Bananas&lt;/li&gt;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="pears" role="treeitem" tabindex="-1"&gt;Pears&lt;/li&gt;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/ul&gt;<br/>
+&#160;&#160; &lt;/li&gt;<br/>
+&#160;&#160; &lt;li id="vegetables" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="true"&gt;&lt;span&gt;Vegetables&lt;/span&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;ul id="veg-grp" role="group"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="broccoli" role="treeitem" tabindex="-1"&gt;Broccoli&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="carrots" role="treeitem" tabindex="-1"&gt;Carrots&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="lettuce" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="false"&gt;&lt;span&gt;Lettuce&lt;/span&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;ul id="lettuce-grp" role="group"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="romaine" role="treeitem" tabindex="-1"&gt;Romaine&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="iceberg" role="treeitem" tabindex="-1"&gt;Iceberg&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="butterhead" role="treeitem" tabindex="-1"&gt;Butterhead&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/ul&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="spinach" role="treeitem" tabindex="-1"&gt;Spinach&lt;/li&gt;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="squash" class="tree-parent" role="treeitem" tabindex="-1" aria-expanded="true"&gt;&lt;span&gt;Squash&lt;/span&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;ul id="squash-grp" role="group"&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="acorn" role="treeitem" tabindex="-1"&gt;Acorn&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="ambercup" role="treeitem" tabindex="-1"&gt;Ambercup&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="autumn_cup" role="treeitem" tabindex="-1"&gt;Autumn Cup&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="hubbard" role="treeitem" tabindex="-1"&gt;Hubbard&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="kobacha" role="treeitem" tabindex="-1"&gt;Kabocha&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="butternut" role="treeitem" tabindex="-1"&gt;Butternut&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="spaghetti" role="treeitem" tabindex="-1"&gt;Spaghetti&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="sweet_dumpling" role="treeitem" tabindex="-1"&gt;Sweet Dumpling&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;li id="turban" role="treeitem" tabindex="-1"&gt;Turban&lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&lt;/ul&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; &lt;/li&gt;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&lt;/ul&gt;<br/>
+&#160;&#160; &lt;/li&gt;<br/>
+&lt;/ul&gt;<br/>
+<br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+h2#label_1 {<br/>
+margin: .5em 0 !important;<br/>
+padding: 0 !important;<br/>
+font-size: 1.6em !important;<br/>
+}<br/>
+ul.tree {<br/>
+&#160;&#160;width: 16em;<br/>
+&#160;&#160;font-size: 100% !important;<br/>
+}<br/>
+ul.tree, ul.tree ul {<br/>
+&#160;&#160;list-style: none;<br/>
+&#160;&#160;margin: 0 !important;<br/>
+&#160;&#160;padding-left: 20px !important;<br/>
+&#160;&#160;font-weight: normal;<br/>
+&#160;&#160;font-size: 100% !important;<br/>
+&#160;&#160;background-color: #f9f9f9;<br/>
+&#160;&#160;color: black;<br/>
+}<br/>
+<br/>
+ul.tree li {<br/>
+&#160;&#160;margin-left: 17px !important;<br/>
+}<br/>
+<br/>
+li.tree-parent {<br/>
+&#160;&#160;font-weight: bold;<br/>
+&#160;&#160;margin-left: 0px;<br/>
+}<br/>
+<br/>
+img.headerImg {<br/>
+&#160;&#160;margin-right: 5px;<br/>
+}<br/>
+<br/>
+li.tree-focus {<br/>
+&#160;&#160;color: white;<br/>
+&#160;&#160;background: black;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+$(document).ready(function() {<br/>
+<br/>
+&#160;&#160;var treeviewApp = new treeview('tree1');<br/>
+<br/>
+}); // end ready<br/>
+<br/>
+//<br/>
+// Function treeview() is a class constructor for a treeview widget. The widget binds to an<br/>
+// unordered list. The top-level &lt;ul&gt; must have role='tree'. All list items must have role='treeitem'.<br/>
+//<br/>
+// Tree groups must be embedded lists within the listitem that heads the group. the top &lt;ul&gt; of a group<br/>
+// must have role='group'. aria-expanded is used to indicate whether a group is expanded or collapsed. This<br/>
+// property must be set on the listitem the encapsulates the group.<br/>
+//<br/>
+// parent nodes must be given the class tree-parent.<br/>
+//<br/>
+// @param (treeID string) treeID is the html id of the top-level &lt;ul&gt; of the list to bind the widget to<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+function treeview(treeID) {<br/>
+<br/>
+&#160;&#160;// define the object properties<br/>
+&#160;&#160;this.$id = $('#' + treeID);<br/>
+&#160;&#160;this.$items = this.$id.find('li'); // jQuery array of list items<br/>
+&#160;&#160;this.$parents = this.$id.find('.tree-parent'); // jQuery array of parent nodes<br/>
+&#160;&#160; this.$visibleItems = null; // holds a jQuery array of the currently visible items in the tree<br/>
+&#160;&#160; this.$activeItem = null; // holds the jQuery object for the active item<br/>
+<br/>
+&#160;&#160;this.keys = {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;tab:&#160;&#160;&#160;&#160;&#160;&#160;9,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;enter:&#160;&#160;&#160;&#160;13,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;space:&#160;&#160;&#160;&#160;32,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;pageup:&#160;&#160; 33,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;pagedown: 34,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;end:&#160;&#160;&#160;&#160;&#160;&#160;35,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;home:&#160;&#160;&#160;&#160; 36,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;left:&#160;&#160;&#160;&#160; 37,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;up:&#160;&#160;&#160;&#160;&#160;&#160; 38,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;right:&#160;&#160;&#160;&#160;39,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;down:&#160;&#160;&#160;&#160; 40,<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;asterisk: 106<br/>
+&#160;&#160; };<br/>
+<br/>
+<br/>
+&#160;&#160;// initialize the treeview<br/>
+&#160;&#160;this.init();<br/>
+<br/>
+&#160;&#160;// bind event handlers<br/>
+&#160;&#160;this.bindHandlers();<br/>
+<br/>
+} // end treeview() constructor<br/>
+<br/>
+//<br/>
+// Function init() is a member function to initialize the treeview widget. It traverses the tree, identifying<br/>
+// which listitems are headers for groups and applying initial collapsed are expanded styling<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+treeview.prototype.init = function() {<br/>
+<br/>
+&#160;&#160; // insert the header image. Note: this method allows the widget to degrade gracefully<br/>
+&#160;&#160; // if javascript is disabled or there is some other error.<br/>
+&#160;&#160; this.$parents.prepend('&lt;img class="headerImg" src="http://www.oaa-accessibility.org/media/examples/images/expanded.gif" alt="Group expanded"/&gt;');<br/>
+<br/>
+&#160;&#160; // If the aria-expanded is false, hide the group and display the collapsed state image<br/>
+&#160;&#160; this.$parents.each(function() {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if ($(this).attr('aria-expanded') == 'false') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(this).children('ul').hide().attr('aria-hidden', 'true');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $(this).children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif').attr('alt', 'Group collapsed');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160; });<br/>
+<br/>
+&#160;&#160; this.$visibleItems = this.$id.find('li:visible');<br/>
+<br/>
+} // end init()<br/>
+<br/>
+//<br/>
+// Function expandGroup() is a member function to expand a collapsed group<br/>
+//<br/>
+// @param($item object) $item is the jquery id of the parent item of the group<br/>
+//<br/>
+// @param(hasFocus boolean) hasFocus is true if the parent has focus, false otherwise<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+treeview.prototype.expandGroup = function($item, hasFocus) {<br/>
+<br/>
+&#160;&#160;var $group = $item.children('ul'); // find the first child ul node<br/>
+<br/>
+&#160;&#160;// expand the group<br/>
+&#160;&#160;$group.show().attr('aria-hidden', 'false');<br/>
+<br/>
+&#160;&#160; // set the aria-expanded property<br/>
+&#160;&#160;$item.attr('aria-expanded', 'true');<br/>
+<br/>
+&#160;&#160;if (hasFocus == true) {<br/>
+&#160;&#160;&#160;&#160;$item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded-focus.gif').attr('alt', 'Group expanded');<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;$item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded.gif').attr('alt', 'Group expanded');<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160; // update the list of visible items<br/>
+&#160;&#160; this.$visibleItems = this.$id.find('li:visible');<br/>
+<br/>
+} // end expandGroup()<br/>
+<br/>
+//<br/>
+// Function collapseGroup() is a member function to collapse an expanded group<br/>
+//<br/>
+// @param($item object) $item is the jquery id of the parent item of the group to collapse<br/>
+//<br/>
+// @param(hasFocus boolean) hasFocus is true if the parent item has focus, false otherwise<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+treeview.prototype.collapseGroup = function($item, hasFocus) {<br/>
+<br/>
+&#160;&#160;var $group = $item.children('ul');<br/>
+<br/>
+&#160;&#160;// collapse the group<br/>
+&#160;&#160;$group.hide().attr('aria-hidden', 'true');<br/>
+<br/>
+&#160;&#160; // update the aria-expanded property<br/>
+&#160;&#160;$item.attr('aria-expanded', 'false');<br/>
+<br/>
+&#160;&#160;if (hasFocus == true) {<br/>
+&#160;&#160;&#160;&#160;$item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted-focus.gif').attr('alt', 'Group collapsed');<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;$item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif').attr('alt', 'Group collapsed');<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160; // update the list of visible items<br/>
+&#160;&#160; this.$visibleItems = this.$id.find('li:visible');<br/>
+<br/>
+} // end collapseGroup()<br/>
+<br/>
+//<br/>
+// Function toggleGroup() is a member function to toggle the display state of a group<br/>
+//<br/>
+// @param($item object) $item is the jquery id of the parent item of the group to toggle<br/>
+//<br/>
+// @param(hasFocus boolean) hasFocus is true if the parent item has focus, false otherwise<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+treeview.prototype.toggleGroup = function($item, hasFocus) {<br/>
+<br/>
+&#160;&#160;var $group = $item.children('ul');<br/>
+<br/>
+&#160;&#160;if ($item.attr('aria-expanded') == 'true') {<br/>
+&#160;&#160;&#160;&#160;// collapse the group<br/>
+&#160;&#160;&#160;&#160;this.collapseGroup($item, hasFocus);<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;// expand the group<br/>
+&#160;&#160;&#160;&#160;this.expandGroup($item, hasFocus);<br/>
+&#160;&#160;}<br/>
+<br/>
+} // end toggleGroup()<br/>
+<br/>
+//<br/>
+// Function bindHandlers() is a member function to bind event handlers to the listitems<br/>
+//<br/>
+// return N/A<br/>
+//<br/>
+treeview.prototype.bindHandlers = function() {<br/>
+<br/>
+&#160;&#160;var thisObj = this;<br/>
+<br/>
+&#160;&#160;// bind a dblclick handler to the parent items<br/>
+&#160;&#160;this.$parents.dblclick(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleDblClick($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a click handler<br/>
+&#160;&#160;this.$items.click(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleClick($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a keydown handler<br/>
+&#160;&#160;this.$items.keydown(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleKeyDown($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a keypress handler<br/>
+&#160;&#160;this.$items.keypress(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleKeyPress($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a focus handler<br/>
+&#160;&#160;this.$items.focus(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleFocus($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160;// bind a blur handler<br/>
+&#160;&#160;this.$items.blur(function(e) {<br/>
+&#160;&#160;&#160;&#160;return thisObj.handleBlur($(this), e);<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160; // bind a document click handler<br/>
+&#160;&#160; $(document).click(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (thisObj.$activeItem != null) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// remove the focus styling<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;thisObj.$activeItem.removeClass('tree-focus');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (thisObj.$activeItem.hasClass('tree-parent') == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // this is a parent item, remove the focus image<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (thisObj.$activeItem.attr('aria-expanded') == 'true') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;thisObj.$activeItem.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded.gif');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;thisObj.$activeItem.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// set activeItem to null<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;thisObj.$activeItem = null;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160; });<br/>
+<br/>
+} // end bindHandlers()<br/>
+<br/>
+//<br/>
+// Function updateStyling() is a member function to update the styling for the tree items<br/>
+//<br/>
+// @param ($item object) $item is the jQuery object of the item to highlight<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+treeview.prototype.updateStyling = function($item) {<br/>
+<br/>
+&#160;&#160;// remove the focus and highlighting from the treeview items<br/>
+&#160;&#160;// and remove them from the tab order.<br/>
+&#160;&#160;this.$items.removeClass('tree-focus').attr('tabindex', '-1');<br/>
+<br/>
+&#160;&#160;// remove the focus image from other parents<br/>
+&#160;&#160;this.$parents.each(function() {<br/>
+<br/>
+&#160;&#160;&#160;&#160;// remove the focus image<br/>
+&#160;&#160;&#160;&#160;if ($(this).attr('aria-expanded') == 'true') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$(this).children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded.gif');<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$(this).children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif');<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;});<br/>
+<br/>
+&#160;&#160; // add the focus image to the current parent<br/>
+&#160;&#160;if ($item.is('.tree-parent')) {<br/>
+&#160;&#160;&#160;&#160;if ($item.attr('aria-expanded') == 'true') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded-focus.gif');<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;$item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted-focus.gif');<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+<br/>
+&#160;&#160;// apply the focus and styling and place the element in the tab order<br/>
+&#160;&#160;$item.addClass('tree-focus').attr('tabindex', '0');<br/>
+<br/>
+} // end updateStyling()<br/>
+<br/>
+//<br/>
+// Function handleKeyDown() is a member function to process keydown events for the treeview items<br/>
+//<br/>
+// @param ($item object) $id is the jQuery id of the item firing the event<br/>
+//<br/>
+// @param (e object) e is the associated event object<br/>
+//<br/>
+// @return (boolean) returns false if consuming event; true if not<br/>
+//<br/>
+treeview.prototype.handleKeyDown = function($item, e) {<br/>
+<br/>
+&#160;&#160;var curNdx = this.$visibleItems.index($item);<br/>
+<br/>
+&#160;&#160;if ((e.altKey || e.ctrlKey)<br/>
+&#160;&#160;&#160;&#160;&#160;&#160; || (e.shiftKey &amp;&amp; e.keyCode != this.keys.tab)) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;case this.keys.tab: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // set activeItem to null<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$activeItem = null;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // remove the focus styling<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $item.removeClass('tree-focus');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if ($item.hasClass('tree-parent') == true) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// this is a parent item, remove the focus image<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($item.attr('aria-expanded') == 'true') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/expanded.gif');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; $item.children('img').attr('src', 'http://www.oaa-accessibility.org/media/examples/images/contracted.gif');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.home: { // jump to first item in tree<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // store the active item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$activeItem = this.$parents.first();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // set focus on the active item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem.focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.end: { // jump to last visible item<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // store the active item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$activeItem = this.$visibleItems.last();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // set focus on the active item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem.focus();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.space: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (!$item.is('.tree-parent')) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// toggle the child group open or closed<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.toggleGroup($item, true);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.left: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if ($item.is('.tree-parent') &amp;&amp; $item.attr('aria-expanded') == 'true') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// collapse the group and return<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.collapseGroup($item, true);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// move up to the parent<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $itemUL = $item.parent();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $itemParent = $itemUL.parent();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// store the active item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem = $itemParent;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// set focus on the parent<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.right: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (!$item.is('.tree-parent')) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// do nothing<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else if ($item.attr('aria-expanded') == 'false') {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.expandGroup($item, true);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// move to the first item in the child group<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem = $item.children('ul').children('li').first();<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.up: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (curNdx &gt; 0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $prev = this.$visibleItems.eq(curNdx - 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// store the active item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem = $prev;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$prev.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (curNdx &lt; this.$visibleItems.length - 1) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $next = this.$visibleItems.eq(curNdx + 1);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;// store the active item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem = $next;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;$next.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.asterisk: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// expand all groups<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;var thisObj = this;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; this.$parents.each(function() {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (thisObj.$activeItem[0] == $(this)[0]) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; thisObj.expandGroup($(this), true);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; thisObj.expandGroup($(this), false);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;});<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleKeyDown<br/>
+<br/>
+//<br/>
+// Function handleKeyPress() is a member function to process keypress events for the treeview items<br/>
+// This function is needed for browsers, such as Opera, that perform window manipulation on kepress events<br/>
+// rather than keydown. The function simply consumes the event.<br/>
+//<br/>
+// @param ($item object) $id is the jQuery id of the parent item firing event<br/>
+//<br/>
+// @param (e object) e is the associated event object<br/>
+//<br/>
+// @return (boolean) returns false if consuming event; true if not<br/>
+//<br/>
+treeview.prototype.handleKeyPress = function($item, e) {<br/>
+<br/>
+&#160;&#160;if (e.altKey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;switch (e.keyCode) {<br/>
+&#160;&#160;&#160;&#160;case this.keys.tab: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;case this.keys.enter:<br/>
+&#160;&#160;&#160;&#160;case this.keys.home:<br/>
+&#160;&#160;&#160;&#160;case this.keys.end:<br/>
+&#160;&#160;&#160;&#160;case this.keys.left:<br/>
+&#160;&#160;&#160;&#160;case this.keys.right:<br/>
+&#160;&#160;&#160;&#160;case this.keys.up:<br/>
+&#160;&#160;&#160;&#160;case this.keys.down: {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return false;<br/>
+&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;default : {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var chr = String.fromCharCode(e.which);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var bMatch = false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var itemNdx = this.$visibleItems.index($item);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var itemCnt = this.$visibleItems.length;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; var curNdx = itemNdx + 1;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // check if the active item was the last one on the list<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (curNdx == itemCnt) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;curNdx = 0;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // Iterate through the menu items (starting from the current item and wrapping) until a match is found<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // or the loop returns to the current menu item<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; while (curNdx != itemNdx)&#160;&#160;{<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var $curItem = this.$visibleItems.eq(curNdx);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;var titleChr = $curItem.text().charAt(0);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if ($curItem.is('.tree-parent')) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; titleChr = $curItem.find('span').text().charAt(0);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (titleChr.toLowerCase() == chr) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; bMatch = true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; break;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;curNdx = curNdx+1;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;if (curNdx == itemCnt) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // reached the end of the list, start again at the beginning<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; curNdx = 0;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; if (bMatch == true) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem = this.$visibleItems.eq(curNdx);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem.focus();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; }<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; e.stopPropagation();<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; return false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleKeyPress<br/>
+<br/>
+//<br/>
+// Function handleDblClick() is a member function to process double-click events for parent items.<br/>
+// Double-click expands or collapses a group.<br/>
+//<br/>
+// @param ($id object) $item is the jQuery object of the tree parent item firing event<br/>
+//<br/>
+// @param (e object) e is the associated event object<br/>
+//<br/>
+// @return (boolean) returns false if consuming event; true if not<br/>
+//<br/>
+treeview.prototype.handleDblClick = function($id, e) {<br/>
+<br/>
+&#160;&#160;if (e.altKey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160; // update the active item<br/>
+&#160;&#160; this.$activeItem = $id;<br/>
+<br/>
+&#160;&#160;// apply the focus highlighting<br/>
+&#160;&#160;this.updateStyling($id);<br/>
+<br/>
+&#160;&#160;// expand or collapse the group<br/>
+&#160;&#160;this.toggleGroup($id, true);<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleDblClick<br/>
+<br/>
+//<br/>
+// Function handleClick() is a member function to process click events.<br/>
+//<br/>
+// @param ($id object) $id is the jQuery id of the parent item firing event<br/>
+//<br/>
+// @param (e object) e is the associated event object<br/>
+//<br/>
+// @return (boolean) returns false if consuming event; true if not<br/>
+//<br/>
+treeview.prototype.handleClick = function($id, e) {<br/>
+<br/>
+&#160;&#160;if (e.altKey || e.ctrlKey || e.shiftKey) {<br/>
+&#160;&#160;&#160;&#160;// do nothing<br/>
+&#160;&#160;&#160;&#160;return true;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160; // update the active item<br/>
+&#160;&#160; this.$activeItem = $id;<br/>
+<br/>
+&#160;&#160;// apply the focus highlighting<br/>
+&#160;&#160;this.updateStyling($id);<br/>
+<br/>
+&#160;&#160;e.stopPropagation();<br/>
+&#160;&#160;return false;<br/>
+<br/>
+} // end handleClick<br/>
+<br/>
+//<br/>
+// Function handleFocus() is a member function to process focus events.<br/>
+//<br/>
+// @param ($item object) $item is the jQuery id of the parent item firing event<br/>
+//<br/>
+// @param (e object) e is the associated event object<br/>
+//<br/>
+// @return (boolean) returns true<br/>
+//<br/>
+treeview.prototype.handleFocus = function($item, e) {<br/>
+<br/>
+&#160;&#160; if (this.$activeItem == null) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$activeItem = $item;<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; this.updateStyling(this.$activeItem);<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleFocus<br/>
+<br/>
+//<br/>
+// Function handleBlur() is a member function to process blur events.<br/>
+//<br/>
+// @param ($id object) $id is the jQuery id of the parent item firing event<br/>
+//<br/>
+// @param (e object) e is the associated event object<br/>
+//<br/>
+// @return (boolean) returns true<br/>
+//<br/>
+treeview.prototype.handleBlur = function($id, e) {<br/>
+<br/>
+&#160;&#160;return true;<br/>
+<br/>
+} // end handleBlur<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>

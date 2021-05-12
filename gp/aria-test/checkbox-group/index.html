@@ -1,0 +1,747 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Checkbox group using background images for visual state</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+	  var stat=0;
+	  	window.onload = function(){
+		document.getElementById("cb1all").focus();
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }else if(e.keyCode == "40"){
+				if(stat==0){
+					document.getElementById("cb1a").focus();
+					stat=1;
+				}else if(stat==1){
+					document.getElementById("cb1b").focus();
+					stat++;
+				}else if(stat==2){
+					document.getElementById("cb1c").focus();
+					stat++;
+				}
+			}else if(e.keyCode == "38"){
+				if(stat==1){
+					document.getElementById("cb1all").focus();
+					stat--;
+				}else if(stat==2){
+					document.getElementById("cb1a").focus();
+					stat--;
+				}else if(stat==3){
+					document.getElementById("cb1b").focus();
+					stat--;
+				}
+			}else if(e.keyCode=="13"){
+				console.log("enter");
+			}	
+		}			
+	}
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+ul.checkboxes {
+   margin: 0;
+   padding: 0;
+}
+
+li.groupbox {
+   margin-left: 1em;
+   padding: 0;
+   padding-left: 2em;
+   list-style: none;
+   width: 7em;
+   border: 2px solid transparent;
+}
+
+li.checkbox {
+   margin-left: 2.5em;
+   padding: 0;
+   padding-left: 2em;
+   list-style: none;
+   width: 7em;
+   border: 2px solid transparent;
+}
+
+li.unchecked {
+   background: url('http://www.oaa-accessibility.org/media/examples/images/checkbox-unchecked-black.png') no-repeat .5em center;
+}
+
+li.checked {
+   background: url('http://www.oaa-accessibility.org/media/examples/images/checkbox-checked-black.png') no-repeat .5em center;;
+}
+
+li.mixed {
+   background: url('http://www.oaa-accessibility.org/media/examples/images/checkbox-mixed-black.png') no-repeat .5em center;
+}
+   
+li.hover {
+   border: 2px solid #777;
+}
+
+li.focus {
+   border: 2px solid black;
+}
+
+.hidden {
+   position: absolute;
+   top: -30em;
+   left: -300em;
+} 
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+var KEY_SPACE = 32;
+
+$(document).ready(function() {
+
+	var checkboxGroupApp = new checkboxGroup("cb1");
+
+}); // end ready event
+
+//
+// Function keyCodes() is an object to contain keycodes needed for the application
+//
+function keyCodes() {
+		this.tab        = 457;//9;
+	this.enter      = 13;
+	this.esc        = 403;//27;
+
+	this.space      = 406;//32;
+	this.pageup     = 33;
+	this.pagedown   = 34;
+	this.end        = 404;//35;
+	this.home       = 405;//36;
+
+	this.left       = 37;
+	this.up         = 38;
+	this.right      = 39;
+	this.down       = 40; 
+}
+
+//
+// Function checkboxGroup() is a class constructor for the implementation of a checkbox group widget.
+// checkboxGroup() requires an unordered list structure, with the first list entry being the group
+// checkbox and the remaining entries being the checkboxes controlled by the group.
+// 
+// This implementation of checkboxGroup() uses background images to represent the check state of the
+// group. This version will not work in high contrast modes, where background images are not displayed.
+//
+// @param(list string) list is the id of the unordered list that checkboxgroup is to be bound to
+//
+// @return N/A
+//
+function checkboxGroup(list) {
+
+	// define object properties
+	this.$id = $('#' + list);
+	this.keys = new keyCodes();
+
+	this.unchecked = 0;
+	this.checked = 1;
+	this.mixed = 2;
+
+	this.$groupBox = this.$id.find('li').first();
+	this.$checkboxes = this.$groupBox.siblings();
+	this.checkedCount = 0; // set to the number of checkboxes that are checked
+
+	// initialize the checkboxGroup object
+	this.init();
+
+	// bind event handlers
+	this.bindHandlers();
+
+} // end checkboxGroup() constructor
+
+// Function init() is a member function to initialize the checkboxGroup object. Initial checkbox
+// states are set according to the aria-checked property of the checkboxes in the group.
+//
+// return N/A
+//
+checkboxGroup.prototype.init = function() {
+
+	var thisObj = this;
+
+	this.$checkboxes.each(function() {
+		if ($(this).attr('aria-checked') == 'true') {
+			thisObj.adjCheckedCount(true);
+		}
+	});
+
+} // end init()
+
+//
+// Function bindHandlers() is a member function to bind event handlers to the checkboxes in the
+// checkbox group.
+//
+// @return N/A
+//
+checkboxGroup.prototype.bindHandlers = function() {
+
+	var thisObj = this;
+
+	/////////// Bind groupbox handlers ////////////////
+	
+	// bind a click handler
+	this.$groupBox.click(function(e) {
+		return thisObj.handleGroupboxClick($(this), e);
+	});
+
+	// bind a keydown handler
+	this.$groupBox.keydown(function(e) {
+		return thisObj.handleGroupboxKeyDown($(this), e);
+	});
+
+	// bind a keypress handler
+	this.$groupBox.keypress(function(e) {
+		return thisObj.handleBoxKeyPress($(this), e);
+	});
+
+	// bind a mouseover handler
+	this.$groupBox.mouseover(function(e) {
+		return thisObj.handleBoxMouseOver($(this), e);
+	});
+
+	// bind a mouseout handler
+	this.$groupBox.mouseout(function(e) {
+		return thisObj.handleBoxMouseOut($(this), e);
+	});
+
+	// bind a focus handler
+	this.$groupBox.focus(function(e) {
+		return thisObj.handleBoxFocus($(this), e);
+	});
+
+	// bind a blur handler
+	this.$groupBox.blur(function(e) {
+		return thisObj.handleBoxBlur($(this), e);
+	});
+
+	/////////// Bind checkbox handlers ////////////////
+	
+	// bind a click handler
+	this.$checkboxes.click(function(e) {
+		return thisObj.handleCheckboxClick($(this), e);
+	});
+
+	// bind a keydown handler
+	this.$checkboxes.keydown(function(e) {
+		return thisObj.handleCheckboxKeyDown($(this), e);
+	});
+
+	// bind a keypress handler
+	this.$checkboxes.keypress(function(e) {
+		return thisObj.handleBoxKeyPress($(this), e);
+	});
+
+	// bind a mouseover handler
+	this.$checkboxes.mouseover(function(e) {
+		return thisObj.handleBoxMouseOver($(this), e);
+	});
+
+	// bind a mouseout handler
+	this.$checkboxes.mouseout(function(e) {
+		return thisObj.handleBoxMouseOut($(this), e);
+	});
+
+	// bind a focus handler
+	this.$checkboxes.focus(function(e) {
+		return thisObj.handleBoxFocus($(this), e);
+	});
+
+	// bind a blur handler
+	this.$checkboxes.blur(function(e) {
+		return thisObj.handleBoxBlur($(this), e);
+	});
+
+} // end bindHandlers()
+
+// Function setBoxState() is a member function to set a checkbox state. This function sets the
+// aria-checked property to the passed state value and changes the box image to display the new
+// box state.
+//
+// @param($boxID object) $boxID is the jquery object of the checkbox to manipulate
+//
+// @param(state integer) state is the check state to set the box
+//
+// @return N/A
+//
+checkboxGroup.prototype.setBoxState = function($boxID, state) {
+
+	switch (state) {
+		case this.unchecked: {
+			$boxID.attr('aria-checked', 'false');
+			$boxID.removeClass('checked mixed');
+			$boxID.addClass('unchecked');
+
+			break;
+		}
+		case this.checked: {
+			$boxID.attr('aria-checked', 'true');
+			$boxID.removeClass('unchecked mixed');
+			$boxID.addClass('checked');
+			break;
+		}
+		case this.mixed: {
+			$boxID.attr('aria-checked', 'mixed');
+			$boxID.removeClass('unchecked checked');
+			$boxID.addClass('mixed');
+			break;
+		}
+	} // end switch
+
+} // end setBoxState()
+
+//
+// Function adjCheckedCount() is a member function to increment or decrement the count of checked
+// boxes. The function modifies the checkes state of the group box accordingly.
+//
+// @param(inc boolean) inc is true if incrementing the checked count, false if decrementing
+//
+// @return N/A
+//
+checkboxGroup.prototype.adjCheckedCount = function(inc) {
+
+	// increment or decrement the count
+	if (inc == true) {
+		this.checkedCount++;
+	}
+	else {
+		this.checkedCount--;
+	}
+
+	// modify the group box state
+	if (this.checkedCount == this.$checkboxes.length) {
+		// all the boxes are checked
+		this.setBoxState(this.$groupBox, this.checked);
+	}
+	else if (this.checkedCount > 0) {
+		// some of the boxes are checked
+		this.setBoxState(this.$groupBox, this.mixed);
+	}
+	else {
+		// all boxes are unchecked
+		this.setBoxState(this.$groupBox, this.unchecked);
+	}
+
+} // end adjCheckedCount()
+
+
+/////////////////////// Groupbox event handlers /////////////////////////////////
+
+//
+// Function handleGroupboxClick() is a member function to handle click events for group checkbox
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the keydown event
+//
+// @return (boolean) Returns false if processing; true of doing nothing
+//
+checkboxGroup.prototype.handleGroupboxClick = function($id, e) {
+		 
+	var thisObj = this;
+
+	if (e.altkey || e.ctrlKey || e.shiftKey) {
+		// do nothing;
+		return true;
+	}
+
+	switch ($id.attr('aria-checked')) {
+		case 'true' : {
+			// uncheck the group
+
+			// clear the groupbox
+			this.setBoxState($id, this.unchecked);
+
+			// clear all the checkboxes in the group
+			this.$checkboxes.each(function() {
+
+				// clear the groupbox
+				thisObj.setBoxState($(this), thisObj.unchecked);
+			});
+
+			// reset the checked count
+			this.checkedCount = 0;
+
+			break;
+		}
+		case 'mixed' :
+		case 'false' : {
+			// check the group
+
+			// set the groupbox to checked
+			this.setBoxState($id, this.checked);
+
+			// check all the checkboxes in the group
+			this.$checkboxes.each(function() {
+
+				// clear the groupbox
+				thisObj.setBoxState($(this), thisObj.checked);
+			});
+
+			// set the checked count
+			this.checkedCount = this.$checkboxes.length;
+
+			break;
+		}
+	} // end switch
+
+	e.stopPropagation();
+	return false;
+	
+} // end handleGroupboxClick()
+	
+//
+// Function handleGroupboxKeyDown() is a member function to handle keydown events for the group checkbox
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the keydown event
+//
+// @return (boolean) Returns false if processing; true of doing nothing
+//
+checkboxGroup.prototype.handleGroupboxKeyDown = function($id, e) {
+		 
+	var thisObj = this;
+
+	if (e.altkey || e.ctrlKey || e.shiftKey) {
+		// do nothing;
+		return true;
+	}
+
+	if( e.keyCode == this.keys.enter) {
+	//console.log("enter");
+		switch ($id.attr('aria-checked')) {
+			case 'true' : {
+				// uncheck the group
+				console.log("true");
+				// clear the groupbox
+				this.setBoxState($id, this.unchecked);
+	
+				// clear all the checkboxes in the group
+				this.$checkboxes.each(function() {
+	
+					// clear the groupbox
+					thisObj.setBoxState($(this), thisObj.unchecked);
+				});
+	
+				// reset the checked count
+				this.checkedCount = 0;
+	
+				break;
+			}
+			case 'mixed' :
+			case 'false' : {
+				// check the group
+			console.log("mixed or false");
+				// set the groupbox to checked
+				this.setBoxState($id, this.checked);
+	
+				// check all the checkboxes in the group
+				this.$checkboxes.each(function() {
+	
+					// clear the groupbox
+					thisObj.setBoxState($(this), thisObj.checked);
+				});
+	
+				// set the checked count
+				this.checkedCount = this.$checkboxes.length;
+	
+				break;
+			}
+		} // end switch
+
+		e.stopPropagation();
+		return false;
+	} // endif
+
+	return true;
+	
+} // end handleGroupboxKeyDown()
+	
+
+/////////////////////// Checkbox event handlers /////////////////////////////////
+
+//
+// Function handleCheckboxClick() is a member function to handle click events for checkboxes
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the keydown event
+//
+// @return (boolean) Returns false if processing; true of doing nothing
+//
+checkboxGroup.prototype.handleCheckboxClick = function($id, e) {
+		 
+	if (e.altkey || e.ctrlKey || e.shiftKey) {
+		// do nothing;
+		return true;
+	}
+
+	// toggle the checkbox state
+
+	if($id.attr('aria-checked') == 'true') {
+		this.setBoxState($id, this.unchecked);
+		this.adjCheckedCount(false);
+	} else {
+		this.setBoxState($id, this.checked);
+		this.adjCheckedCount(true);
+	}  // endif
+
+	e.stopPropagation();
+	return false;
+	
+} // end handleCheckboxClick()
+	
+//
+// Function handleCheckboxKeyDown() is a member function to handle keydown events for checkboxes
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the keydown event
+//
+// @return (boolean) Returns false if processing; true of doing nothing
+//
+checkboxGroup.prototype.handleCheckboxKeyDown = function($id, e) {
+		 
+	if (e.altkey || e.ctrlKey || e.shiftKey) {
+		// do nothing;
+		return true;
+	}
+
+	if( e.keyCode == this.keys.space || e.keyCode==this.keys.enter ) {
+
+		// toggle the checkbox state
+
+		if($id.attr('aria-checked') == 'true') {
+			this.setBoxState($id, this.unchecked);
+			this.adjCheckedCount(false);
+		} else {
+			this.setBoxState($id, this.checked);
+			this.adjCheckedCount(true);
+		}  // endif
+
+		e.stopPropagation();
+		return false;
+	} // endif
+
+	return true;
+	
+} // end handleCheckboxKeyDown()
+	
+////////////////////////////////// Common event handlers ///////////////////////////////////
+
+//
+// Function handleBoxKeyPress() is a member function to handle keypress events for checkboxes
+// This function is needed to consume events for browsers, such as Opera, that perform window
+// manipulation on keypress events.
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the keydown event
+//
+// @return (boolean) Returns false if processing; true of doing nothing
+//
+checkboxGroup.prototype.handleBoxKeyPress = function($id, e) {
+		 
+	if (e.altkey || e.ctrlKey || e.shiftKey) {
+		// do nothing;
+		return true;
+	}
+
+	if( e.keyCode == this.keys.space ) {
+		// consume the event
+		e.stopPropagation();
+		return false;
+	} // endif
+
+	return true;
+	
+} // end handleBoxKeyPress()
+
+//
+// Function handleBoxMouseOver() is a member function to handle mouseover events for checkboxes
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the mouseover event
+//
+// @return (boolean) Returns false;
+//
+checkboxGroup.prototype.handleBoxMouseOver = function($id, e) {
+		 
+	// if the box does not have the focus class add the hover highlight
+	if ($id.not('.focus')) {
+		$id.addClass('hover');
+	}
+
+	e.stopPropagation();
+	return false;
+	
+} // end handleBoxMouseOver()
+
+//
+// Function handleBoxMouseOut() is a member function to handle mouseout events for checkboxes
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the mouseout event
+//
+// @return (boolean) Returns false;
+//
+checkboxGroup.prototype.handleBoxMouseOut = function($id, e) {
+		 
+	$id.removeClass('hover');
+
+	e.stopPropagation();
+	return false;
+	
+} // end handleBoxMouseOut()
+
+//
+// Function handleBoxFocus() is a member function to handle focus events for checkboxes
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the focus event
+//
+// @return (boolean) Returns true;
+//
+checkboxGroup.prototype.handleBoxFocus = function($id, e) {
+		 
+	$id.addClass('focus');
+
+	// remove the hover class if it is applied
+	$id.removeClass('hover');
+
+	return true;
+	
+} // end handleBoxFocus()
+
+//
+// Function handleBoxBlur() is a member function to handle blur events for checkboxes
+//
+// @param ($id object) $id is the jquery object of the checkbox
+//
+// @param (e object) e is the event object associated with the blur event
+//
+// @return (boolean) Returns true;
+//
+checkboxGroup.prototype.handleBoxBlur = function($id, e) {
+		 
+	$id.removeClass('focus');
+	return true;
+	
+} // end handleBoxBlur()
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+  
+  <div id="content">
+    <h1>Checkbox group using background images for visual state</h1>
+
+
+<div role="main">
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div role="application">
+
+<h3 id="cond">Sandwich Condiments</h3>
+
+
+<ul id="cb1" class="checkboxes" role="group" aria-labelledby="cond">
+
+    <li id="cb1all"
+        role="checkbox" 
+        class="groupbox mixed"
+        aria-checked="mixed" 
+        tabindex="0">
+        All condiments
+        
+     </li>   
+            <li id="cb1a" 
+                role="checkbox" 
+                class="checkbox unchecked"
+                aria-checked="false" 
+                aria-describedby="desc1"
+                tabindex="0">
+                Lettuce
+            </li>
+            
+            <li id="cb1b" 
+                role="checkbox" 
+                class="checkbox checked"
+                aria-checked="true" 
+                aria-describedby="desc2"
+                tabindex="0">
+                Tomato
+            </li>
+            
+            <li id="cb1c" 
+                role="checkbox" 
+                class="checkbox checked"
+                aria-checked="true" 
+                aria-describedby="desc3"
+                tabindex="0">
+                Mustard
+            </li>
+        
+   
+</ul>
+
+<p id="desc1" class="hidden">Not your average lettuce</p>
+<p id="desc2" class="hidden">Organically grown beef steak tomatos</p>
+<p id="desc3" class="hidden">Brown and spicy mustard</p>
+<p id="desc4" class="hidden">Fresh alfalfa sprouts, organically grown</p> 
+
+
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0064)http://websiteaccessibility.donaldevans.com/2011/07/12/aria-log/ -->
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en-US"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>ARIA Log «  DonaldEvans.com Blog</title>
+<link rel="stylesheet" href="./css/style.css" type="text/css">
+<link rel="pingback" href="http://donaldevans.com/blog/xmlrpc.php">
+
+<script type="text/javascript" src="./js/custom.js"></script>
+<script type="text/javascript" src="./js/grid.js"></script>
+<script type="text/javascript" src="./js/jwplayer.js"></script>
+<script type="text/javascript" src="./js/swfobject.js"></script>
+
+<link rel="stylesheet" href="./css/custom.css" type="text/css">
+
+<link rel="alternate" type="application/rss+xml" title="DonaldEvans.com Blog » Feed" href="http://websiteaccessibility.donaldevans.com/feed/">
+<link rel="alternate" type="application/rss+xml" title="DonaldEvans.com Blog » Comments Feed" href="http://websiteaccessibility.donaldevans.com/comments/feed/">
+<script type="text/javascript" src="./js/comment-reply.min.js"></script>
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://donaldevans.com/blog/xmlrpc.php?rsd">
+<link rel="wlwmanifest" type="application/wlwmanifest+xml" href="http://donaldevans.com/blog/wp-includes/wlwmanifest.xml"> 
+<link rel="prev" title="ARIA Link" href="http://websiteaccessibility.donaldevans.com/2011/07/12/aria-link/">
+<link rel="next" title="ARIA Marquee" href="http://websiteaccessibility.donaldevans.com/2011/07/15/aria-marquee/">
+<meta name="generator" content="WordPress 3.5.1">
+<link rel="canonical" href="http://websiteaccessibility.donaldevans.com/2011/07/12/aria-log/">
+<link rel="shortlink" href="http://websiteaccessibility.donaldevans.com/?p=1482">
+	<style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
+<style id="style-1-cropbar-clipper">/* Copyright 2014 Evernote Corporation. All rights reserved. */
+.en-markup-crop-options {
+    top: 18px !important;
+    left: 50% !important;
+    margin-left: -100px !important;
+    width: 200px !important;
+    border: 2px rgba(255,255,255,.38) solid !important;
+    border-radius: 4px !important;
+}
+
+.en-markup-crop-options div div:first-of-type {
+    margin-left: 0px !important;
+}
+</style></head>
+<body onload="lgtv_init()" class="single single-post postid-1482 single-format-standard" data-feedly-mini="yes">
+<div id="container">
+	<div id="header">
+		<div id="headings">
+			<h1><a href="http://websiteaccessibility.donaldevans.com/">DonaldEvans.com Blog</a></h1>
+			<h2>WebsiteAccessibility.com</h2>
+		</div>
+		<div id="movement">
+			<div id="searchbox">
+				<form role="search" method="get" action="http://websiteaccessibility.donaldevans.com/">
+					<div id="search-input-text-wrapper"><input id="search-input-text" type="text" name="s" value="" class="input-text"></div>
+					<div id="search-input-submit-wrapper"><input id="search-input-submit" type="image" src="./image/button.png" value="Search" class="input-submit"></div>
+				</form>
+			</div>
+			<ul id="navigation">
+<li class="page_item page-item-53"><a href="http://websiteaccessibility.donaldevans.com/about/">About</a></li>
+<li class="page_item page-item-59"><a href="http://websiteaccessibility.donaldevans.com/">Best Practices by Language</a></li>
+<li class="page_item page-item-509"><a href="http://websiteaccessibility.donaldevans.com/best-practices-by-use/">Best Practices by Use</a></li>
+<li class="page_item page-item-883"><a href="http://websiteaccessibility.donaldevans.com/helpful-links/">Helpful Links</a></li>
+			</ul>
+		</div>
+	</div>	<div id="content_wrapper">
+		<div id="content">
+			<div class="navigation">
+			<div class="alignleft">« <a href="http://websiteaccessibility.donaldevans.com/2011/07/12/aria-link/" rel="prev">ARIA Link</a></div>
+			<div class="alignright"><a href="http://websiteaccessibility.donaldevans.com/2011/07/15/aria-marquee/" rel="next">ARIA Marquee</a> »</div>
+		</div>
+		<div class="post-1482 post type-post status-publish format-standard hentry category-accessibility category-aria-accessibility category-best-practices category-wcag" id="post-1482">
+			<h2 class="post-title-single">ARIA Log</h2>
+			<div class="post-date-single">Jul 12th, 2011 at 1:02 pm</div>
+			<div class="entry">
+				<p><script type="”text/javascript”">
+<!–
+ARIA_Role_Log(message)
+//–></script></p>
+<div id="description">
+<p>
+ARIA’s <code>role=log</code> is a live region that can expect to be updated with new lines of information added to the end of the other content.  In addition, the older content may disappear.
+</p>
+<p>
+Areas with <code>role=log</code> always have the <code>aria-live</code> value of <code>polite</code>.
+</p>
+<p>
+In Example 1 below, JAWS will read each new text node as it is added, but does not read the entire log file.
+</p>
+<p>
+In Example 2 below, Jaws reads the new line because it is the only thing in the log.  In this case the old log entry is overwritten with the new log line.
+</p>
+</div>
+<div id="example" class="example">
+<h2>Example 1:</h2>
+<p>Adding a log line to the end of the area.</p>
+<div id="livelog1" role="log" aria-atomic="false"></div>
+<p><button id="lgtv_focus1" onclick="ARIA_Append_Log();" onkeydown="lgtv_keyhandle(event);">Add a log entry</button></p>
+<div id="code">
+<h2>Code</h2>
+<pre><xmp>
+Adding a log line to the end of the area.
+<div role="log" aria-atomic="false"></div>
+<button id="lgtv_focus1" onClick="ARIA_Append_Log();">Add a log entry</button>
+function ARIA_Append_Log() {
+  var txt = document.createTextNode(Math.random() + " A line has been appended.");
+  document.getElementById('livelog1').appendChild(txt); 
+}</xmp>
+</pre>
+</div>
+<h2>Example 2:</h2>
+<p>Updating a log by deleting the old line and adding one new line.</p>
+<div id="livelog2" role="log">This is the start of a log</div>
+<p><button id="lgtv_focus2" onkeydown="lgtv_keyhandle(event);" onclick="ARIA_Overwrite_Log(&#39;livelog2&#39;,&#39;&#39;,&#39;&#39;);">Overwrite a log entry</button></p>
+<div id="code">
+<h2>Code</h2>
+<pre><xmp>
+function ARIA_Overwrite_Log() {
+  document.getElementById('livelog2').innerHTML = Math.random( ) + 
+  ": another new line has been written over writing the current line.";
+}
+Updating a log by deleting the old line and adding one new line.
+<div id="livelog2" role="log">This is the start of a log</div>
+<button onClick="ARIA_Overwrite_Log('livelog2','','');">Overwrite a log entry</button>
+</xmp>
+</pre>
+</div>
+</div>
+<div id="workswith">
+<h3>Works With</h3>
+<table border="1">
+<caption><code>role=log</code></caption>
+<tbody><tr>
+<th>Browser</th>
+<th>Screen Reader</th>
+<th>Results</th>
+</tr>
+<tr>
+<td>IE 9 </td>
+<td>JAWS 12</td>
+<td>No</td>
+</tr>
+<tr>
+<td>FF 5 </td>
+<td>JAWS 12</td>
+<td>Yes.</td>
+</tr>
+</tbody></table>
+</div>
+<div id="standards">
+<h2>Standards:</h2>
+<ul>
+<li><strong><a href="http://www.w3.org/TR/UNDERSTANDING-WCAG20/content-structure-separation-programmatic.html">1.3.1 Info and Relationships: </a></strong>Information, structure, and relationships conveyed through presentation can be programmatically determined or are available in text. (Level A)  </li>
+</ul>
+</div>
+												<p class="postmetadata alt">
+					<small>
+						In <a href="http://websiteaccessibility.donaldevans.com/category/accessibility/" title="View all posts in Accessibility" rel="category tag">Accessibility</a>, <a href="http://websiteaccessibility.donaldevans.com/category/accessibility/aria-accessibility/" title="View all posts in ARIA" rel="category tag">ARIA</a>, <a href="http://websiteaccessibility.donaldevans.com/category/accessibility/best-practices/" title="View all posts in Best Practices" rel="category tag">Best Practices</a>, <a href="http://websiteaccessibility.donaldevans.com/category/accessibility/wcag/" title="View all posts in WCAG" rel="category tag">WCAG</a>.
+													Both comments and pings are currently closed.
+											</small>
+				</p>
+			</div>
+		</div>
+				
+		<p class="nocomments">Comments are closed.</p>
+				</div>
+	</div>
+<div style="clear: both;"></div> <!-- sometimes .navigation breaks the layout without this -->
+</div><!-- /container -->
+<div id="footer_wrapper">
+	<div id="footer">
+		<div id="column-1">
+			<h4>Archives</h4>
+			<div class="floatitems">
+				<div class="floatitem"><a href="http://websiteaccessibility.donaldevans.com/2011/09/" title="September 2011">September 2011</a>&nbsp;(1)</div>
+				<div class="floatitem"><a href="http://websiteaccessibility.donaldevans.com/2011/08/" title="August 2011">August 2011</a>&nbsp;(1)</div>
+				<div class="floatitem"><a href="http://websiteaccessibility.donaldevans.com/2011/07/" title="July 2011">July 2011</a>&nbsp;(6)</div>
+				<div class="floatitem"><a href="http://websiteaccessibility.donaldevans.com/2011/06/" title="June 2011">June 2011</a>&nbsp;(31)</div>
+				<div class="floatitem"><a href="http://websiteaccessibility.donaldevans.com/2011/05/" title="May 2011">May 2011</a>&nbsp;(10)</div>
+			</div><!-- /floatitems -->
+		</div><!-- /column-1 -->
+		<div id="column-2">
+			<h4>Categories</h4>
+			<ul class="floatitems">
+	<li class="cat-item cat-item-3"><a href="http://websiteaccessibility.donaldevans.com/category/accessibility/" title="View all posts filed under Accessibility">Accessibility</a> (49)
+</li>
+	<li class="cat-item cat-item-9"><a href="http://websiteaccessibility.donaldevans.com/category/accessibility/aria-accessibility/" title="View all posts filed under ARIA">ARIA</a> (14)
+</li>
+	<li class="cat-item cat-item-7"><a href="http://websiteaccessibility.donaldevans.com/category/accessibility/best-practices/" title="View all posts filed under Best Practices">Best Practices</a> (33)
+</li>
+	<li class="cat-item cat-item-11"><a href="http://websiteaccessibility.donaldevans.com/category/html5/" title="View all posts filed under HTML5">HTML5</a> (1)
+</li>
+	<li class="cat-item cat-item-4"><a href="http://websiteaccessibility.donaldevans.com/category/accessibility/section-508/" title="View all posts filed under Section 508">Section 508</a> (2)
+</li>
+	<li class="cat-item cat-item-5"><a href="http://websiteaccessibility.donaldevans.com/category/accessibility/wcag/" title="View all posts filed under WCAG">WCAG</a> (31)
+</li>
+			</ul><!-- /floatitems -->
+		</div><!-- /column-2 -->
+		<div id="column-3">
+						<h4>Site Information</h4>
+			<ul id="site_info">
+			<li>Content © 2016 <a href="http://websiteaccessibility.donaldevans.com/">DonaldEvans.com Blog</a> except where otherwise noted.</li>
+			<li>Powered by <a href="http://www.wordpress.org/" target="_blank">WordPress</a>.<br>Theme is <a href="http://renownedmedia.com/blog/renownedmint-wordpress-theme/" target="_blank">RenownedMint</a> by <a href="http://renownedmedia.com/" target="_blank">Renowned Media</a>.</li>
+			</ul>
+					</div><!-- /column-3 -->
+	</div><!-- /footer -->
+</div><!-- /footer_wrapper -->
+<!-- /container -->
+<script type="text/javascript" language="JavaScript">
+//<![CDATA[
+
+function lgtv_init()
+{
+  document.getElementById('lgtv_focus1').focus();
+}
+
+function lgtv_keyhandle(event)
+{
+	if (event.keyCode == 38) {
+		document.getElementById('lgtv_focus1').focus();
+		alert(event.keyCode);
+	}
+	else if (event.keyCode == 40) {
+		document.getElementById('lgtv_focus2').focus();
+		alert(event.keyCode);
+	}else if (event.keyCode == 461) {
+		window.location.replace("../../menu.html");
+	}
+}
+
+var wpdone;
+function wpvisit()
+{
+  var z;
+  z="&r="+escape(document.referrer);
+  z=z+"&b="+escape(navigator.appName+" "+navigator.appVersion);
+  w=parseFloat(navigator.appVersion);
+  if (w > 2.0) {
+    z=z+"&s="+screen.width+"x"+screen.height;
+    z=z+"&o="+navigator.platform;
+    v="1.2";
+    if (navigator.appName != "Netscape") {
+      z=z+"&c="+screen.colorDepth;
+    } else {
+      z=z+"&c="+screen.pixelDepth
+    }
+    z=z+"&j="+navigator.javaEnabled();
+  } else {
+    v=1.0;
+  }
+  z=z+"&v="+v;
+
+  document.writeln("<img border=\"0\" src=\"http://visit.webhosting.yahoo.com/wisit.gif"+"/"+"?"+z+"\" />");
+}
+  //wpvisit();
+//]]>
+</script><img border="0" src="./image/saved_resource">
+
+
+<noscript>&lt;img src="http://visit.webhosting.yahoo.com/wisit.gif?1463302223" border="0" width="1" height="1" alt="visit" /&gt;</noscript>
+
+<!-- Dynamic Page Served (once) in 0.877 seconds -->
+<!-- Cached page served by WP-Cache -->
+<script type="text/javascript">(function (d, w) {var x = d.getElementsByTagName('SCRIPT')[0];var f = function () {var s = d.createElement('SCRIPT');s.type = 'text/javascript';s.async = true;s.src = "//np.lexity.com/embed/YW/ca40a742f4d0e5f97bc1eb0c916f017e?id=3c96581807a3";x.parentNode.insertBefore(s, x);};w.attachEvent ? w.attachEvent('onload',f) :w.addEventListener('load',f,false);}(document, window));</script><div id="feedly-mini" title="feedly Mini tookit"></div></body></html>

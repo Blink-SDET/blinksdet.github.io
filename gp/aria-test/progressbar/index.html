@@ -1,0 +1,754 @@
+
+   
+
+<!DOCTYPE html >
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" >
+  <head id="head">
+    
+    <title id="header_title">Example 27 - Progressbar</title>
+    
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-print.css"   type="text/css" media="print" />
+    <link rel="stylesheet" href="http://www.oaa-accessibility.org/media/css/openajax-example-screen.css"  type="text/css" media="screen" title="screen" />
+
+    <script type="text/javascript">
+      var $URL_SITE = "http://www.oaa-accessibility.org/media//";
+    </script>
+    
+    
+
+
+
+
+<style type="text/css">
+
+div.progress {
+  margin: 50px;
+  padding: 0;
+  width: 540px;
+  height: 20px;
+  background-color: #eef;
+  border: 2px solid black;
+}
+
+div.progressIndicator {
+  margin: 0;
+  padding: 0;
+  background-color: #fbcb46;
+  position: relative;
+  top: 0;
+  left: 0px;
+
+  width: 10%;
+  height: 100%;
+}
+  
+div.progressVal  {
+  position: relative;
+  top: -18px;
+  margin: 0;
+  padding: 0;
+  height: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.hidden {
+  position: absolute !important;
+  top: -20em;
+  left: -200em;
+}
+
+.focus {
+  background-color: #eee !important;
+}
+
+</style>
+
+
+
+
+
+    
+
+
+<script type="text/javascript" src="http://www.oaa-accessibility.org/media/examples/js/jquery-1.4.2.min.js"></script>
+
+
+
+<script type="text/javascript">
+
+var g_progress1 = null;
+var g_$startButton = null;
+
+var g_intervalID = null; // the handle of the interval set when the example is running
+var g_curVal = 0;
+var g_maxVal = 300;
+
+// function increment() increments the value and passes the new value to the progress bar
+// widget. If the progress bar is at 100%, it stops the increment.
+//
+function doUpdate () {
+
+   if (g_progress1.getProgress() == 100) {
+      clearInterval(g_intervalID);
+      g_intervalID = null;
+
+      // make sure that the progress bar shows that it is full
+      g_progress1.$progDiv.css('width', '100%');
+
+      g_curVal = 0;
+      g_$startButton.html('Reset Example');
+      return;
+   }
+
+   g_curVal = g_curVal + 1;
+   g_progress1.setValue(g_curVal);
+}
+
+$(document).ready(function() {
+
+   var running = false; // true if example is running
+
+	// progress1 is a progress bar
+	g_progress1 = new progressbar('pb1', g_maxVal, true); 
+
+   g_$startButton = $('#pb1_control');
+
+   // bind a click handler to the start  button
+   g_$startButton.click(function(e) {
+
+      if (g_progress1.getProgress() == 100) {
+         g_progress1.setValue(0);
+      }
+            
+      if (running == true) {
+         clearInterval(g_intervalID);
+         g_intervalID = null;
+         g_$startButton.html('Start Example');
+         running = false;
+      }
+      else {
+         // create an interval timer to increment the count every second
+         g_intervalID = setInterval("doUpdate()", 100);
+
+         g_$startButton.html('Stop Example');
+
+         running = true;
+      }
+   });
+   
+}); // end document ready
+
+
+
+////////////////////////////////////////////////////
+//
+// function progressbar() is a class to define an ARIA-enabled progressbar widget.
+//
+// @param(container_id string) container_id is the containing div for the progressbar
+//
+// @param(max integer) max is the maximum value for the values being set. Used to calculate percent progress
+//
+// @param(showVal boolean) showVal is true if the current progress value should be shown
+//
+// @return N/A
+//
+function progressbar(container_id, max, showVal) {
+
+	// define progressbar object properties
+
+	this.$container = $('#' + container_id);
+	this.valMax = max;
+	this.showVal = showVal;
+   this.divWidth = 0;
+
+	// Store the size of the progress bar
+	this.width = this.$container.width();
+
+	// Store the page position of the widget
+	this.left = Math.round(this.$container.offset().left);
+	this.top = Math.round(this.$container.offset().top);
+
+   // Create and initialize the progress indicator
+   this.$container.append('<div id="progDiv" class="progressIndicator"></div>'); 
+   this.$progDiv = $('#progDiv');
+   this.$progDiv.css('width', '0%');
+
+   // Create and initialize the value box
+   this.$container.append('<div id="progVal" class="progressVal" aria-hidden="false"></div>'); 
+   this.$progVal = $('#progVal');
+   this.$progVal.html('0%');
+
+   if (this.showVal == false) {
+      this.$progVal.addClass('hidden').attr('aria-hidden', 'true');
+   }
+
+} // end progressbar constructor
+
+//
+// function setValue() is a member function to set the value of the progress bar.
+//
+// @param(val integer) val is the new value to calculate the progress from
+//
+// @return N/A
+//
+progressbar.prototype.setValue = function(val)  {
+
+   var percent = val * 100 / this.valMax;
+
+   if (percent <= 100.0) {
+      this.$container.attr('aria-valuenow', Math.round(percent));
+      this.$progDiv.css('width', percent + '%'); //Math.round(percent) + '%');
+      this.$progVal.html(this.$container.attr('aria-valuenow') + '%');
+   }
+}
+
+//
+// function getProgress() is a member function to return the percent progress
+//
+// @return (integer) Returns the percent progress in integer form (e.g. 50 represents 50%)
+//
+progressbar.prototype.getProgress = function()  {
+
+   return this.$container.attr('aria-valuenow');
+}
+
+//
+// function positionHandle() is a member function to position a handle at the specified value for the
+// progressbar. If showVal is true, it also positions and updates the displayed value container.
+//
+// @param($handle object) $handle is a pointer to the handle jQuery object to manipulate
+//
+// @param (val integer) val is the new value of the progressbar
+//
+// @return N/A
+//
+progressbar.prototype.positionHandle = function($handle, val) {
+
+	var handleHeight = $handle.outerHeight(); // the total height of the handle
+	var handleWidth = $handle.outerWidth(); // the total width of the handle
+	var handleOffset; // the distance from the value position for centering the handle
+	var xPos; // calculated horizontal position of the handle;
+	var yPos; // calculated vertical position of the handle;
+	var valPos; //calculated new pixel position for the value;
+
+		
+   // calculate the horizontal pixel position of the specified value
+   valPos = ((val - this.min) / (this.max - this.min)) * this.width + this.left;
+
+   xPos = Math.round(valPos - (handleWidth / 2));
+   yPos = Math.round(this.top + (this.height / 2) - (handleHeight / 2));
+
+	// Set the position of the handle
+	$handle.css('top', yPos + 'px');
+	$handle.css('left', xPos + 'px');
+
+	// Set the aria-valuenow position of the handle
+	$handle.attr('aria-valuenow', val);
+
+	// Update the stored handle values
+	if (/1$/.test($handle.attr('id')) == true) {
+		// first handle
+		this.val1 = val;
+	}
+	else {
+		// second handle
+		this.val2 = val;
+	}
+
+	// if showVal is true, update the value container
+	if (this.showVals == true) {
+		this.updateValBox($handle, Math.round(valPos));
+	}
+
+} // end positionHandle()
+
+//
+// function updateValBox() is a member function to reposition a handle value box and update its contents
+//
+// @return N/A
+//
+progressbar.prototype.updateValBox = function() {
+
+	var $valBox = $('#' + $handle.attr('id') + '_val');
+
+	var xPos; // horizontal pixel position of the box
+	var yPos; // vertical pixel position of the box
+
+	// Set the position of the handle
+   var boxWidth = $valBox.outerWidth();
+
+   yPos = $handle.css('top');
+
+   // Adjust the horizontal position to center the value box on the value position
+   xPos = Math.round(valPos - (boxWidth / 2)) + 'px';
+
+	// Set the position of the value box
+	$valBox.css('top', yPos);
+	$valBox.css('left', xPos);
+
+	// Set the text in the box to the handle value
+	$valBox.text($handle.attr('aria-valuenow'));
+
+} // end updateValBox()
+
+</script>
+
+
+
+
+
+  </head>
+  
+<body>
+
+<script type="text/javascript">
+	window.onload = function(){
+		document.getElementById("pb1_control").focus();
+		window.addEventListener("keydown", checkKeyPressed, false);
+
+	 	function checkKeyPressed(e) {
+		    if (e.keyCode == "461") {
+		        window.location.replace("../../menu.html");
+		    }
+		}		
+	}
+</script>
+
+  <div id="banner" role="banner">        
+    <div class="content">
+      <div class="title">Accessibility Examples</div>
+      <div class="banner_nav" role="navigation" aria-labelledby="admin_label">
+        <h2 id="admin_label">OpenAjax Links</h2>
+        <ul>
+          <li><a href="http://www.openajax.org/member/wiki/Accessibility">OpenAjax Alliance Accessibility Task Force</a></li>
+          <li><a href="http://www.opanajax.org/">OpenAjax Alliance</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>   
+
+
+<div id="nav" role="navigation" aria-labelledby="nav_label">
+    <h2 id="nav_label">Example Navigation</h2>
+    <ul>
+        
+        <li><a href="../../examples/state/153/index.html">Examples</a></li>
+        
+        
+        
+        
+        <li class="first"><a href="../1/index.html">First</a></li>
+        
+        
+        <li class="previous"><a href="../26/index.html">Previous</a></li>
+        
+        <li>Example 27</li>
+        
+        <li class="next"><a href="../28/index.html">Next</a></li>
+        
+        
+        <li class="last"><a href="../44/index.html">Last</a></li>
+        
+        
+        
+    </ul>
+</div>
+
+
+  
+  <div id="content">
+    <h1>Example 27 - Progressbar</h1>
+
+
+<div role="main">
+    
+    
+    <div class="perm"><a href="../../examplep/progressbar1/index.html">Permanent link for Progressbar</a></div>
+    
+    <h2 id="start">Example Start</h2>
+    
+    <div id="example_code">
+        
+<div role="application">
+
+  <h3>Progressbar Example 1</h3>
+	
+  <button id="pb1_control">Start Example</button>
+  <div id="pb1_label" class="hidden">Example 1 Progressbar</div>
+  <div id="pb1" class="progress" role="progressbar" aria-labelledby="pb1_label" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" tabindex="0"></div>	
+		  
+</div>
+
+    </div>
+    
+    <h2 id="end">Example End</h2>
+    
+    
+    <h2>Example Description</h2>
+    <div id="description">
+        <p>Type: <span class="bp">Best Practice</span></p>
+        
+        <p>Simple example of a progress bar widget.</p>
+        
+    </div>
+
+    <h2>Keyboard Support</h2>
+    <div id="keyboard">
+        
+        <p>No keyboard information</p>
+        
+    </div>
+    
+    <h2>Example Markup</h2>
+    
+    <ul>  
+        
+        <li>ARIA 1.0: [aria-hidden]</li>      
+        
+        <li>ARIA 1.0: [aria-labelledby]</li>      
+        
+        <li>ARIA 1.0: [aria-valuemax]</li>      
+        
+        <li>ARIA 1.0: [aria-valuemin]</li>      
+        
+        <li>ARIA 1.0: [aria-valuenow]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;application&quot;]</li>      
+        
+        <li>ARIA 1.0: [role=&quot;progressbar&quot;]</li>      
+        
+    </ul>
+        
+    
+    <h2>Browser Compatibility</h2>
+    
+    <ul>  
+        
+        <li>osx: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>osx: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Firefox 3.6 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Internet Explorer 8.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Opera 11.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+        <li>win: Safari 5.0 (<span class="c"><abbr title="Complete">C</abbr></span>)</li>      
+        
+    </ul>
+    
+    
+    
+    <h2>HTML Source Code</h2>
+    <div class="code">
+        <br/>
+&lt;div role="application"&gt;<br/>
+<br/>
+&#160;&#160;&lt;h3&gt;Progressbar Example 1&lt;/h3&gt;<br/>
+&#160;&#160;<br/>
+&#160;&#160;&lt;button id="pb1_control"&gt;Start Example&lt;/button&gt;<br/>
+&#160;&#160;&lt;div id="pb1_label" class="hidden"&gt;Example 1 Progressbar&lt;/div&gt;<br/>
+&#160;&#160;&lt;div id="pb1" class="progress" role="progressbar" aria-labelledby="pb1_label" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" tabindex="0"&gt;&lt;/div&gt;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&lt;/div&gt;<br/>
+
+    </div>
+    
+    
+    <h2>CSS Code</h2>
+    <div class="code">
+        <br/>
+div.progress {<br/>
+&#160;&#160;margin: 50px;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;width: 540px;<br/>
+&#160;&#160;height: 20px;<br/>
+&#160;&#160;background-color: #eef;<br/>
+&#160;&#160;border: 2px solid black;<br/>
+}<br/>
+<br/>
+div.progressIndicator {<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;background-color: #fbcb46;<br/>
+&#160;&#160;position: relative;<br/>
+&#160;&#160;top: 0;<br/>
+&#160;&#160;left: 0px;<br/>
+<br/>
+&#160;&#160;width: 10%;<br/>
+&#160;&#160;height: 100%;<br/>
+}<br/>
+&#160;&#160;<br/>
+div.progressVal&#160;&#160;{<br/>
+&#160;&#160;position: relative;<br/>
+&#160;&#160;top: -18px;<br/>
+&#160;&#160;margin: 0;<br/>
+&#160;&#160;padding: 0;<br/>
+&#160;&#160;height: 20px;<br/>
+&#160;&#160;text-align: center;<br/>
+&#160;&#160;font-weight: bold;<br/>
+}<br/>
+<br/>
+.hidden {<br/>
+&#160;&#160;position: absolute !important;<br/>
+&#160;&#160;top: -20em;<br/>
+&#160;&#160;left: -200em;<br/>
+}<br/>
+<br/>
+.focus {<br/>
+&#160;&#160;background-color: #eee !important;<br/>
+}<br/>
+
+    </div>
+    
+    
+    
+    <h2>Javascript Source Code</h2>
+    <div class="code">
+        <br/>
+var g_progress1 = null;<br/>
+var g_$startButton = null;<br/>
+<br/>
+var g_intervalID = null; // the handle of the interval set when the example is running<br/>
+var g_curVal = 0;<br/>
+var g_maxVal = 300;<br/>
+<br/>
+// function increment() increments the value and passes the new value to the progress bar<br/>
+// widget. If the progress bar is at 100%, it stops the increment.<br/>
+//<br/>
+function doUpdate () {<br/>
+<br/>
+&#160;&#160; if (g_progress1.getProgress() == 100) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;clearInterval(g_intervalID);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;g_intervalID = null;<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;// make sure that the progress bar shows that it is full<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;g_progress1.$progDiv.css('width', '100%');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;g_curVal = 0;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;g_$startButton.html('Reset Example');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;return;<br/>
+&#160;&#160; }<br/>
+<br/>
+&#160;&#160; g_curVal = g_curVal + 1;<br/>
+&#160;&#160; g_progress1.setValue(g_curVal);<br/>
+}<br/>
+<br/>
+$(document).ready(function() {<br/>
+<br/>
+&#160;&#160; var running = false; // true if example is running<br/>
+<br/>
+&#160;&#160;// progress1 is a progress bar<br/>
+&#160;&#160;g_progress1 = new progressbar('pb1', g_maxVal, true); <br/>
+<br/>
+&#160;&#160; g_$startButton = $('#pb1_control');<br/>
+<br/>
+&#160;&#160; // bind a click handler to the start&#160;&#160;button<br/>
+&#160;&#160; g_$startButton.click(function(e) {<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (g_progress1.getProgress() == 100) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; g_progress1.setValue(0);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;if (running == true) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; clearInterval(g_intervalID);<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; g_intervalID = null;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; g_$startButton.html('Start Example');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; running = false;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; // create an interval timer to increment the count every second<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; g_intervalID = setInterval("doUpdate()", 100);<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; g_$startButton.html('Stop Example');<br/>
+<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; running = true;<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;}<br/>
+&#160;&#160; });<br/>
+&#160;&#160; <br/>
+}); // end document ready<br/>
+<br/>
+<br/>
+<br/>
+////////////////////////////////////////////////////<br/>
+//<br/>
+// function progressbar() is a class to define an ARIA-enabled progressbar widget.<br/>
+//<br/>
+// @param(container_id string) container_id is the containing div for the progressbar<br/>
+//<br/>
+// @param(max integer) max is the maximum value for the values being set. Used to calculate percent progress<br/>
+//<br/>
+// @param(showVal boolean) showVal is true if the current progress value should be shown<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+function progressbar(container_id, max, showVal) {<br/>
+<br/>
+&#160;&#160;// define progressbar object properties<br/>
+<br/>
+&#160;&#160;this.$container = $('#' + container_id);<br/>
+&#160;&#160;this.valMax = max;<br/>
+&#160;&#160;this.showVal = showVal;<br/>
+&#160;&#160; this.divWidth = 0;<br/>
+<br/>
+&#160;&#160;// Store the size of the progress bar<br/>
+&#160;&#160;this.width = this.$container.width();<br/>
+<br/>
+&#160;&#160;// Store the page position of the widget<br/>
+&#160;&#160;this.left = Math.round(this.$container.offset().left);<br/>
+&#160;&#160;this.top = Math.round(this.$container.offset().top);<br/>
+<br/>
+&#160;&#160; // Create and initialize the progress indicator<br/>
+&#160;&#160; this.$container.append('&lt;div id="progDiv" class="progressIndicator"&gt;&lt;/div&gt;'); <br/>
+&#160;&#160; this.$progDiv = $('#progDiv');<br/>
+&#160;&#160; this.$progDiv.css('width', '0%');<br/>
+<br/>
+&#160;&#160; // Create and initialize the value box<br/>
+&#160;&#160; this.$container.append('&lt;div id="progVal" class="progressVal" aria-hidden="false"&gt;&lt;/div&gt;'); <br/>
+&#160;&#160; this.$progVal = $('#progVal');<br/>
+&#160;&#160; this.$progVal.html('0%');<br/>
+<br/>
+&#160;&#160; if (this.showVal == false) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$progVal.addClass('hidden').attr('aria-hidden', 'true');<br/>
+&#160;&#160; }<br/>
+<br/>
+} // end progressbar constructor<br/>
+<br/>
+//<br/>
+// function setValue() is a member function to set the value of the progress bar.<br/>
+//<br/>
+// @param(val integer) val is the new value to calculate the progress from<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+progressbar.prototype.setValue = function(val)&#160;&#160;{<br/>
+<br/>
+&#160;&#160; var percent = val * 100 / this.valMax;<br/>
+<br/>
+&#160;&#160; if (percent &lt;= 100.0) {<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$container.attr('aria-valuenow', Math.round(percent));<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$progDiv.css('width', percent + '%'); //Math.round(percent) + '%');<br/>
+&#160;&#160;&#160;&#160;&#160;&#160;this.$progVal.html(this.$container.attr('aria-valuenow') + '%');<br/>
+&#160;&#160; }<br/>
+}<br/>
+<br/>
+//<br/>
+// function getProgress() is a member function to return the percent progress<br/>
+//<br/>
+// @return (integer) Returns the percent progress in integer form (e.g. 50 represents 50%)<br/>
+//<br/>
+progressbar.prototype.getProgress = function()&#160;&#160;{<br/>
+<br/>
+&#160;&#160; return this.$container.attr('aria-valuenow');<br/>
+}<br/>
+<br/>
+//<br/>
+// function positionHandle() is a member function to position a handle at the specified value for the<br/>
+// progressbar. If showVal is true, it also positions and updates the displayed value container.<br/>
+//<br/>
+// @param($handle object) $handle is a pointer to the handle jQuery object to manipulate<br/>
+//<br/>
+// @param (val integer) val is the new value of the progressbar<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+progressbar.prototype.positionHandle = function($handle, val) {<br/>
+<br/>
+&#160;&#160;var handleHeight = $handle.outerHeight(); // the total height of the handle<br/>
+&#160;&#160;var handleWidth = $handle.outerWidth(); // the total width of the handle<br/>
+&#160;&#160;var handleOffset; // the distance from the value position for centering the handle<br/>
+&#160;&#160;var xPos; // calculated horizontal position of the handle;<br/>
+&#160;&#160;var yPos; // calculated vertical position of the handle;<br/>
+&#160;&#160;var valPos; //calculated new pixel position for the value;<br/>
+<br/>
+&#160;&#160;&#160;&#160;<br/>
+&#160;&#160; // calculate the horizontal pixel position of the specified value<br/>
+&#160;&#160; valPos = ((val - this.min) / (this.max - this.min)) * this.width + this.left;<br/>
+<br/>
+&#160;&#160; xPos = Math.round(valPos - (handleWidth / 2));<br/>
+&#160;&#160; yPos = Math.round(this.top + (this.height / 2) - (handleHeight / 2));<br/>
+<br/>
+&#160;&#160;// Set the position of the handle<br/>
+&#160;&#160;$handle.css('top', yPos + 'px');<br/>
+&#160;&#160;$handle.css('left', xPos + 'px');<br/>
+<br/>
+&#160;&#160;// Set the aria-valuenow position of the handle<br/>
+&#160;&#160;$handle.attr('aria-valuenow', val);<br/>
+<br/>
+&#160;&#160;// Update the stored handle values<br/>
+&#160;&#160;if (/1$/.test($handle.attr('id')) == true) {<br/>
+&#160;&#160;&#160;&#160;// first handle<br/>
+&#160;&#160;&#160;&#160;this.val1 = val;<br/>
+&#160;&#160;}<br/>
+&#160;&#160;else {<br/>
+&#160;&#160;&#160;&#160;// second handle<br/>
+&#160;&#160;&#160;&#160;this.val2 = val;<br/>
+&#160;&#160;}<br/>
+<br/>
+&#160;&#160;// if showVal is true, update the value container<br/>
+&#160;&#160;if (this.showVals == true) {<br/>
+&#160;&#160;&#160;&#160;this.updateValBox($handle, Math.round(valPos));<br/>
+&#160;&#160;}<br/>
+<br/>
+} // end positionHandle()<br/>
+<br/>
+//<br/>
+// function updateValBox() is a member function to reposition a handle value box and update its contents<br/>
+//<br/>
+// @return N/A<br/>
+//<br/>
+progressbar.prototype.updateValBox = function() {<br/>
+<br/>
+&#160;&#160;var $valBox = $('#' + $handle.attr('id') + '_val');<br/>
+<br/>
+&#160;&#160;var xPos; // horizontal pixel position of the box<br/>
+&#160;&#160;var yPos; // vertical pixel position of the box<br/>
+<br/>
+&#160;&#160;// Set the position of the handle<br/>
+&#160;&#160; var boxWidth = $valBox.outerWidth();<br/>
+<br/>
+&#160;&#160; yPos = $handle.css('top');<br/>
+<br/>
+&#160;&#160; // Adjust the horizontal position to center the value box on the value position<br/>
+&#160;&#160; xPos = Math.round(valPos - (boxWidth / 2)) + 'px';<br/>
+<br/>
+&#160;&#160;// Set the position of the value box<br/>
+&#160;&#160;$valBox.css('top', yPos);<br/>
+&#160;&#160;$valBox.css('left', xPos);<br/>
+<br/>
+&#160;&#160;// Set the text in the box to the handle value<br/>
+&#160;&#160;$valBox.text($handle.attr('aria-valuenow'));<br/>
+<br/>
+} // end updateValBox()<br/>
+
+    </div>
+    
+    
+</div>
+
+
+    
+  </div>  
+  
+  <div id="footer" role="contentinfo">
+    
+    <h2>Administration Links</h2>
+    <ul>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:Privacy_policy">Privacy Policy</a></li>
+      <li><a href="http://www.openajax.org/member/wiki/MemberWiki:General_disclaimer">Disclaimers</a></li>
+      <li><a href="http://validator.w3.org/check?uri=referer">Validate Markup with W3C Validator</a></li>
+    </ul>
+    
+    <div class="copyright">
+      &copy; 2016 The Board of Trustees at the University of Illinois
+    </div>     
+    
+  </div>  
+</body>
+</html>
