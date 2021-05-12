@@ -1,0 +1,38 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<widget xmlns="http://www.w3.org/ns/widgets" xmlns:tizen="http://tizen.org/ns/widgets" id="http://www.vudu.com" version="7.6.47" viewmodes="maximized">
+    <access origin="*" subdomains="true" />
+    <tizen:app-control>
+        <tizen:src name="index.html" reload="disable" />
+        <tizen:operation name="http://samsung.com/appcontrol/operation/eden_resume" />
+    </tizen:app-control>
+    <tizen:application id="kk8MbItQ0H.VUDU" package="kk8MbItQ0H" required_version="2.4" />
+    <feature name="http://tizen.org/feature/screen.size.normal.1080.1920" />
+    <content src="index.html" />
+    <icon src="icon_173x143.png" />
+    <tizen:metadata key="http://samsung.com/tv/metadata/use.accelerator" value="bg_service" />
+    <tizen:metadata key="http://samsung.com/tv/metadata/search.format" value="{ &quot;contentId&quot;: &quot;%%CONTENT_ID%%&quot;, &quot;launchSource&quot;: &quot;search&quot;}" />
+    <tizen:metadata key="http://developer.samsung.com/tizen/metadata/bixby/companion-app/version" value="10000" />
+    <tizen:metadata key="http://developer.samsung.com/tizen/metadata/bixby/sdk/version" value="v2.0" />
+    <tizen:metadata key="http://developer.samsung.com/tizen/metadata/bixby/companion-app/action-id" value="tvMediaControl.ContinueWatching,tvMediaControl.TrackPrevious,tvMediaControl.TrackNext,tvMediaControl.Restart,tvMediaControl.SkipBackward,tvMediaControl.SkipForward,tvMediaControl.SetPlayPosition,tvMediaControl.SetSubtitle," />
+    <name>VUDU</name>
+    <tizen:privilege name="http://tizen.org/privilege/application.launch" />
+    <tizen:privilege name="http://tizen.org/privilege/datacontrol.consumer" />
+    <tizen:privilege name="http://tizen.org/privilege/internet" />
+    <tizen:privilege name="http://tizen.org/privilege/tv.inputdevice" />
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.read" />
+    <tizen:privilege name="http://tizen.org/privilege/filesystem.write" />
+    <tizen:privilege name="http://developer.samsung.com/privilege/productinfo" />
+    <tizen:privilege name="http://developer.samsung.com/privilege/avplay" />
+    <tizen:privilege name="http://developer.samsung.com/privilege/drminfo" />
+    <tizen:privilege name="http://developer.samsung.com/privilege/drmplay" />
+    <tizen:privilege name="http://developer.samsung.com/privilege/network.public" />
+    <tizen:profile name="tv" />
+    <tizen:service id="kk8MbItQ0H.TilesService">
+        <tizen:content src="javascript/edenservice/service.js" />
+        <tizen:name>VUDUTilesService</tizen:name>
+        <tizen:icon src="icon_173x143.png" />
+        <tizen:description>VUDU tiles service </tizen:description>
+        <tizen:metadata key="meta-key" value="meta-value" />
+        <tizen:category name="http://tizen.org/category/service" />
+    </tizen:service>
+</widget>

@@ -1,0 +1,37 @@
+<html><head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<meta name="viewport" content="width=1280">
+	<title>Vudu</title>
+	<link rel="stylesheet" href="css/init.css">
+<link type="text/css" rel="stylesheet" href="css/bundle.css" media="screen"></head>
+<body class="vudu-hd screen_resolution">
+        <script>
+                function handleKeyDown(e) {
+                        console.log(e.keyCode);
+                        var element = document.getElementById("chapterThumbnail");
+                        var keyCode = e.keyCode;
+                        console.log("keyCode = " + keyCode);
+
+                        if (keyCode == 50 || keyCode == 98) {
+                           element.style.borderStyle = "solid";
+                           element.style.borderWidth = "2px";
+                        }
+                        if (keyCode == 49 || keyCode == 97) {
+                           element.style.borderStyle = "solid";
+                           element.style.borderWidth = "0px";
+                        }
+                }
+
+                window.onload = function(){
+                    var element = document.getElementById("chapterThumbnail");
+                    element.style.position = "absolute",
+                    element.style.width = "216px",
+                    element.style.height = "156px",
+                    element.style.display = "block",
+                    element.style.top = "0"
+                    document.addEventListener('keydown', handleKeyDown);
+                }
+        </script>
+	<div id="main" style="visibility: visible;"><div id="chaptersMenu" style="position: absolute; display: block; left: 80px; top: 108px;"><div id="chapterThumbnail" class="clickable" role="option" style="position: absolute; width: 216px; height: 156px; display: block; top: 0px; left: 0px; border-style: solid; border-width: 0px; border-color: rgb(255, 255, 255);"><img class="chapterThumbnailImage" width="216" height="124" src="icon_173x143.png" style="width: 216px; height: 124px; background-color: black;"><div class="chapterThumbnailText" style="position: absolute; top: 124px; left: 0px; width: 216px; height: 32px; background-color: rgb(0, 123, 196);"><div class="chaptersChText" style="color: rgb(255, 255, 255);">Ch. 1</div><div class="chaptersTimeText" style="color: rgb(255, 255, 255);">0:00:00</div></div></div><div id="chapterThumbnail" class="clickable" role="option" style="position: absolute; width: 216px; height: 156px; display: block; top: 0px; left: 224px; border-style: solid; border-width: 2px; border-color: rgb(255, 255, 255);"><img class="chapterThumbnailImage" width="216" height="124" src="icon_173x143.png" style="width: 216px; height: 124px; background-color: black;"><div class="chapterThumbnailText" style="position: absolute; top: 124px; left: 0px; width: 216px; height: 32px; background-color: rgb(255, 255, 255);"><div class="chaptersChText" style="color: rgb(0, 0, 0);">Ch. 2</div><div class="chaptersTimeText" style="color: rgb(0, 0, 0);">0:07:51</div></div></div></div><div id="selectorLayer" style="pointer-events: none;"></div></div>
+	<div id="ariaContainer" class="offscreen" aria-live="assertive" aria-label="Chapter 2. 0:07:51"></div>
+</body></html>
