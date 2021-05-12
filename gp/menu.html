@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset='UTF-8' />
+		<title>LG Smart TV - ARIA Test</title>
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+		<script language="javascript" src="js/keycode.js"></script>
+		<script language="javascript" src="js/common.js"></script>
+		<script language="javascript" src="js/menu.js"></script>
+		<script>
+
+		//set onload event handler
+		window.addEventListener("load", initPage);
+		
+		//initialize page
+		function initPage()
+		{
+			addMenu("Radiogroup", "aria-test/radiogroup");
+			addMenu("Treeview", "aria-test/treeview");
+			addMenu("Progressbar", "aria-test/progressbar");
+			addMenu("Spinbutton", "aria-test/spinbutton");
+			addMenu("Combobox", "aria-test/combobox");
+			addMenu("Multiselectable List", "aria-test/multiselectable-list");
+			addMenu("Toolbar", "aria-test/toolbar");
+			addMenu("Alert/alert box", "aria-test/alert-alert-box");
+			addMenu("Log", "aria-test/log");
+			addMenu("Menu", "aria-test/menu");
+			addMenu("Tab Panel", "aria-test/tab-panel");
+			addMenu("Tooltip", "aria-test/tooltip");
+			addMenu("Date Picker", "aria-test/date-picker");
+			addMenu("Checkboxes", "aria-test/checkboxes");
+			addMenu("Checkbox group", "aria-test/checkbox-group");
+			addMenu("Slider", "aria-test/slider");
+			addMenu("Alert/dialog box", "aria-test/alert-dialog-box");
+			addMenu("Hide/Show Region", "aria-test/hide-show-region");
+			addMenu("Live Region", "aria-test/live-region");
+			addMenu("Grid", "aria-test/grid");
+			drawMenu();
+			
+			addMenuButton("Exit", closeApp);
+		}
+
+		</script>
+	</head>
+
+	<body ondragstart='return false' onselectstart='return false'>	
+		
+		<!-- title -->
+		<div id='title' class='title'>[ARIA TEST]</div>
+		
+		<!-- category -->
+		<div id='category' class='category'></div>
+		
+		<!-- contact -->
+		<div id='contact' class='contact'></div>
+				
+		<!-- test content -->
+		<div id='testContentArea' class='testContentArea'>
+		</div>
+		
+		<div id='bottomArea' class='bottomArea'>
+			<!-- button and copyright -->	
+			<div id='buttonArea' class='buttonArea'>
+				<!-- 여기에 수동으로 html 코드를 입력하지 마시오. javascript 함수를 이용하여 코드를 입력할 것입니다. -->
+			</div>
+			
+		</div>
+
+	</body>
+</html>
