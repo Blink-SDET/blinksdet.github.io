@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="description" content="Basic Template"/>
+</head>
+<body style="margin:0">
+    <video id="videoPlayer" style="position:fixed" width="100%" height="100%">
+        To play DASH supported media file
+    </video>
+    <script>
+        var script = document.createElement("script");
+        window.addEventListener("message", receiveMessage, false);
+
+        function receiveMessage(event)
+        {
+            script.onload = function() {
+                event.source.postMessage({type: "asteroid_loaded", context: event.data.context}, "*")
+            }
+            script.src = "../node_modules/@vudu/asteroid-bundle-" + event.data.message +"/asteroid.all.js";
+            document.body.appendChild(script);
+            window.removeEventListener("message", receiveMessage);
+        }
+    </script>
+</body>
+</html>
