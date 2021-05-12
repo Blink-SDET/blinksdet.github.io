@@ -1,0 +1,458 @@
+/*
+	 LCD TV LABORATORY, LG ELECTRONICS INC., SEOUL, KOREA
+	 Copyright(c) 2010 by LG Electronics Inc.
+
+	 All rights reserved. No part of this work may be reproduced, stored in a
+	 retrieval system, or transmitted by any means without prior written
+	 permission of LG Electronics Inc.
+
+	 Following styles are for NetCast Test .
+*/
+
+body
+{
+	margin:0; 
+	overflow:hidden; 
+	width:1280px; 
+	height:720px; 
+	background:#FFFFFF;
+	/*
+	background:#000000;
+	background-image: url("../subtitle/timer.mp4_000006360.jpg"); 
+	background-repeat: no-repeat;
+	background-position : 50% 50%; 
+	*/
+}
+
+.mainBody
+{
+	position:absolute;
+	width:1280px;
+	height:720px;
+	z-index:100;
+}
+
+.fullScreenContent
+{
+	position:absolute;
+	width:1280px;
+	height:720px;
+	visibility:hidden;
+	z-index:0;
+}
+
+.title
+{
+	position:absolute;
+	width:1250px;
+	height:100px;
+	font-size:30px;
+	font-weight:bolder;
+	padding-left :15px;
+	padding-top : 10px;
+	color:rgb(66,66,66);
+	font-family : inherit;
+	background-position : middle top;
+	background-repeat : no-repeat;
+}
+
+.category
+{
+	position:absolute;
+	width:450px;
+	height:20px;
+	left:30px;
+	top:69px;
+	font-size:20px;
+	font-weight:bolder;
+	font-family:inherit;
+	text-align:left;
+	color:rgb(106,116,123);
+}
+
+.contact
+{
+	position:absolute;
+	width:400px;
+	height:20px;
+	left:480px;
+	top:69px;
+	font-size:20px;
+	font-weight:bolder;
+	font-family:inherit;
+	text-align:left;
+	color:rgb(106,116,123);
+}
+
+.notification
+{
+	position:absolute;
+	width:1260px;
+	height:40px;
+	line-height:40px;
+	top:100px;
+	font-size:24px;
+	font-weight:bolder;
+	text-align:left;
+	padding-left:20px;
+	color:rgb(0, 0, 0);
+	font-family : inherit;
+	background-color:rgb(255, 0, 0);
+}
+
+.testContentArea
+{
+	position:absolute;
+	width:1280px;
+	height:540px;
+	left:0px;
+	top:60px;
+}
+
+.outputView
+{
+	position:relative;
+	width:800px;
+	height:540px;
+	float:left;
+	background-color:rgb(255, 240, 240);
+}
+
+.controlView
+{
+	position:relative;
+	width:480px;
+	height:540px;
+	float:right;
+	background-color:rgb(255, 100, 150);
+}
+
+.testButtonArea
+{
+	position:relative;
+	width:470px;
+	height:280px;
+	font-size:20px;
+	padding:5px;
+	background-color:rgb(230, 230, 230);
+}
+
+.testButtonDiv
+{
+	position:relative;
+	font-size:20px;
+	text-align:center;
+	height:30px;
+	width:225px;
+	float:left;
+	padding:5px;
+}
+
+.testButtonDivLong
+{
+	position:relative;
+	font-size:20px;
+	text-align:center;
+	height:30px;
+	width:460px;
+	float:left;
+	padding:5px;
+}
+
+.testButton
+{
+	position:relative;
+	font-size:20px;
+	text-align:center;
+	height:30px;
+	width:220px;
+}
+
+.testButtonLong
+{
+	position:relative;
+	font-size:20px;
+	text-align:center;
+	height:30px;
+	width:455px;
+}
+
+#selected
+{
+	color : red;
+}
+
+.descNormalCaseAreaTitle
+{
+	position:relative;
+	width:470px;
+	height:20px;
+	font-size:18px;
+	text-align:center;
+	font-weight:bolder;
+	padding-left:5px;
+	padding-right:5px;
+	background-color:rgb(150, 150, 2550);
+	word-break:break-all;
+}
+
+.descNormalCaseArea
+{
+	position:relative;
+	width:470px;
+	height:105px;
+	font-size:16px;
+	padding-left:5px;
+	padding-right:5px;
+	background-color:rgb(150, 255, 150);
+	word-break:break-all;
+}
+
+.descErrorCaseAreaTitle
+{
+	position:relative;
+	width:470px;
+	height:20px;
+	font-size:18px;
+	text-align:center;
+	font-weight:bolder;
+	padding-left:5px;
+	padding-right:5px;
+	background-color:rgb(150, 150, 2550);
+	word-break:break-all;
+}
+
+.descErrorCaseArea
+{
+	position:relative;
+	width:470px;
+	height:105px;
+	font-size:16px;
+	padding-left:5px;
+	padding-right:5px;
+	background-color:rgb(255, 150, 150);
+	word-break:break-all;
+}
+
+.buttonDescription
+{	
+	left:164px;
+	float:left;
+	height:40px;
+	height:40px;
+	line-height:40px;
+	font-size:24px;
+	font-weight:bolder;
+	font-family : inherit;
+	text-align:center;
+	min-width:80px;
+	padding-left:20px;
+	padding-right:20px;
+	color:rgb(255,255,255);
+	background-image: url("../image/btn_h1_n.png") ,url("../image/btn_h3_n.png"),url("../image/btn_h2_n.png"); 
+	background-repeat: no-repeat,no-repeat,repeat-x;
+	background-position: left, right, center;
+}
+
+.buttonDescription:hover
+{
+	background-image: url("../image/btn_h1_o.png") ,url("../image/btn_h3_o.png"),url("../image/btn_h2_o.png"); 
+	background-repeat: no-repeat,no-repeat,repeat-x;
+	background-position: left, right, center;
+	
+}
+.buttonDescription:ACTIVE
+{
+	background-image: url("../image/btn_h1_p.png") ,url("../image/btn_h3_p.png"),url("../image/btn_h2_p.png"); 
+	background-repeat: no-repeat,no-repeat,repeat-x;
+	background-position: left, right, center;
+	
+}
+
+.bottomArea
+{
+	position:absolute;
+	width:1280px;
+	height:40px;
+	left:0px;
+	top:680px;	
+	background-image: url("../image/bg_bottom.png");
+	background-repeat: repeat-x;
+	background-position: left;
+}
+
+.buttonArea
+{
+	position:relative;
+	float:left;
+	width:830px;
+	height:40px;
+	top:0px;
+}
+
+.mouseInfo
+{
+	position:relative;
+	float:right;
+	top:11px;
+	width:120px;
+	font-size:18px;
+	font-family:LG Display Font;
+	color:rgb(255,255,100);
+}
+
+.copyright
+{
+	position:relative;
+	float:right;
+	top:11px;
+	width:250px;
+	font-size:18px;
+	font-family:LG Display Font;
+	text-align:right;
+	color:rgb(230,230,230);
+}
+
+.popupNotification
+{
+	position:absolute;
+	display:block;
+	padding:30px;
+	color:black;
+	background-color:red;
+	border-style:inset;
+	font-size:24px;
+	text-align:center;
+	z-index:200;
+}
+
+.normalButton
+{
+	font-size:24px;
+	text-align:center;
+	height:50px;
+	width:100px;
+}
+
+.eachMenuDefault
+{
+	position:absolute;
+	overflow:hidden;
+	white-space:nowrap;
+	font-size:18px;
+	font-family:TiresiasScreenfont;
+	height:61px;
+
+	background: url(../image/btn_d1_n.png) left no-repeat, url(../image/btn_d3_n.png) right no-repeat, url(../image/btn_d2_n.png) left repeat-x; 
+}
+
+.eachMenuSelected
+{
+	position:absolute;
+	overflow:hidden;
+	white-space:nowrap;
+	font-size:18px;
+	font-family:TiresiasScreenfont;
+	height:61px;
+
+	background: url(../image/btn_d1_p.png) left no-repeat, url(../image/btn_d3_p.png) right no-repeat, url(../image/btn_d2_p.png) left repeat-x; 
+}
+
+.eachMenuNo
+{
+	float:left;
+	width:60px;
+	color:#A9A9A9;
+	text-align:center;
+}
+
+.eachMenuName
+{
+	overflow:hidden;
+	white-space:nowrap;
+	width: 100%;
+	color:#424242;
+}
+
+.eachMenuDefault:hover
+{
+	background: url(../image/btn_d1_o.png) left no-repeat, url(../image/btn_d3_o.png) right no-repeat, url(../image/btn_d2_o.png) left repeat-x;
+}
+
+.eachMenuDefault:hover .eachMenuNo
+{
+	color:#A9A9A9;
+}
+
+.eachMenuDefault:hover .eachMenuName
+{
+	color:#424242;
+}
+
+.eachMenuDefault:active
+{
+	background: url(../image/btn_d1_p.png) left no-repeat, url(../image/btn_d3_p.png) right no-repeat, url(../image/btn_d2_p.png) left repeat-x; 
+}
+
+.eachMenuDefault:active .eachMenuNo
+{
+	color:#BA6D86; 
+}
+
+.eachMenuDefault:active .eachMenuName
+{
+	color:#FFFFFF; 
+}
+
+.eachMenuSelected:hover
+{
+	background: url(../image/btn_d1_o.png) left no-repeat, url(../image/btn_d3_o.png) right no-repeat, url(../image/btn_d2_o.png) left repeat-x;
+}
+
+.eachMenuSelected:hover .eachMenuNo
+{
+	color:#A9A9A9;
+}
+
+.eachMenuSelected:hover .eachMenuName
+{
+	color:#424242;
+}
+
+.eachMenuSelected:active
+{
+	background: url(../image/btn_d1_p.png) left no-repeat, url(../image/btn_d3_p.png) right no-repeat, url(../image/btn_d2_p.png) left repeat-x; 
+}
+
+.eachMenuSelected:active .eachMenuNo
+{
+	color:#BA6D86; 
+}
+
+.eachMenuSelected:active .eachMenuName
+{
+	color:#FFFFFF; 
+}
+
+.executeButton
+{
+	display:block;
+	color:#FFFFFF;
+	background-color:#98bf21;
+	font-weight:bold;
+	width:120px;
+	text-align:center;
+	padding:0;
+	padding-top:3px;
+	padding-bottom:4px;
+	border:1px solid #ffffff;
+	outline:1px solid #98bf21;
+	text-decoration:none;
+	margin-left:1px;
+}
+
+.executeButton:hover
+{
+	background-color:#7A991A;
+}
+
