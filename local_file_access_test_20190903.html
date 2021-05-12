@@ -1,0 +1,82 @@
+<style>
+table,th, td, tr {
+    border: 1px solid #bcbcbc;
+}
+</style>
+<body style="background-color:white">
+<h3>Local File access Test</h3>
+<div style="font-size:15px">
+For App which "trustLevel" : "trusted" - all images and video and local file under trusted/allowed path, subdirectories should be accessed<br>
+For App which "trustLevel" : "default"/"netcast" - all images and video and local file shouldn't be accessed<br>
+Especially for app which "trustLevel" : "netcast" with "allowCrossDomain":true in appinfo.json can access allowedpath.
+<br>
+<div style = "font-size:18px">[Preparations]</div>
+Download the media files under trusted/allowed path. Send below in terminal<Br>
+  wget http://wp.lge.com/~haejin.song/tc/cors_localfile/img1.jpg <br>
+  wget http://wp.lge.com/~haejin.song/tc/cors_localfile/video.mp4 <br>
+  wget http://wp.lge.com/~haejin.song/tc/cors_localfile/html.html <br>
+</div>
+<div style="font-size:18px">[Test]</div>
+<div style="font-size:15px">
+<table style="font-size:15px; width:70%">
+<tr align="center">
+<td>TC1. image in the Trusted path<br> below images should be loaded on trusted app</td>
+<td>TC2. image in the Allowed path<br>below images should be loaded on trusted app, netcast app with 'allowCrossDomain':true
+</td>
+</tr>
+<tr align="center">
+<td>
+file:///media/img1.jpg<br><img src="file:///media/img1.jpg" width=auto height=50><br>
+file:///media/tmp/img1.jpg<br><img src="file:///media/tmp/img1.jpg" width=auto height=50>
+</td>
+<td>
+file:///tmp/alibaba/img1.jpg<br><img src="file:///tmp/alibaba/img1.jpg" width=auto height=50></br>
+file:///tmp/alibaba/tmp/img1.jpg<br><img src="file:///tmp/alibaba/tmp/img1.jpg" width=auto height=50>
+</tr>
+<tr align="center">
+<td>TC3. video in the Trusted path<br>below video should be loaded on trusetd app</td>
+<td>TC4. video in the Allowed path<br>below video should be loaded on trusted app, netcast app with 'allowCrossDomain':true</td>
+<td> </td>
+</tr>
+<tr align="center">
+<td>file:///media/video.mp4<br>
+    <video id="video" width=400 height=100 style="" controls>
+        <source src="file:///media/video.mp4" type="video/mp4">
+    </video><br>
+    file:///media/tmp/video.mp4<br>
+    <video id="video" width=400 height=100 style="" controls>
+        <source src="file:///media/tmp/video.mp4" type="video/mp4">
+    </video><br>
+</td>
+<td>file:///tmp/alibaba/video.mp4<br>
+    <video id="video" width=400 height=100 style="" controls>
+        <source src="file:///tmp/alibaba/video.mp4" type="video/mp4">
+    </video><br>
+    file:///tmp/alibaba/tmp/video.mp4<br>
+    <video id="video" width=400 height=100 style="" controls>
+        <source src="file:///tmp/alibaba/tmp/video.mp4" type="video/mp4">
+    </video>
+</td>
+<td> </td>
+</tr>
+<tr align="center">
+<td>TC5. HTML in the Trusted path<br>file:///media/html.html : html.html should be loaded on trusted app</td>
+<td>TC6. HTML in the Allowed path<br>file:///tmp/alibaba/html.html : html.html should be loaded on trusted app, netcast app with 'allowCrossDomain':true</td>
+</tr>
+<tr align="center">
+<td><a href = "file:///media/html.html">file:///media/html.html</a></td>
+<td><a href = "file:///tmp/alibaba/html.html">file:///tmp/alibaba/html.html</a></td>
+</tr>
+<tr align="center">
+<td>TC7. Click this, below hosted url should be loaded well</td>
+<td>TC8. Not allowed path<br>file:///home/img1.jpg : this file should be not loaded</td>
+</tr>
+<tr align="center">
+<td><a href = "http://wp.lge.com/~haejin.song/tc/cors_localfile/html.html">http://wp.lge.com/~haejin.song/tc/cors_localfile/html.html</a></td>
+<td><img src="file:///home/img1.jpg" width=auto height=100></td>
+</tr>
+</table>
+</div>
+<body>
+
+
