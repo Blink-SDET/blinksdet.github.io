@@ -1,0 +1,32 @@
+{
+  "name": "perf-enact-virtuallist",
+  "version": "1.0.2",
+  "description": "perf sample",
+  "author": "",
+  "main": "src/index.js",
+  "scripts": {
+    "serve": "enact serve",
+    "pack": "enact pack",
+    "pack-p": "enact pack -p"
+  },
+  "license": "Apache-2.0",
+  "repository": "https://github.com/enyojs/enact-internal-samples",
+  "enact": {
+    "isomorphic": true,
+    "ri": {
+      "baseSize": 24
+    }
+  },
+  "eslintConfig": {
+    "extends": "enact"
+  },
+  "dependencies": {
+    "@enact/core": "^1.3.1",
+    "@enact/i18n": "^1.3.1",
+    "@enact/moonstone": "^1.3.1",
+    "@enact/spotlight": "^1.3.1",
+    "@enact/ui": "^1.3.1",
+    "react": "^15.5.0",
+    "react-dom": "^15.5.0"
+  }
+}
