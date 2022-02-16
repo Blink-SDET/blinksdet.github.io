@@ -1,0 +1,72 @@
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Dummy App</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf8"/>
+        <meta name="apple-mobile-web-app-capable" content="yes"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    </head>
+    <style>
+    body {
+        background-color:#e0e0e0;
+        font-size: 2rem;
+    }
+    input {
+        width:30%;
+        height:10%;
+        font-size: 2rem;
+    }
+    button {
+        background-color: #4CAF50; /* Green */
+        border: none;
+        color: white;
+        cursor: pointer;
+        display: inline-block;
+        font-size: 2rem;
+        margin: 4px;
+        padding: 30px;
+        text-align: center;
+        text-decoration: none;
+    }
+
+    .container {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    </style>
+    <body>
+        <div class="container">
+            <label>Navigate to:</label>
+            <input type="url" id="url" name="url" placeholder="https://www.google.com">
+            <button onclick="navigateTo()">Go</button>
+        </div>
+        <div>
+            <label>Navigate a certain URL directly:
+            <div class="container">
+                <button onclick="navigateToURL('https://www.google.com')">Google</button>
+                <button onclick="navigateToURL('https://www.youtube.com')">Youtube</button>
+                <button onclick="navigateToURL('https://www.lg.com/us')">LG</button>
+            </div>
+        </div>
+        <p id="log"></p>
+
+        <script>
+            function navigateTo() {
+               const url_element = document.getElementById('url');
+               navigateToURL(url_element.value);
+            }
+            function navigateToURL(url) {
+                const log = document.getElementById("log");
+                log.value = '';
+                if (typeof url == 'string' && url != '') {
+                    log.innerHTML = "Will be moved to " + url;
+                    location.href = url;
+                } else {
+                    log.innerHTML = "Wrong url: " + url;
+                }
+            }
+        </script>
+    </body>
+</html>
